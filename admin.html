@@ -9,6 +9,13 @@
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #000;}
         #map { height: 100vh; width: 100%; z-index: 1; }
         
+        /* Security Overlay CSS */
+        .security-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0b0f19; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .passcode-box { background: rgba(15, 23, 42, 0.9); padding: 30px; border-radius: 15px; border: 1px solid #38bdf8; box-shadow: 0 0 30px rgba(56,189,248,0.2); text-align: center; }
+        .passcode-box h2 { color: #f8fafc; margin-top: 0; }
+        .pass-input { background: #1e293b; border: 1px solid #475569; color: white; padding: 10px; font-size: 18px; border-radius: 8px; width: 150px; text-align: center; letter-spacing: 5px; outline: none; }
+        .pass-btn { background: #38bdf8; border: none; padding: 10px 20px; color: black; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 15px; }
+
         .dashboard { position: absolute; top: 15px; left: 15px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 340px; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(56,189,248,0.2); color: white; transition: 0.3s;}
         .dashboard::-webkit-scrollbar { width: 5px; } .dashboard::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 5px; }
         
@@ -37,9 +44,27 @@
         .hide-btn { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 12px;}
         .show-panel-btn { position: absolute; top: 15px; left: 15px; background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 15px; border-radius: 8px; z-index: 1001; cursor: pointer; font-weight: bold; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
         .hidden { display: none !important; }
+        
+        /* Geo Alert overlay */
+        .geo-alert { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #ef4444; color: white; padding: 15px 30px; font-weight: bold; font-size: 16px; border-radius: 10px; z-index: 2000; box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); display: none; animation: blinker 1s linear infinite;}
+        @keyframes blinker { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
+
+    <!-- Security Overlay -->
+    <div id="securityScreen" class="security-screen">
+        <div class="passcode-box">
+            <h2>🛡️ Admin Access</h2>
+            <p style="color: #94a3b8; font-size: 14px;">Enter Security Passcode</p>
+            <input type="password" id="passInput" class="pass-input" placeholder="****" maxlength="4">
+            <br>
+            <button id="passBtn" class="pass-btn">LOGIN</button>
+            <p id="passError" style="color: #ef4444; font-size: 12px; display: none; margin-top: 10px;">Incorrect passcode!</p>
+        </div>
+    </div>
+
+    <div id="geoAlert" class="geo-alert">⚠️ GEOFENCE BREACH DETECTED! ⚠️</div>
 
     <button id="showPanelBtn" class="show-panel-btn">➕ Show Dashboard</button>
 
@@ -108,6 +133,16 @@
         let marker = null; let accuracyRadar = null; 
         let routeLine = L.polyline([], {color: '#ef4444', weight: 4, opacity: 0.8}).addTo(map);
         let lastLat = 0, lastLng = 0; let geofenceEnabled = false; let geofenceCircle = null; let geofenceCenter = null;
+
+        // Security Logic
+        document.getElementById('passBtn').addEventListener('click', () => {
+            const pass = document.getElementById('passInput').value;
+            if(pass === '1234') { // Default passcode
+                document.getElementById('securityScreen').style.display = 'none';
+            } else {
+                document.getElementById('passError').style.display = 'block';
+            }
+        });
 
         // Auto-delete on Page Refresh to save Firebase Quota
         remove(ref(db, 'live_location/photo'));
@@ -198,6 +233,22 @@
                 let htmlFormat = `<div class="smart-marker" style="transform: rotate(${heading}deg);">${speed > 10 ? "🚘" : (speed > 2 ? "🚶‍♂️" : "🧍‍♂️")}</div>`;
                 const smartIcon = L.divIcon({ className: '', html: htmlFormat, iconSize: [40, 40], iconAnchor: [20, 20] });
                 const latlng = [lat, lng]; routeLine.addLatLng(latlng);
+
+                // Geofence Check
+                if(geofenceEnabled && geofenceCenter) {
+                    const centerLatLng = L.latLng(geofenceCenter[0], geofenceCenter[1]);
+                    const currentLatLng = L.latLng(lat, lng);
+                    const distance = centerLatLng.distanceTo(currentLatLng); // in meters
+                    
+                    if(distance > 200) { // 200m radius
+                        document.getElementById('geoAlert').style.display = 'block';
+                        // Optional: Play alert sound on admin side
+                        const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3');
+                        alertSound.play().catch(e=>{});
+                    } else {
+                        document.getElementById('geoAlert').style.display = 'none';
+                    }
+                }
 
                 if (!marker) { 
                     accuracyRadar = L.circle(latlng, { radius: accuracy, color: '#38bdf8', fillColor: '#38bdf8', fillOpacity: 0.2 }).addTo(map);
