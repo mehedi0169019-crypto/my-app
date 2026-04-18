@@ -7,26 +7,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#3b82f6">
-    <title>QR Studio Pro</title>
+    <title>QR Studio</title>
     
-    <!-- QR Library, Scanner, Confetti & Icons -->
+    <!-- QR Library & Icons & Scanner -->
     <script src="https://cdn.jsdelivr.net/npm/easyqrcodejs@4.4.13/dist/easy.qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script> <!-- Scanner Library -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-    <!-- 🔥 Firebase Compat Libraries (For Single HTML File) 🔥 -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics-compat.js"></script>
 
     <style>
         :root {
             --bg-body: #eef2f6; --app-bg: #ffffff;
             --text-main: #1e293b; --text-muted: #64748b;
             --primary: #3b82f6; --primary-gradient: linear-gradient(135deg, #3b82f6, #6366f1);
-            --gold-gradient: linear-gradient(135deg, #fbbf24, #f59e0b);
             --input-bg: #f1f5f9; --border: #e2e8f0;
             --nav-bg: rgba(255, 255, 255, 0.85); --shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
         }
@@ -50,7 +43,7 @@
         .app-container {
             width: 100%; max-width: 420px; height: 100%; max-height: 100dvh;
             background: var(--app-bg); display: flex; flex-direction: column;
-            position: relative; transition: 0.3s; z-index: 1;
+            position: relative; transition: 0.3s;
         }
 
         @media (min-width: 450px) { 
@@ -63,19 +56,27 @@
         }
         .header h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px; }
         
-        .head-actions { display: flex; gap: 8px; align-items: center;}
+        .head-actions { display: flex; gap: 10px; }
         .theme-btn {
-            background: var(--input-bg); border: none; width: 40px; height: 40px;
+            background: var(--input-bg); border: none; width: 42px; height: 42px;
             border-radius: 50%; color: var(--text-main); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;
         }
         .lang-btn { font-weight: 900; font-size: 13px; color: var(--primary); }
-        .pro-btn { width: auto; padding: 0 15px; font-weight: 700; font-size: 13px; background: var(--gold-gradient); color: white; border-radius: 20px; }
 
-        .main-content { flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 100px; scroll-behavior: smooth; }
+        .main-content {
+            flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 100px; scroll-behavior: smooth;
+        }
         .main-content::-webkit-scrollbar { display: none; }
 
-        .qr-card { background: var(--app-bg); padding: 20px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; border: 1px solid var(--border); }
-        #qr-container { width: 200px; height: 200px; background: white; border-radius: 16px; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); padding: 12px; margin-bottom: 20px; }
+        .qr-card {
+            background: var(--app-bg); padding: 20px; border-radius: 24px; display: flex; 
+            flex-direction: column; align-items: center; margin-bottom: 25px; border: 1px solid var(--border);
+        }
+
+        #qr-container {
+            width: 200px; height: 200px; background: white; border-radius: 16px; display: flex; 
+            justify-content: center; align-items: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); padding: 12px; margin-bottom: 20px;
+        }
 
         .action-btns { display: flex; gap: 10px; width: 100%; }
         .action-btns button {
@@ -84,12 +85,15 @@
             gap: 5px; align-items: center; transition: 0.2s;
         }
         .action-btns button:active { transform: scale(0.95); }
-        .btn-copy { background: #64748b; } .btn-share { background: #10b981; } .btn-down { background: var(--primary-gradient); } .btn-open { background: #f59e0b; }
+        .btn-copy { background: #64748b; }
+        .btn-share { background: #10b981; }
+        .btn-down { background: var(--primary-gradient); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .btn-open { background: #f59e0b; }
 
-        .view-section { display: none; animation: slideUp 0.4s ease; } .view-section.active { display: block; }
+        .view-section { display: none; animation: slideUp 0.4s ease; }
+        .view-section.active { display: block; }
         
-        label { display: flex; align-items: center; gap: 5px; margin: 0 0 8px 5px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
-        .premium-lock { color: #f59e0b; font-size: 12px; }
+        label { display: block; margin: 0 0 8px 5px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
         .input-wrap { margin-bottom: 18px; }
         input, select, textarea {
             width: 100%; padding: 14px; background: var(--input-bg); border: 2px solid transparent;
@@ -97,38 +101,42 @@
         }
         input:focus, textarea:focus { border-color: var(--primary); background: transparent; }
         textarea { height: 80px; resize: none; }
-        .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; } input[type="color"] { height: 45px; padding: 2px; cursor: pointer; }
+        .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        input[type="color"] { height: 45px; padding: 2px; cursor: pointer; }
+        
         .switch-wrap { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-main); font-weight: 600; }
         input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
 
+        /* Scanner Styles */
         #reader { width: 100%; border-radius: 16px; overflow: hidden; border: 2px solid var(--border); background: #000; }
         #reader video { object-fit: cover; border-radius: 16px; }
 
-        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--nav-bg); backdrop-filter: blur(15px); border-top: 1px solid var(--border); display: flex; overflow-x: auto; padding: 10px; z-index: 20; scroll-snap-type: x mandatory; }
+        .bottom-nav {
+            position: absolute; bottom: 0; left: 0; width: 100%; background: var(--nav-bg); 
+            backdrop-filter: blur(15px); border-top: 1px solid var(--border); display: flex; 
+            overflow-x: auto; padding: 10px; z-index: 20; scroll-snap-type: x mandatory;
+        }
         .bottom-nav::-webkit-scrollbar { display: none; }
-        .nav-item { background: none; border: none; color: var(--text-muted); padding: 8px 15px; min-width: 75px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: 0.3s; scroll-snap-align: center; }
-        .nav-item i { font-size: 20px; } .nav-item.active { color: var(--primary); }
+        .nav-item {
+            background: none; border: none; color: var(--text-muted); padding: 8px 15px; min-width: 75px;
+            display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; 
+            font-size: 11px; font-weight: 600; transition: 0.3s; scroll-snap-align: center;
+        }
+        .nav-item i { font-size: 20px; }
+        .nav-item.active { color: var(--primary); }
 
-        .history-item { background: var(--input-bg); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid var(--border); }
+        .history-item { 
+            background: var(--input-bg); padding: 12px; border-radius: 12px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid var(--border);
+        }
         .history-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 70%; color: var(--text-main); font-size: 14px; font-weight: 600; }
         .history-type { font-size: 11px; color: var(--primary); background: rgba(59, 130, 246, 0.1); padding: 3px 8px; border-radius: 8px; }
 
-        /* 🔥 Modal Styles for Pro/Login 🔥 */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-overlay.active { display: flex; }
-        .modal-box { background: var(--app-bg); width: 90%; max-width: 350px; padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 15px 50px rgba(0,0,0,0.2); position: relative; border: 1px solid var(--border); }
-        .modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; }
-        .modal-icon { font-size: 40px; color: #f59e0b; margin-bottom: 10px; }
-        .modal-title { font-size: 20px; color: var(--text-main); margin: 0 0 10px 0; font-weight: 800; }
-        .modal-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
-        .pro-list { text-align: left; font-size: 13px; color: var(--text-main); margin-bottom: 20px; font-weight: 600;}
-        .pro-list li { margin-bottom: 8px; }
-        .pro-list i { color: #10b981; margin-right: 5px; }
-        .btn-google { background: white; color: #333; border: 1px solid #ccc; width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
-        .btn-google img { width: 20px; }
-        .payment-box { background: rgba(245, 158, 11, 0.1); padding: 15px; border-radius: 12px; text-align: left; margin-bottom: 15px; border: 1px dashed #f59e0b;}
-
-        #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%) scale(0.9); background: var(--text-main); color: var(--bg-body); padding: 12px 25px; border-radius: 30px; font-size: 14px; font-weight: 600; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 2000; }
+        #toast {
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%) scale(0.9);
+            background: var(--text-main); color: var(--bg-body); padding: 12px 25px; border-radius: 30px; 
+            font-size: 14px; font-weight: 600; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 100;
+        }
         #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) scale(1); }
         @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -141,15 +149,15 @@
         <div class="head-actions">
             <button class="theme-btn lang-btn" onclick="toggleLang()" id="lang-btn">EN</button>
             <button class="theme-btn" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="theme-icon"></i></button>
-            <!-- 👑 Premium User Button -->
-            <button class="theme-btn pro-btn" id="pro-btn" onclick="openModal()"><i class="fa-solid fa-crown"></i> PRO</button>
         </div>
     </div>
 
     <div class="main-content">
         
         <div class="qr-card" id="qr-card">
-            <div id="qr-container"><i class="fa-solid fa-qrcode" style="font-size: 70px; color: #cbd5e1;"></i></div>
+            <div id="qr-container">
+                <i class="fa-solid fa-qrcode" style="font-size: 70px; color: #cbd5e1;"></i>
+            </div>
             <div class="action-btns" id="action-btns" style="display: none;">
                 <button class="btn-copy" onclick="copyQR()"><i class="fa-solid fa-copy"></i> <span data-i18n="btn_copy">কপি</span></button>
                 <button class="btn-share" onclick="shareQR()"><i class="fa-solid fa-share-nodes"></i> <span data-i18n="btn_share">শেয়ার</span></button>
@@ -158,22 +166,43 @@
         </div>
 
         <div id="view-text" class="view-section active">
-            <div class="input-wrap"><label data-i18n="lbl_text">টেক্সট বা লিংক দিন</label><input type="text" id="inp-text" data-i18n-ph="ph_text" placeholder="https://..." oninput="autoGenerate()"></div>
+            <div class="input-wrap">
+                <label data-i18n="lbl_text">টেক্সট বা লিংক দিন</label>
+                <input type="text" id="inp-text" data-i18n-ph="ph_text" placeholder="https://..." oninput="autoGenerate()">
+            </div>
         </div>
 
         <div id="view-whatsapp" class="view-section">
-            <div class="input-wrap"><label data-i18n="lbl_wa_ph">হোয়াটসঅ্যাপ নাম্বার</label><input type="tel" id="wa-phone" placeholder="01XXXXXXXXX" oninput="autoGenerate()"></div>
-            <div class="input-wrap"><label data-i18n="lbl_wa_msg">মেসেজ (ঐচ্ছিক)</label><textarea id="wa-msg" data-i18n-ph="ph_wa_msg" placeholder="হ্যালো..." oninput="autoGenerate()"></textarea></div>
+            <div class="input-wrap">
+                <label data-i18n="lbl_wa_ph">হোয়াটসঅ্যাপ নাম্বার</label>
+                <input type="tel" id="wa-phone" placeholder="01XXXXXXXXX" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap">
+                <label data-i18n="lbl_wa_msg">মেসেজ (ঐচ্ছিক)</label>
+                <textarea id="wa-msg" data-i18n-ph="ph_wa_msg" placeholder="হ্যালো..." oninput="autoGenerate()"></textarea>
+            </div>
         </div>
 
         <div id="view-wifi" class="view-section">
-            <div class="input-wrap"><label data-i18n="lbl_wifi_ssid">WiFi এর নাম (SSID)</label><input type="text" id="wifi-ssid" placeholder="My Network" oninput="autoGenerate()"></div>
-            <div class="input-wrap"><label data-i18n="lbl_wifi_pass">পাসওয়ার্ড</label><input type="password" id="wifi-pass" placeholder="••••••••" oninput="autoGenerate()"></div>
+            <div class="input-wrap">
+                <label data-i18n="lbl_wifi_ssid">WiFi এর নাম (SSID)</label>
+                <input type="text" id="wifi-ssid" placeholder="My Network" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap">
+                <label data-i18n="lbl_wifi_pass">পাসওয়ার্ড</label>
+                <input type="password" id="wifi-pass" placeholder="••••••••" oninput="autoGenerate()">
+            </div>
         </div>
 
         <div id="view-location" class="view-section">
-            <div class="input-wrap"><label data-i18n="lbl_loc_lat">ল্যাটিটিউড (Latitude)</label><input type="number" id="loc-lat" placeholder="23.8103" oninput="autoGenerate()"></div>
-            <div class="input-wrap"><label data-i18n="lbl_loc_lon">লঙ্গিটিউড (Longitude)</label><input type="number" id="loc-lon" placeholder="90.4125" oninput="autoGenerate()"></div>
+            <div class="input-wrap">
+                <label data-i18n="lbl_loc_lat">ল্যাটিটিউড (Latitude)</label>
+                <input type="number" id="loc-lat" placeholder="23.8103" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap">
+                <label data-i18n="lbl_loc_lon">লঙ্গিটিউড (Longitude)</label>
+                <input type="number" id="loc-lon" placeholder="90.4125" oninput="autoGenerate()">
+            </div>
         </div>
 
         <div id="view-contact" class="view-section">
@@ -202,16 +231,19 @@
                     <option value="yt">YouTube</option>
                 </select>
             </div>
-            <div class="input-wrap"><label data-i18n="lbl_soc_url">ইউজারনেম বা প্রোফাইল লিংক</label><input type="text" id="soc-url" placeholder="username বা link" oninput="autoGenerate()"></div>
+            <div class="input-wrap">
+                <label data-i18n="lbl_soc_url">ইউজারনেম বা প্রোফাইল লিংক</label>
+                <input type="text" id="soc-url" placeholder="username বা link" oninput="autoGenerate()">
+            </div>
         </div>
 
         <div id="view-design" class="view-section">
-            <div class="input-wrap"><label data-i18n="lbl_dsg_txt">কাস্টম লেখা (নিচে দেখাবে)</label><input type="text" id="frame-text" placeholder="S C A N  M E" oninput="autoGenerate()"></div>
-            
-            <!-- 🔥 LOCKED FEATURES 🔥 -->
+            <div class="input-wrap"><label data-i18n="lbl_dsg_txt">কাস্টম লেখা (নিচে দেখাবে)</label>
+                <input type="text" id="frame-text" placeholder="S C A N  M E" oninput="autoGenerate()">
+            </div>
             <div class="input-wrap">
-                <label><span data-i18n="lbl_dsg_logo">মাঝখানে লোগো বসান</span> <i class="fa-solid fa-lock premium-lock" id="lock-logo"></i></label>
-                <input type="file" id="inp-logo" accept="image/*" style="padding: 10px;" onclick="checkPremiumLock(event)">
+                <label data-i18n="lbl_dsg_logo">মাঝখানে লোগো বসান</label>
+                <input type="file" id="inp-logo" accept="image/*" style="padding: 10px;">
             </div>
             <div class="input-wrap color-grid">
                 <div><label data-i18n="lbl_dsg_qr_col">QR কালার</label><input type="color" id="col-dark" value="#000000" onchange="autoGenerate()"></div>
@@ -222,17 +254,21 @@
                 <span data-i18n="lbl_dsg_trans">স্বচ্ছ (Transparent) ব্যাকগ্রাউন্ড</span>
             </div>
             <div class="input-wrap">
-                <label><span data-i18n="lbl_dsg_style">QR কোডের স্টাইল</span> <i class="fa-solid fa-lock premium-lock" id="lock-style"></i></label>
-                <select id="qr-style" onchange="checkPremiumSelect(this)">
+                <label data-i18n="lbl_dsg_style">QR কোডের স্টাইল</label>
+                <select id="qr-style" onchange="autoGenerate()">
                     <option value="square" data-i18n="opt_sq">ক্লাসিক (Square)</option>
                     <option value="dot" data-i18n="opt_dot">প্রিমিয়াম বিন্দু (Dot)</option>
                 </select>
             </div>
         </div>
 
+        <!-- NEW: Scanner Section -->
         <div id="view-scan" class="view-section">
             <div id="reader"></div>
-            <div class="input-wrap" style="margin-top: 20px;"><label data-i18n="lbl_scan_res">স্ক্যান রেজাল্ট</label><textarea id="scan-result" readonly placeholder="..." style="height: 100px; color: var(--primary); font-weight: 600;"></textarea></div>
+            <div class="input-wrap" style="margin-top: 20px;">
+                <label data-i18n="lbl_scan_res">স্ক্যান রেজাল্ট</label>
+                <textarea id="scan-result" readonly placeholder="..." style="height: 100px; color: var(--primary); font-weight: 600;"></textarea>
+            </div>
             <div class="action-btns">
                 <button class="btn-copy" onclick="copyScanResult()"><i class="fa-solid fa-copy"></i> <span data-i18n="btn_copy">কপি</span></button>
                 <button class="btn-open" onclick="openScanResult()"><i class="fa-solid fa-external-link"></i> <span data-i18n="btn_open">ওপেন</span></button>
@@ -243,6 +279,7 @@
             <h3 style="margin-top:0; color:var(--text-main); font-size:16px;" data-i18n="hist_title">সেভ করা হিস্ট্রি</h3>
             <div id="history-list"></div>
         </div>
+
     </div> 
 
     <!-- Scrollable Bottom Navigation -->
@@ -259,37 +296,7 @@
         <button class="nav-item" onclick="switchTab('design', this)"><i class="fa-solid fa-palette"></i><span data-i18n="nav_design">ডিজাইন</span></button>
         <button class="nav-item" onclick="switchTab('history', this)"><i class="fa-solid fa-clock-rotate-left"></i><span data-i18n="nav_history">হিস্ট্রি</span></button>
     </nav>
-</div>
 
-<!-- 🔥 Premium Upgrade & Login Modal 🔥 -->
-<div class="modal-overlay" id="pro-modal">
-    <div class="modal-box">
-        <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-        <i class="fa-solid fa-crown modal-icon"></i>
-        <h3 class="modal-title" id="modal-title">Upgrade to Pro</h3>
-        <p class="modal-desc" id="modal-desc">লগইন করুন এবং প্রিমিয়াম আনলক করুন!</p>
-        
-        <ul class="pro-list" id="pro-list">
-            <li><i class="fa-solid fa-circle-check"></i> ওয়াটারমার্ক ছাড়া হাই-রেজোলিউশন ডাউনলোড</li>
-            <li><i class="fa-solid fa-circle-check"></i> QR এর মাঝে নিজের লোগো আপলোড</li>
-            <li><i class="fa-solid fa-circle-check"></i> প্রিমিয়াম ডট (Dot) স্টাইল ব্যবহার</li>
-        </ul>
-
-        <div id="auth-section">
-            <button class="btn-google" onclick="loginWithGoogle()">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G"> Google দিয়ে লগইন করুন
-            </button>
-        </div>
-
-        <div id="payment-section" style="display: none;">
-            <div class="payment-box">
-                <p style="margin:0 0 5px 0; font-size:13px; color:var(--text-main);"><b>বিকাশ / নগদ (Send Money):</b></p>
-                <p style="margin:0 0 10px 0; font-size:18px; font-weight:800; color:var(--primary);">01XXXXXXXXX</p>
-                <p style="margin:0; font-size:12px; color:var(--text-muted);">টাকা পাঠানোর পর আপনার ইমেইলটি আমাদের ফেসবুক পেজে মেসেজ করুন।</p>
-            </div>
-            <button class="theme-btn pro-btn" style="width:100%; padding:12px; font-size:14px;" onclick="logout()">লগআউট (Logout)</button>
-        </div>
-    </div>
 </div>
 
 <div id="toast">মেসেজ</div>
@@ -315,8 +322,8 @@
             nav_social: "সোশ্যাল", nav_email: "ইমেইল", nav_sms: "SMS", nav_design: "ডিজাইন", nav_history: "হিস্ট্রি",
             btn_copy: "কপি", btn_share: "শেয়ার", btn_down: "সেভ HD", btn_open: "ওপেন", hist_empty: "কোনো হিস্ট্রি নেই।",
             t_copy: "✅ কপি হয়েছে!", t_err: "❌ লাইভ সার্ভার লাগবে", t_sh_err: "❌ শেয়ার সাপোর্ট করে না",
-            t_err_emp: "আগে কিছু লিখুন!", t_down: "📥 HD ডাউনলোড সফল!", t_res: "✅ রিস্টোর করা হয়েছে!",
-            t_scan_succ: "✅ স্ক্যান সফল!", t_open_err: "❌ এটি কোনো লিংক নয়", t_pro_warn: "⚠️ প্রো আনলক করুন", t_login: "লগইন সফল!", t_logout: "লগআউট হয়েছে"
+            t_err_emp: "আগে কিছু লিখুন!", t_down: "📥 HD কোয়ালিটিতে ডাউনলোড সফল!", t_res: "✅ ডাটা রিস্টোর করা হয়েছে!",
+            t_scan_succ: "✅ স্ক্যান সফল!", t_open_err: "❌ এটি কোনো লিংক নয়"
         },
         "en": {
             title: "QR Studio", lbl_text: "Enter Text or Link", ph_text: "https://...",
@@ -326,7 +333,7 @@
             lbl_vc_name: "Name", ph_vc_name: "Your Name", lbl_vc_phone: "Phone Number", lbl_vc_email: "Email",
             lbl_em_to: "Email Address", lbl_em_sub: "Subject", lbl_em_msg: "Write details...",
             lbl_sms_phone: "Phone Number", lbl_sms_msg: "Message",
-            lbl_soc_plat: "Platform", lbl_soc_url: "Username or Link",
+            lbl_soc_plat: "Platform", lbl_soc_url: "Username or Profile Link",
             lbl_dsg_txt: "Custom Text (Bottom)", lbl_dsg_logo: "Add Logo in Center",
             lbl_dsg_qr_col: "QR Color", lbl_dsg_bg_col: "Background",
             lbl_dsg_trans: "Transparent Background", lbl_dsg_style: "QR Code Style",
@@ -337,15 +344,19 @@
             btn_copy: "Copy", btn_share: "Share", btn_down: "Save HD", btn_open: "Open", hist_empty: "No history found.",
             t_copy: "✅ Copied!", t_err: "❌ Requires live server", t_sh_err: "❌ Share not supported",
             t_err_emp: "Enter something first!", t_down: "📥 HD Download Successful!", t_res: "✅ Data Restored!",
-            t_scan_succ: "✅ Scan Successful!", t_open_err: "❌ Not a valid link", t_pro_warn: "⚠️ Unlock Pro Feature", t_login: "Login Success!", t_logout: "Logged Out!"
+            t_scan_succ: "✅ Scan Successful!", t_open_err: "❌ Not a valid link"
         }
     };
 
     let currentLang = localStorage.getItem('lang') || 'bn';
 
     function applyLanguage() {
-        document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = dict[currentLang][el.getAttribute('data-i18n')]; });
-        document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = dict[currentLang][el.getAttribute('data-i18n-ph')]; });
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.innerText = dict[currentLang][el.getAttribute('data-i18n')];
+        });
+        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+            el.placeholder = dict[currentLang][el.getAttribute('data-i18n-ph')];
+        });
         document.getElementById('lang-btn').innerText = currentLang === 'bn' ? 'EN' : 'BN';
         if (currentTab === 'history') loadHistory();
     }
@@ -355,88 +366,10 @@
         localStorage.setItem('lang', currentLang);
         applyLanguage();
     }
-
-    // 🔥 NEW Firebase Configuration & Setup 🔥
-    const firebaseConfig = {
-      apiKey: "AIzaSyCFnFbLhLN3mAUrmcjFkcb9DpBp5EPmKnQ",
-      authDomain: "heke-452d6.firebaseapp.com",
-      databaseURL: "https://heke-452d6-default-rtdb.firebaseio.com",
-      projectId: "heke-452d6",
-      storageBucket: "heke-452d6.firebasestorage.app",
-      messagingSenderId: "33927182418",
-      appId: "1:33927182418:web:e9891ddac048d65539478b",
-      measurementId: "G-68NZHNTTY1"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const analytics = firebase.analytics(); // Analytics initialized
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const provider = new firebase.auth.GoogleAuthProvider();
-
-    let isPremium = false;
-    let currentUser = null;
-
-    // 🔥 User Auth Listener 🔥
-    auth.onAuthStateChanged((user) => {
-        currentUser = user;
-        const proBtn = document.getElementById('pro-btn');
-        const authSec = document.getElementById('auth-section');
-        const paySec = document.getElementById('payment-section');
-        const mTitle = document.getElementById('modal-title');
-
-        if (user) {
-            db.collection('users').doc(user.uid).get().then((doc) => {
-                if (doc.exists) {
-                    isPremium = doc.data().isPremium || false;
-                } else {
-                    db.collection('users').doc(user.uid).set({ email: user.email, isPremium: false });
-                    isPremium = false;
-                }
-                updateUIForPremium();
-            }).catch(() => { isPremium = false; updateUIForPremium(); });
-
-            authSec.style.display = 'none'; paySec.style.display = 'block';
-            mTitle.innerText = "Get Premium Access";
-            proBtn.innerHTML = `<img src="${user.photoURL}" style="width:20px; height:20px; border-radius:50%; border:2px solid white;">`;
-        } else {
-            isPremium = false;
-            authSec.style.display = 'block'; paySec.style.display = 'none';
-            mTitle.innerText = "Upgrade to Pro";
-            proBtn.innerHTML = `<i class="fa-solid fa-crown"></i> PRO`;
-            updateUIForPremium();
-        }
-    });
-
-    function loginWithGoogle() { auth.signInWithPopup(provider).then(() => { showToast(dict[currentLang]['t_login']); closeModal(); }).catch(e => showToast("Error")); }
-    function logout() { auth.signOut().then(() => { showToast(dict[currentLang]['t_logout']); closeModal(); }); }
-
-    function updateUIForPremium() {
-        const lockLogo = document.getElementById('lock-logo'); const lockStyle = document.getElementById('lock-style');
-        if (isPremium) {
-            lockLogo.style.display = 'none'; lockStyle.style.display = 'none';
-            document.getElementById('pro-btn').style.background = '#10b981';
-        } else {
-            lockLogo.style.display = 'inline-block'; lockStyle.style.display = 'inline-block';
-            document.getElementById('pro-btn').style.background = 'var(--gold-gradient)';
-        }
-    }
-
-    // 🔥 Modal Logic 🔥
-    function openModal() { document.getElementById('pro-modal').classList.add('active'); }
-    function closeModal() { document.getElementById('pro-modal').classList.remove('active'); }
-
-    function checkPremiumLock(e) { if (!isPremium) { e.preventDefault(); openModal(); showToast(dict[currentLang]['t_pro_warn']); } }
-    function checkPremiumSelect(selectObj) {
-        if (!isPremium && selectObj.value === 'dot') {
-            selectObj.value = 'square'; openModal(); showToast(dict[currentLang]['t_pro_warn']); autoGenerate();
-        } else { autoGenerate(); }
-    }
-
-
-    // --- Core Functions Below ---
+    
+    // 🔥 Core App Logic 🔥
     let currentTab = 'text', activeDataTab = 'text', logoData = null, qrGenerated = false, lastGeneratedData = ""; 
-    let html5QrCode = null;
+    let html5QrCode = null; // Scanner variable
 
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
@@ -446,7 +379,9 @@
     applyLanguage();
 
     function switchTab(tabName, element) {
+        // Stop scanner if leaving scan tab
         if (currentTab === 'scan' && tabName !== 'scan') stopScanner();
+
         currentTab = tabName;
         if (tabName !== 'design' && tabName !== 'history' && tabName !== 'scan') { activeDataTab = tabName; }
         
@@ -457,37 +392,67 @@
         element.classList.add('active');
         element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
+        // Logic for Scanner vs Generator
         const qrCard = document.getElementById('qr-card');
-        if (tabName === 'scan') { qrCard.style.display = 'none'; startScanner(); } 
-        else { qrCard.style.display = 'flex'; if (tabName === 'history') loadHistory(); else autoGenerate(); }
+        if (tabName === 'scan') {
+            qrCard.style.display = 'none'; // Hide QR Card when scanning
+            startScanner();
+        } else {
+            qrCard.style.display = 'flex'; // Show QR Card
+            if (tabName === 'history') loadHistory(); else autoGenerate();
+        }
     }
 
-    // Scanner
+    // --- NEW: Scanner Functions ---
     function startScanner() {
         if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
         html5QrCode.start({ facingMode: "environment" }, config,
-            (decodedText) => { document.getElementById('scan-result').value = decodedText; showToast(dict[currentLang]['t_scan_succ']); stopScanner(); },
-            () => {}
-        ).catch(err => console.log(err));
+            (decodedText, decodedResult) => {
+                document.getElementById('scan-result').value = decodedText;
+                showToast('t_scan_succ');
+                stopScanner(); // Auto stop after scan
+            },
+            (errorMessage) => { /* ignore constant scanning errors */ }
+        ).catch(err => console.log("Camera access error:", err));
     }
-    function stopScanner() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().catch(err => {}); } }
-    function copyScanResult() { const txt = document.getElementById('scan-result').value; if(txt) { navigator.clipboard.writeText(txt); showToast(dict[currentLang]['t_copy']); } }
-    function openScanResult() { const txt = document.getElementById('scan-result').value; if(txt.startsWith("http")) window.open(txt, '_blank'); else showToast(dict[currentLang]['t_open_err']); }
 
-    // Logo Upload
+    function stopScanner() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().catch(err => console.log(err));
+        }
+    }
+
+    function copyScanResult() {
+        const text = document.getElementById('scan-result').value;
+        if (!text) return showToast('t_err_emp');
+        navigator.clipboard.writeText(text); showToast('t_copy');
+    }
+
+    function openScanResult() {
+        const text = document.getElementById('scan-result').value;
+        if (!text) return showToast('t_err_emp');
+        if (text.startsWith("http://") || text.startsWith("https://")) {
+            window.open(text, '_blank');
+        } else { showToast('t_open_err'); }
+    }
+    // ------------------------------
+
     document.getElementById('inp-logo').addEventListener('change', function(e) {
-        if(!isPremium) return;
         const file = e.target.files[0];
-        if (file) { const reader = new FileReader(); reader.onload = function(evt) { logoData = evt.target.result; autoGenerate(); }; reader.readAsDataURL(file); } 
-        else { logoData = null; autoGenerate(); }
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) { logoData = evt.target.result; autoGenerate(); };
+            reader.readAsDataURL(file);
+        } else { logoData = null; autoGenerate(); }
     });
 
     let typingTimer;
     function autoGenerate() { clearTimeout(typingTimer); typingTimer = setTimeout(generateQR, 300); }
 
     function generateQR() {
-        if (currentTab === 'scan') return; 
+        if (currentTab === 'scan') return; // Do not generate while scanning
+
         let textData = "";
 
         if (activeDataTab === 'text') textData = document.getElementById('inp-text').value;
@@ -497,14 +462,38 @@
             const msg = encodeURIComponent(document.getElementById('wa-msg').value);
             if(phone) textData = `https://wa.me/${phone}?text=${msg}`;
         } 
-        else if (activeDataTab === 'wifi') { const ssid = document.getElementById('wifi-ssid').value, pass = document.getElementById('wifi-pass').value; if(ssid) textData = `WIFI:S:${ssid};T:WPA;P:${pass};;`; }
-        else if (activeDataTab === 'location') { const lat = document.getElementById('loc-lat').value, lon = document.getElementById('loc-lon').value; if(lat && lon) textData = `geo:${lat},${lon}`; }
-        else if (activeDataTab === 'contact') { const n = document.getElementById('vc-name').value, p = document.getElementById('vc-phone').value, e = document.getElementById('vc-email').value; if(n||p||e) textData = `BEGIN:VCARD\nVERSION:3.0\nFN:${n}\nTEL:${p}\nEMAIL:${e}\nEND:VCARD`; }
-        else if (activeDataTab === 'email') { const to = document.getElementById('em-to').value, sub = encodeURIComponent(document.getElementById('em-sub').value), msg = encodeURIComponent(document.getElementById('em-msg').value); if(to) textData = `mailto:${to}?subject=${sub}&body=${msg}`; }
-        else if (activeDataTab === 'sms') { const ph = document.getElementById('sms-phone').value, msg = document.getElementById('sms-msg').value; if(ph) textData = `SMSTO:${ph}:${msg}`; }
+        else if (activeDataTab === 'wifi') {
+            const ssid = document.getElementById('wifi-ssid').value;
+            const pass = document.getElementById('wifi-pass').value;
+            if(ssid) textData = `WIFI:S:${ssid};T:WPA;P:${pass};;`;
+        }
+        else if (activeDataTab === 'location') {
+            const lat = document.getElementById('loc-lat').value;
+            const lon = document.getElementById('loc-lon').value;
+            if(lat && lon) textData = `geo:${lat},${lon}`;
+        }
+        else if (activeDataTab === 'contact') {
+            const n = document.getElementById('vc-name').value, p = document.getElementById('vc-phone').value, e = document.getElementById('vc-email').value;
+            if(n||p||e) textData = `BEGIN:VCARD\nVERSION:3.0\nFN:${n}\nTEL:${p}\nEMAIL:${e}\nEND:VCARD`;
+        }
+        else if (activeDataTab === 'email') {
+            const to = document.getElementById('em-to').value, sub = encodeURIComponent(document.getElementById('em-sub').value), msg = encodeURIComponent(document.getElementById('em-msg').value);
+            if(to) textData = `mailto:${to}?subject=${sub}&body=${msg}`;
+        }
+        else if (activeDataTab === 'sms') {
+            const ph = document.getElementById('sms-phone').value, msg = document.getElementById('sms-msg').value;
+            if(ph) textData = `SMSTO:${ph}:${msg}`;
+        }
         else if (activeDataTab === 'social') {
             const pf = document.getElementById('soc-platform').value, url = document.getElementById('soc-url').value.trim();
-            if(url) { if(url.startsWith('http')) textData = url; else { if(pf==='fb') textData = `https://facebook.com/${url}`; if(pf==='insta') textData = `https://instagram.com/${url}`; if(pf==='yt') textData = `https://youtube.com/@${url}`; } }
+            if(url) {
+                if(url.startsWith('http')) textData = url;
+                else {
+                    if(pf==='fb') textData = `https://facebook.com/${url}`;
+                    if(pf==='insta') textData = `https://instagram.com/${url}`;
+                    if(pf==='yt') textData = `https://youtube.com/@${url}`;
+                }
+            }
         }
 
         const container = document.getElementById('qr-container');
@@ -514,28 +503,32 @@
         if (!textData.trim()) {
             container.innerHTML = '<i class="fa-solid fa-qrcode" style="font-size: 70px; color: #cbd5e1;"></i>';
             container.style.background = isTransparent ? 'transparent' : 'white';
-            actionBtns.style.display = 'none'; qrGenerated = false; return;
+            actionBtns.style.display = 'none';
+            qrGenerated = false; return;
         }
 
         lastGeneratedData = textData;
         container.innerHTML = "";
-        const isDot = isPremium && document.getElementById('qr-style').value === 'dot';
+        const isDot = document.getElementById('qr-style').value === 'dot';
 
         new QRCode(container, {
             text: textData, width: 220, height: 220,
             colorDark: document.getElementById('col-dark').value,
             colorLight: isTransparent ? "rgba(255,255,255,0)" : document.getElementById('col-light').value,
             correctLevel: QRCode.CorrectLevel.H, dotScale: isDot ? 0.4 : 1,
-            logo: isPremium ? logoData : null, logoWidth: 55, logoHeight: 55, logoBackgroundTransparent: false
+            logo: logoData, logoWidth: 55, logoHeight: 55, logoBackgroundTransparent: false
         });
         
         container.style.background = isTransparent ? 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAHElEQVQYV2NkYGAwYkAD////Mw7y4igwDhoAxgMAgZkEAfxM2iUAAAAASUVORK5CYII=) repeat' : 'white';
-        actionBtns.style.display = 'flex'; qrGenerated = true;
+        actionBtns.style.display = 'flex';
+        qrGenerated = true;
     }
 
-    function showToast(msg) {
-        const toast = document.getElementById("toast"); toast.innerText = msg; 
-        toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 2500);
+    function showToast(msgKey) {
+        const toast = document.getElementById("toast");
+        toast.innerText = dict[currentLang][msgKey]; 
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2500);
     }
 
     function saveToHistory() {
@@ -543,65 +536,122 @@
         let hist = JSON.parse(localStorage.getItem('qr_history') || '[]');
         if (hist.length > 0 && hist[0].data === lastGeneratedData) return; 
         hist.unshift({ type: activeDataTab, data: lastGeneratedData });
-        if(hist.length > 15) hist.pop(); localStorage.setItem('qr_history', JSON.stringify(hist));
+        if(hist.length > 15) hist.pop(); 
+        localStorage.setItem('qr_history', JSON.stringify(hist));
     }
 
     function loadHistory() {
         const list = document.getElementById('history-list');
         let hist = JSON.parse(localStorage.getItem('qr_history') || '[]');
-        if (hist.length === 0) { list.innerHTML = `<p style='color:var(--text-muted); font-size:13px;'>${dict[currentLang]['hist_empty']}</p>`; return; }
+        if (hist.length === 0) {
+            list.innerHTML = `<p style='color:var(--text-muted); font-size:13px;'>${dict[currentLang]['hist_empty']}</p>`;
+            return;
+        }
         list.innerHTML = "";
         hist.forEach(h => {
-            let div = document.createElement('div'); div.className = 'history-item';
+            let div = document.createElement('div');
+            div.className = 'history-item';
             div.innerHTML = `<span class="history-text">${h.data}</span><span class="history-type">${h.type.toUpperCase()}</span>`;
-            div.onclick = () => { switchTab('text', document.querySelector('.bottom-nav button:nth-child(1)')); document.getElementById('inp-text').value = h.data; autoGenerate(); showToast(dict[currentLang]['t_res']); };
+            div.onclick = () => restoreFromHistory(h.data);
             list.appendChild(div);
         });
     }
 
-    async function copyQR() { const canvas = document.querySelector('#qr-container canvas'); if (!canvas) return; saveToHistory(); try { const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png')); await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); showToast(dict[currentLang]['t_copy']); } catch (error) { showToast(dict[currentLang]['t_err']); } }
-    async function shareQR() { const canvas = document.querySelector('#qr-container canvas'); if (!canvas) return; saveToHistory(); try { const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png')); const file = new File([blob], 'QR-Code.png', { type: 'image/png' }); if (navigator.share) await navigator.share({ files: [file], title: 'My QR Code' }); else showToast(dict[currentLang]['t_sh_err']); } catch (error) {} }
+    function restoreFromHistory(data) {
+        switchTab('text', document.querySelector('.bottom-nav button:nth-child(1)'));
+        document.getElementById('inp-text').value = data;
+        autoGenerate(); showToast('t_res');
+    }
+
+    async function copyQR() {
+        const canvas = document.querySelector('#qr-container canvas');
+        if (!canvas) return;
+        saveToHistory();
+        try {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            showToast('t_copy');
+        } catch (error) { showToast('t_err'); }
+    }
+
+    async function shareQR() {
+        const canvas = document.querySelector('#qr-container canvas');
+        if (!canvas) return;
+        saveToHistory();
+        try {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const file = new File([blob], 'QR-Code.png', { type: 'image/png' });
+            if (navigator.share) await navigator.share({ files: [file], title: 'My QR Code' });
+            else showToast('t_sh_err');
+        } catch (error) {}
+    }
 
     function downloadQR() {
-        if (!qrGenerated) return showToast(dict[currentLang]['t_err_emp']);
+        if (!qrGenerated) return showToast('t_err_emp');
         saveToHistory();
         const originalCanvas = document.querySelector('#qr-container canvas');
         if (!originalCanvas) return;
 
-        const exportCanvas = document.createElement('canvas'); const ctx = exportCanvas.getContext('2d');
+        const exportCanvas = document.createElement('canvas');
+        const ctx = exportCanvas.getContext('2d');
         const isTransparent = document.getElementById('bg-transparent').checked;
         const scale = 4, qrSize = originalCanvas.width * scale, padding = 60 * scale; 
-        
-        // 🔥 If Free User, space added for watermark at bottom. If Pro, no extra space.
-        const bottomSpace = isPremium ? padding : (isTransparent ? padding : 130 * scale); 
+        const bottomSpace = isTransparent ? padding : 130 * scale; 
 
         exportCanvas.width = qrSize + (padding * 2); exportCanvas.height = qrSize + padding + bottomSpace;
 
-        if (!isTransparent) { ctx.fillStyle = document.getElementById('col-light').value; ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height); }
+        if (!isTransparent) {
+            ctx.fillStyle = document.getElementById('col-light').value;
+            ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        }
 
-        ctx.imageSmoothingEnabled = false; ctx.drawImage(originalCanvas, padding, padding, qrSize, qrSize);
+        ctx.imageSmoothingEnabled = false; 
+        ctx.drawImage(originalCanvas, padding, padding, qrSize, qrSize);
 
         if (!isTransparent) {
             let customText = document.getElementById('frame-text').value.trim();
             if(!customText) customText = "S C A N  M E";
             ctx.fillStyle = document.getElementById('col-dark').value; 
-            ctx.font = `bold ${30 * scale}px 'Helvetica Neue', sans-serif`; ctx.textAlign = 'center';
+            ctx.font = `bold ${30 * scale}px 'Helvetica Neue', sans-serif`;
+            ctx.textAlign = 'center';
             const textX = exportCanvas.width / 2, textY = exportCanvas.height - bottomSpace + (50 * scale);
             ctx.fillText(customText, textX, textY);
+            ctx.fillStyle = '#64748b'; 
+            ctx.font = `500 ${16 * scale}px 'Helvetica Neue', sans-serif`;
             
-            // 🔥 Watermark Logic 🔥
-            if(!isPremium) {
-                ctx.fillStyle = '#64748b'; ctx.font = `500 ${16 * scale}px 'Helvetica Neue', sans-serif`;
-                ctx.fillText("Generated by QR Studio", textX, textY + (40 * scale));
-            }
+            // 🔥 Watermark Added Here 🔥
+            ctx.fillText("Generated by QR Studio", textX, textY + (40 * scale));
         }
 
         const link = document.createElement('a');
         link.download = `QR-Studio-${Date.now()}.png`; link.href = exportCanvas.toDataURL("image/png", 1.0); link.click();
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.4 }, zIndex: 9999 }); showToast(dict[currentLang]['t_down']);
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.4 }, zIndex: 9999 }); showToast('t_down');
     }
 
-    function toggleTheme() { document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; localStorage.setItem('theme', isDark ? 'dark' : 'light'); }
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    // 🔥 100% Offline Support 🔥
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE = 'qr-studio-v3';
+            const assets = [
+                location.href,
+                'https://cdn.jsdelivr.net/npm/easyqrcodejs@4.4.13/dist/easy.qrcode.min.js',
+                'https://unpkg.com/html5-qrcode',
+                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
+                'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
+            ];
+            self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(assets))); });
+            self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))); });
+        `;
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        try { navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{}); } catch(e){}
+    }
 </script>
 
 </body>
