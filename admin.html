@@ -139,6 +139,87 @@
         }
         #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) scale(1); }
         @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ✨ QR Generate Animation */
+        @keyframes qrPop { 0% { transform: scale(0.7) rotate(-5deg); opacity: 0; } 70% { transform: scale(1.08) rotate(1deg); } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+        .qr-animate { animation: qrPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        /* 🔍 QR Zoom Modal */
+        #zoom-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(8px); z-index: 999; justify-content: center; align-items: center;
+            animation: fadeIn 0.2s ease;
+        }
+        #zoom-modal.open { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #zoom-inner {
+            background: white; border-radius: 24px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 15px;
+            animation: qrPop 0.3s ease;
+        }
+        #zoom-inner canvas, #zoom-inner img { border-radius: 12px; max-width: 280px; max-height: 280px; }
+        #zoom-close {
+            background: #f1f5f9; border: none; border-radius: 50px; padding: 10px 28px;
+            font-size: 14px; font-weight: 700; cursor: pointer; color: #1e293b;
+        }
+        #zoom-modal .zoom-hint { font-size: 12px; color: #64748b; }
+        #qr-container { cursor: zoom-in; transition: transform 0.2s; }
+        #qr-container:active { transform: scale(0.96); }
+
+        /* ⭐ Favorites */
+        .history-item { position: relative; }
+        .fav-btn {
+            background: none; border: none; font-size: 18px; cursor: pointer;
+            padding: 4px; transition: transform 0.2s; line-height: 1;
+        }
+        .fav-btn:active { transform: scale(1.4); }
+        .history-item.is-fav { border-color: #f59e0b; background: rgba(245, 158, 11, 0.06); }
+        .hist-actions { display: flex; align-items: center; gap: 6px; }
+        .del-btn { background: none; border: none; font-size: 15px; cursor: pointer; color: #ef4444; padding: 4px; }
+        .fav-section-title { font-size: 12px; font-weight: 700; color: #f59e0b; margin: 10px 0 6px 4px; }
+        .all-section-title { font-size: 12px; font-weight: 700; color: var(--text-muted); margin: 10px 0 6px 4px; }
+
+        /* 📷 Scan History */
+        #view-scan .scan-hist-wrap { margin-top: 20px; }
+        .scan-hist-title { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; }
+        .scan-hist-item {
+            background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .scan-hist-text { font-size: 13px; color: var(--text-main); font-weight: 600; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 65%; }
+        .scan-hist-actions { display: flex; gap: 6px; }
+        .scan-hist-actions button { background: none; border: none; font-size: 14px; cursor: pointer; padding: 4px; }
+
+        /* 🌈 Design Power-ups */
+        .frame-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .frame-chip {
+            border: 2px solid var(--border); border-radius: 10px; padding: 8px 4px;
+            background: var(--input-bg); cursor: pointer; display: flex; flex-direction: column;
+            align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--text-muted); transition: 0.2s;
+        }
+        .frame-chip.active, .frame-chip:hover { border-color: var(--primary); color: var(--primary); background: rgba(59,130,246,0.08); }
+        .frame-chip i { font-size: 18px; }
+        input[type="range"] { padding: 4px 0; cursor: pointer; accent-color: var(--primary); height: auto; }
+        .size-display { text-align: right; font-size: 12px; font-weight: 700; color: var(--primary); }
+        .gradient-row { display: flex; gap: 10px; align-items: center; }
+        .gradient-toggle { flex-shrink: 0; }
+
+        /* 🔍 Auto Detect Badge */
+        .detect-badge {
+            display: inline-flex; align-items: center; gap: 6px; background: rgba(59,130,246,0.1);
+            color: var(--primary); border-radius: 20px; padding: 6px 12px; font-size: 12px;
+            font-weight: 700; margin-bottom: 10px; animation: slideUp 0.3s ease;
+        }
+
+        /* 📊 QR Info Bar */
+        #qr-info-bar {
+            display: none; width: 100%; margin-top: 10px;
+            background: var(--input-bg); border-radius: 10px; padding: 8px 12px;
+            font-size: 11px; color: var(--text-muted); font-weight: 600;
+            display: none; gap: 12px; justify-content: center; flex-wrap: wrap;
+        }
+        #qr-info-bar span { display: flex; align-items: center; gap: 4px; }
+        #qr-info-bar.visible { display: flex; }
     </style>
 </head>
 <body>
@@ -155,7 +236,7 @@
     <div class="main-content">
         
         <div class="qr-card" id="qr-card">
-            <div id="qr-container">
+            <div id="qr-container" onclick="openZoom()" title="Tap to Zoom">
                 <i class="fa-solid fa-qrcode" style="font-size: 70px; color: #cbd5e1;"></i>
             </div>
             <div class="action-btns" id="action-btns" style="display: none;">
@@ -163,12 +244,18 @@
                 <button class="btn-share" onclick="shareQR()"><i class="fa-solid fa-share-nodes"></i> <span data-i18n="btn_share">শেয়ার</span></button>
                 <button class="btn-down" onclick="downloadQR()"><i class="fa-solid fa-download"></i> <span data-i18n="btn_down">সেভ HD</span></button>
             </div>
+            <div id="qr-info-bar">
+                <span>📊 <span id="info-chars">0</span> chars</span>
+                <span>⚡ <span id="info-level">H</span> error</span>
+                <span>📐 <span id="info-size">200</span>px</span>
+            </div>
         </div>
 
         <div id="view-text" class="view-section active">
+            <div id="detect-badge-wrap"></div>
             <div class="input-wrap">
                 <label data-i18n="lbl_text">টেক্সট বা লিংক দিন</label>
-                <input type="text" id="inp-text" data-i18n-ph="ph_text" placeholder="https://..." oninput="autoGenerate()">
+                <input type="text" id="inp-text" data-i18n-ph="ph_text" placeholder="https://..." oninput="autoGenerate(); autoDetectType(this.value)">
             </div>
         </div>
 
@@ -245,13 +332,59 @@
                 <label data-i18n="lbl_dsg_logo">মাঝখানে লোগো বসান</label>
                 <input type="file" id="inp-logo" accept="image/*" style="padding: 10px;">
             </div>
-            <div class="input-wrap color-grid">
-                <div><label data-i18n="lbl_dsg_qr_col">QR কালার</label><input type="color" id="col-dark" value="#000000" onchange="autoGenerate()"></div>
-                <div><label data-i18n="lbl_dsg_bg_col">ব্যাকগ্রাউন্ড</label><input type="color" id="col-light" value="#ffffff" onchange="autoGenerate()"></div>
+            <!-- 🌈 Gradient Colors -->
+            <div class="input-wrap">
+                <label>🌈 QR গ্রাদিয়েন্ট কালার</label>
+                <div class="gradient-row">
+                    <input type="color" id="col-dark" value="#000000" onchange="autoGenerate()" style="flex:1">
+                    <div class="gradient-toggle switch-wrap" style="margin:0;flex-shrink:0;">
+                        <input type="checkbox" id="use-gradient" onchange="toggleGradientUI(); autoGenerate()">
+                        <span style="font-size:12px;">Gradient</span>
+                    </div>
+                    <input type="color" id="col-dark2" value="#6366f1" onchange="autoGenerate()" style="flex:1; display:none;">
+                </div>
             </div>
-            <div class="input-wrap switch-wrap">
-                <input type="checkbox" id="bg-transparent" onchange="autoGenerate()">
-                <span data-i18n="lbl_dsg_trans">স্বচ্ছ (Transparent) ব্যাকগ্রাউন্ড</span>
+            <div class="input-wrap color-grid">
+                <div><label data-i18n="lbl_dsg_bg_col">ব্যাকগ্রাউন্ড</label><input type="color" id="col-light" value="#ffffff" onchange="autoGenerate()"></div>
+                <div style="display:flex;flex-direction:column;justify-content:flex-end;">
+                    <div class="switch-wrap" style="margin-bottom:0;">
+                        <input type="checkbox" id="bg-transparent" onchange="autoGenerate()">
+                        <span style="font-size:12px;" data-i18n="lbl_dsg_trans">স্বচ্ছ</span>
+                    </div>
+                </div>
+            </div>
+            <!-- 📈 QR Size Slider -->
+            <div class="input-wrap">
+                <label>📈 QR সাইজ: <span class="size-display" id="size-val">200px</span></label>
+                <input type="range" id="qr-size" min="120" max="280" value="200" step="10" oninput="updateSize(this.value); autoGenerate()">
+            </div>
+            <!-- 🔵 Corner Shape -->
+            <div class="input-wrap">
+                <label>🔵 কোরনার শেপ</label>
+                <div class="frame-grid">
+                    <div class="frame-chip active" id="corner-square" onclick="setCorner('square', this)">
+                        <i class="fa-solid fa-square"></i><span>Square</span>
+                    </div>
+                    <div class="frame-chip" id="corner-dot" onclick="setCorner('dot', this)">
+                        <i class="fa-solid fa-circle"></i><span>Dot</span>
+                    </div>
+                    <div class="frame-chip" id="corner-extra-rounded" onclick="setCorner('extra-rounded', this)">
+                        <i class="fa-regular fa-circle"></i><span>Round</span>
+                    </div>
+                    <div class="frame-chip" id="corner-diamond" onclick="setCorner('diamond', this)">
+                        <i class="fa-solid fa-diamond"></i><span>Classic</span>
+                    </div>
+                </div>
+            </div>
+            <!-- 🎨 Frame Template -->
+            <div class="input-wrap">
+                <label>🎨 ফ্রেম টেমপ্লেট</label>
+                <div class="frame-grid">
+                    <div class="frame-chip active" onclick="applyTemplate('none', this)">❌ None</div>
+                    <div class="frame-chip" onclick="applyTemplate('blue', this)"><span style='color:#3b82f6'>🔵</span> Blue</div>
+                    <div class="frame-chip" onclick="applyTemplate('dark', this)"><span>■</span> Dark</div>
+                    <div class="frame-chip" onclick="applyTemplate('neon', this)"><span style='color:#10b981'>⬢</span> Neon</div>
+                </div>
             </div>
             <div class="input-wrap">
                 <label data-i18n="lbl_dsg_style">QR কোডের স্টাইল</label>
@@ -267,11 +400,15 @@
             <div id="reader"></div>
             <div class="input-wrap" style="margin-top: 20px;">
                 <label data-i18n="lbl_scan_res">স্ক্যান রেজাল্ট</label>
-                <textarea id="scan-result" readonly placeholder="..." style="height: 100px; color: var(--primary); font-weight: 600;"></textarea>
+                <textarea id="scan-result" readonly placeholder="..." style="height: 80px; color: var(--primary); font-weight: 600;"></textarea>
             </div>
             <div class="action-btns">
                 <button class="btn-copy" onclick="copyScanResult()"><i class="fa-solid fa-copy"></i> <span data-i18n="btn_copy">কপি</span></button>
                 <button class="btn-open" onclick="openScanResult()"><i class="fa-solid fa-external-link"></i> <span data-i18n="btn_open">ওপেন</span></button>
+            </div>
+            <div class="scan-hist-wrap">
+                <div class="scan-hist-title" data-i18n="lbl_scan_hist">📋 স্ক্যান হিস্ট্রি</div>
+                <div id="scan-history-list"></div>
             </div>
         </div>
 
@@ -297,6 +434,15 @@
         <button class="nav-item" onclick="switchTab('history', this)"><i class="fa-solid fa-clock-rotate-left"></i><span data-i18n="nav_history">হিস্ট্রি</span></button>
     </nav>
 
+</div>
+
+<!-- 🔍 Zoom Modal -->
+<div id="zoom-modal" onclick="closeZoom()">
+    <div id="zoom-inner" onclick="event.stopPropagation()">
+        <div id="zoom-qr-display"></div>
+        <p class="zoom-hint">📌 HD কোয়ালিটি QR</p>
+        <button id="zoom-close" onclick="closeZoom()">✕ বন্ধ করুন</button>
+    </div>
 </div>
 
 <div id="toast">মেসেজ</div>
@@ -368,8 +514,10 @@
     }
     
     // 🔥 Core App Logic 🔥
-    let currentTab = 'text', activeDataTab = 'text', logoData = null, qrGenerated = false, lastGeneratedData = ""; 
-    let html5QrCode = null; // Scanner variable
+    let currentTab = 'text', activeDataTab = 'text', logoData = null, qrGenerated = false, lastGeneratedData = "";
+    let html5QrCode = null;
+    let currentCorner = 'square'; // Corner shape state
+    let currentQrSize = 200;      // Size state
 
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
@@ -377,6 +525,124 @@
     }
 
     applyLanguage();
+
+    // 🔍 AUTO DETECT TYPE
+    const detectRules = [
+        { test: v => /^https?:\/\//i.test(v),                        tab: 'text',     icon: '🌐', label: 'URL লিংক' },
+        { test: v => /^wa\.me|whatsapp/i.test(v),                   tab: 'whatsapp', icon: '💬', label: 'WhatsApp' },
+        { test: v => /^WIFI:/i.test(v),                              tab: 'wifi',     icon: '📡', label: 'WiFi' },
+        { test: v => /^geo:|^[0-9.]+,\s*[0-9.]+$/.test(v),          tab: 'location', icon: '📍', label: 'Location' },
+        { test: v => /^BEGIN:VCARD/i.test(v),                        tab: 'contact',  icon: '📞', label: 'Contact' },
+        { test: v => /^mailto:/i.test(v),                            tab: 'email',    icon: '✉️', label: 'Email' },
+        { test: v => /^SMSTO:/i.test(v),                             tab: 'sms',      icon: '💬', label: 'SMS' },
+        { test: v => /facebook\.com|instagram\.com|youtube\.com/i.test(v), tab: 'social', icon: '🔷', label: 'Social' },
+    ];
+    function autoDetectType(value) {
+        const wrap = document.getElementById('detect-badge-wrap');
+        if (!value.trim()) { wrap.innerHTML = ''; return; }
+        const match = detectRules.find(r => r.test(value));
+        if (match) {
+            wrap.innerHTML = `<div class="detect-badge">${match.icon} ${match.label} সনআক্ত হয়েছে!</div>`;
+        } else {
+            wrap.innerHTML = `<div class="detect-badge">📝 টেক্সট</div>`;
+        }
+    }
+
+    // 🔍 ZOOM MODAL
+    function openZoom() {
+        if (!qrGenerated) return;
+        const canvas = document.querySelector('#qr-container canvas');
+        if (!canvas) return;
+        const display = document.getElementById('zoom-qr-display');
+        const cloned = canvas.cloneNode(true);
+        cloned.style.cssText = 'width:260px;height:260px;border-radius:12px;';
+        display.innerHTML = '';
+        display.appendChild(cloned);
+        document.getElementById('zoom-modal').classList.add('open');
+    }
+    function closeZoom() { document.getElementById('zoom-modal').classList.remove('open'); }
+
+    // ⭐ FAVORITES & DELETE - History
+    function toggleFav(index) {
+        let hist = JSON.parse(localStorage.getItem('qr_history') || '[]');
+        hist[index].fav = !hist[index].fav;
+        localStorage.setItem('qr_history', JSON.stringify(hist));
+        loadHistory();
+    }
+    function deleteHist(index) {
+        let hist = JSON.parse(localStorage.getItem('qr_history') || '[]');
+        hist.splice(index, 1);
+        localStorage.setItem('qr_history', JSON.stringify(hist));
+        loadHistory();
+    }
+
+    // 📷 SCAN HISTORY
+    function saveScanHistory(text) {
+        let sh = JSON.parse(localStorage.getItem('scan_history') || '[]');
+        if (sh[0] === text) return;
+        sh.unshift(text);
+        if (sh.length > 10) sh.pop();
+        localStorage.setItem('scan_history', JSON.stringify(sh));
+        loadScanHistory();
+    }
+    function loadScanHistory() {
+        const list = document.getElementById('scan-history-list');
+        if (!list) return;
+        let sh = JSON.parse(localStorage.getItem('scan_history') || '[]');
+        if (sh.length === 0) { list.innerHTML = `<p style='color:var(--text-muted);font-size:12px;'>অর্তাৎ কোনো হিস্ট্রি নেই</p>`; return; }
+        list.innerHTML = sh.map((t, i) => `
+            <div class="scan-hist-item">
+                <span class="scan-hist-text">${t}</span>
+                <div class="scan-hist-actions">
+                    <button onclick="document.getElementById('scan-result').value='${t.replace(/'/g,'&#39;')}'" title="Restore">🔄</button>
+                    <button onclick="navigator.clipboard.writeText('${t.replace(/'/g,'&#39;')}')" title="Copy">📋</button>
+                    <button onclick="deleteScanHist(${i})" title="Delete">🗑️</button>
+                </div>
+            </div>`).join('');
+    }
+    function deleteScanHist(i) {
+        let sh = JSON.parse(localStorage.getItem('scan_history') || '[]');
+        sh.splice(i, 1);
+        localStorage.setItem('scan_history', JSON.stringify(sh));
+        loadScanHistory();
+    }
+
+    // 🌈 GRADIENT / DESIGN POWER-UPS
+    function toggleGradientUI() {
+        const c2 = document.getElementById('col-dark2');
+        c2.style.display = document.getElementById('use-gradient').checked ? 'flex' : 'none';
+    }
+    let selectedCorner = 'square';
+    function setCorner(type, el) {
+        selectedCorner = type;
+        document.querySelectorAll('.frame-chip[id^="corner-"]').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        autoGenerate();
+    }
+    function updateSize(val) {
+        currentQrSize = parseInt(val);
+        document.getElementById('size-val').textContent = val + 'px';
+        document.getElementById('info-size').textContent = val;
+        const c = document.getElementById('qr-container');
+        c.style.width = val + 'px'; c.style.height = val + 'px';
+    }
+    function applyTemplate(type, el) {
+        document.querySelectorAll('.frame-chip:not([id])').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        const templates = {
+            none:  { dark: '#000000', light: '#ffffff', grad: false },
+            blue:  { dark: '#1d4ed8', light: '#eff6ff', grad: false },
+            dark:  { dark: '#ffffff', light: '#0f172a', grad: false },
+            neon:  { dark: '#10b981', light: '#022c22', grad: false },
+        };
+        const t = templates[type];
+        document.getElementById('col-dark').value  = t.dark;
+        document.getElementById('col-light').value = t.light;
+        document.getElementById('use-gradient').checked = t.grad;
+        toggleGradientUI();
+        document.getElementById('bg-transparent').checked = false;
+        autoGenerate();
+    }
 
     function switchTab(tabName, element) {
         // Stop scanner if leaving scan tab
@@ -408,13 +674,15 @@
         if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
         html5QrCode.start({ facingMode: "environment" }, config,
-            (decodedText, decodedResult) => {
+            (decodedText) => {
                 document.getElementById('scan-result').value = decodedText;
+                saveScanHistory(decodedText); // 📷 Save to scan history
                 showToast('t_scan_succ');
-                stopScanner(); // Auto stop after scan
+                stopScanner();
             },
-            (errorMessage) => { /* ignore constant scanning errors */ }
+            () => {}
         ).catch(err => console.log("Camera access error:", err));
+        loadScanHistory();
     }
 
     function stopScanner() {
@@ -451,9 +719,10 @@
     function autoGenerate() { clearTimeout(typingTimer); typingTimer = setTimeout(generateQR, 300); }
 
     function generateQR() {
-        if (currentTab === 'scan') return; // Do not generate while scanning
-
+        if (currentTab === 'scan') return;
         let textData = "";
+        const sizeEl = document.getElementById('qr-size');
+        const qrSize = sizeEl ? parseInt(sizeEl.value) : 200;
 
         if (activeDataTab === 'text') textData = document.getElementById('inp-text').value;
         else if (activeDataTab === 'whatsapp') {
@@ -498,12 +767,15 @@
 
         const container = document.getElementById('qr-container');
         const actionBtns = document.getElementById('action-btns');
+        const infoBar = document.getElementById('qr-info-bar');
         const isTransparent = document.getElementById('bg-transparent').checked;
+        const useGrad = document.getElementById('use-gradient') && document.getElementById('use-gradient').checked;
 
         if (!textData.trim()) {
             container.innerHTML = '<i class="fa-solid fa-qrcode" style="font-size: 70px; color: #cbd5e1;"></i>';
             container.style.background = isTransparent ? 'transparent' : 'white';
             actionBtns.style.display = 'none';
+            if (infoBar) infoBar.classList.remove('visible');
             qrGenerated = false; return;
         }
 
@@ -511,17 +783,44 @@
         container.innerHTML = "";
         const isDot = document.getElementById('qr-style').value === 'dot';
 
+        // 🌈 Gradient color logic
+        let darkColor = document.getElementById('col-dark').value;
+        let lightColor = isTransparent ? "rgba(255,255,255,0)" : document.getElementById('col-light').value;
+        const gradientColor = (useGrad && document.getElementById('col-dark2'))
+            ? { type: 'linear', position0: 0, position1: 1, color0: darkColor, color1: document.getElementById('col-dark2').value }
+            : undefined;
+
+        // 🔵 Corner shape => dotScale mapping
+        const cornerDotScale = selectedCorner === 'dot' ? 0.5 : selectedCorner === 'extra-rounded' ? 0.7 : 1;
+        const finalDotScale = isDot ? 0.4 : cornerDotScale;
+
         new QRCode(container, {
-            text: textData, width: 220, height: 220,
-            colorDark: document.getElementById('col-dark').value,
-            colorLight: isTransparent ? "rgba(255,255,255,0)" : document.getElementById('col-light').value,
-            correctLevel: QRCode.CorrectLevel.H, dotScale: isDot ? 0.4 : 1,
-            logo: logoData, logoWidth: 55, logoHeight: 55, logoBackgroundTransparent: false
+            text: textData, width: qrSize, height: qrSize,
+            colorDark: darkColor,
+            colorLight: lightColor,
+            correctLevel: QRCode.CorrectLevel.H,
+            dotScale: finalDotScale,
+            logo: logoData, logoWidth: 55, logoHeight: 55, logoBackgroundTransparent: false,
+            ...(gradientColor ? { colorDark: gradientColor } : {})
         });
-        
-        container.style.background = isTransparent ? 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAHElEQVQYV2NkYGAwYkAD////Mw7y4igwDhoAxgMAgZkEAfxM2iUAAAAASUVORK5CYII=) repeat' : 'white';
+
+        container.style.background = isTransparent
+            ? 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAHElEQVQYV2NkYGAwYkAD////Mw7y4igwDhoAxgMAgZkEAfxM2iUAAAAASUVORK5CYII=) repeat'
+            : 'white';
         actionBtns.style.display = 'flex';
         qrGenerated = true;
+
+        // ✨ Pop animation
+        container.classList.remove('qr-animate');
+        void container.offsetWidth;
+        container.classList.add('qr-animate');
+
+        // 📊 QR Info Bar update
+        if (infoBar) {
+            document.getElementById('info-chars').textContent = textData.length;
+            document.getElementById('info-size').textContent = qrSize;
+            infoBar.classList.add('visible');
+        }
     }
 
     function showToast(msgKey) {
@@ -548,13 +847,28 @@
             return;
         }
         list.innerHTML = "";
-        hist.forEach(h => {
-            let div = document.createElement('div');
-            div.className = 'history-item';
-            div.innerHTML = `<span class="history-text">${h.data}</span><span class="history-type">${h.type.toUpperCase()}</span>`;
-            div.onclick = () => restoreFromHistory(h.data);
-            list.appendChild(div);
-        });
+        const favs = hist.filter(h => h.fav);
+        const others = hist.filter(h => !h.fav);
+        if (favs.length > 0) {
+            list.innerHTML += `<div class="fav-section-title">⭐ Favorites</div>`;
+            favs.forEach((h, i) => renderHistItem(list, h, hist.indexOf(h)));
+        }
+        if (others.length > 0) {
+            list.innerHTML += `<div class="all-section-title">📋 সব হিস্ট্রি</div>`;
+            others.forEach((h, i) => renderHistItem(list, h, hist.indexOf(h)));
+        }
+    }
+    function renderHistItem(list, h, index) {
+        let div = document.createElement('div');
+        div.className = 'history-item' + (h.fav ? ' is-fav' : '');
+        div.innerHTML = `
+            <span class="history-text" onclick="restoreFromHistory('${h.data.replace(/'/g,"&#39;")}')">${h.data}</span>
+            <div class="hist-actions">
+                <button class="fav-btn" onclick="toggleFav(${index})" title="Favorite">${h.fav ? '⭐' : '☆'}</button>
+                <button class="del-btn" onclick="deleteHist(${index})" title="Delete">🗑️</button>
+                <span class="history-type">${h.type.toUpperCase()}</span>
+            </div>`;
+        list.appendChild(div);
     }
 
     function restoreFromHistory(data) {
