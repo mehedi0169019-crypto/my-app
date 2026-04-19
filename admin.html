@@ -220,6 +220,22 @@
         }
         #qr-info-bar span { display: flex; align-items: center; gap: 4px; }
         #qr-info-bar.visible { display: flex; }
+        /* 🎨 Skin Picker */
+        .skin-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .skin-card {
+            border: 2px solid var(--border); border-radius: 12px; padding: 10px 5px;
+            background: var(--input-bg); cursor: pointer; display: flex; flex-direction: column;
+            align-items: center; gap: 5px; transition: 0.2s;
+        }
+        .skin-card:active { transform: scale(0.94); }
+        .skin-card.active { border-color: var(--primary); background: rgba(59,130,246,0.1); }
+        .skin-preview {
+            width: 42px; height: 42px; border-radius: 8px;
+            display: flex; justify-content: center; align-items: center; font-size: 9px;
+            font-weight: 900; color: white; letter-spacing: 1px; overflow: hidden;
+        }
+        .skin-name { font-size: 10px; font-weight: 700; color: var(--text-muted); text-align: center; }
+        .skin-card.active .skin-name { color: var(--primary); }
     </style>
 </head>
 <body>
@@ -376,6 +392,60 @@
                     </div>
                 </div>
             </div>
+            <!-- 🎨 QR Skin Picker -->
+            <div class="input-wrap">
+                <label>🎨 QR স্কিন স্টাইল</label>
+                <div class="skin-grid">
+                    <div class="skin-card active" id="skin-classic" onclick="setSkin('classic',this)">
+                        <div class="skin-preview" style="background:#000;">
+                            <svg width="32" height="32" viewBox="0 0 10 10"><rect x="1" y="1" width="3" height="3" fill="white"/><rect x="6" y="1" width="3" height="3" fill="white"/><rect x="1" y="6" width="3" height="3" fill="white"/><rect x="5" y="5" width="1" height="1" fill="white"/><rect x="7" y="5" width="1" height="1" fill="white"/><rect x="5" y="7" width="1" height="1" fill="white"/></svg>
+                        </div>
+                        <span class="skin-name">ক্লাসিক</span>
+                    </div>
+                    <div class="skin-card" id="skin-dot" onclick="setSkin('dot',this)">
+                        <div class="skin-preview" style="background:#1e293b;border-radius:50%;">
+                            <svg width="32" height="32" viewBox="0 0 10 10"><circle cx="2" cy="2" r="1" fill="white"/><circle cx="5" cy="2" r="1" fill="white"/><circle cx="8" cy="2" r="1" fill="white"/><circle cx="2" cy="5" r="1" fill="white"/><circle cx="8" cy="5" r="1" fill="white"/><circle cx="2" cy="8" r="1" fill="white"/><circle cx="5" cy="8" r="1" fill="white"/><circle cx="8" cy="8" r="1" fill="white"/></svg>
+                        </div>
+                        <span class="skin-name">Dot</span>
+                    </div>
+                    <div class="skin-card" id="skin-blue" onclick="setSkin('blue',this)">
+                        <div class="skin-preview" style="background:linear-gradient(135deg,#3b82f6,#6366f1);">
+                            <svg width="32" height="32" viewBox="0 0 10 10"><rect x="1" y="1" width="3" height="3" rx="1" fill="white"/><rect x="6" y="1" width="3" height="3" rx="1" fill="white"/><rect x="1" y="6" width="3" height="3" rx="1" fill="white"/><rect x="5" y="5" width="2" height="2" rx="1" fill="white"/></svg>
+                        </div>
+                        <span class="skin-name">Ocean</span>
+                    </div>
+                    <div class="skin-card" id="skin-neon" onclick="setSkin('neon',this)">
+                        <div class="skin-preview" style="background:#022c22;">
+                            <svg width="32" height="32" viewBox="0 0 10 10"><rect x="1" y="1" width="3" height="3" fill="#10b981"/><rect x="6" y="1" width="3" height="3" fill="#10b981"/><rect x="1" y="6" width="3" height="3" fill="#10b981"/><circle cx="6.5" cy="6.5" r="1.5" fill="#10b981"/></svg>
+                        </div>
+                        <span class="skin-name">Neon</span>
+                    </div>
+                    <div class="skin-card" id="skin-rose" onclick="setSkin('rose',this)">
+                        <div class="skin-preview" style="background:linear-gradient(135deg,#f43f5e,#f97316);">
+                            <svg width="32" height="32" viewBox="0 0 10 10"><rect x="1" y="1" width="3" height="3" rx="2" fill="white"/><rect x="6" y="1" width="3" height="3" rx="2" fill="white"/><rect x="1" y="6" width="3" height="3" rx="2" fill="white"/><rect x="5" y="5" width="2" height="2" rx="1" fill="white"/></svg>
+                        </div>
+                        <span class="skin-name">Rose</span>
+                    </div>
+                    <div class="skin-card" id="skin-gold" onclick="setSkin('gold',this)">
+                        <div class="skin-preview" style="background:#1c1400;">
+                            <svg width="32" height="32" viewBox="0 0 10 10"><rect x="1" y="1" width="3" height="3" fill="#f59e0b"/><rect x="6" y="1" width="3" height="3" fill="#f59e0b"/><rect x="1" y="6" width="3" height="3" fill="#f59e0b"/><rect x="5.5" y="5.5" width="3" height="3" rx="1.5" fill="#f59e0b"/></svg>
+                        </div>
+                        <span class="skin-name">Gold</span>
+                    </div>
+                    <div class="skin-card" id="skin-galaxy" onclick="setSkin('galaxy',this)">
+                        <div class="skin-preview" style="background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);">
+                            <svg width="32" height="32" viewBox="0 0 10 10"><circle cx="2.5" cy="2.5" r="1.5" fill="#a78bfa"/><circle cx="7.5" cy="2.5" r="1.5" fill="#a78bfa"/><circle cx="2.5" cy="7.5" r="1.5" fill="#a78bfa"/><circle cx="6" cy="6" r="1" fill="#c4b5fd"/></svg>
+                        </div>
+                        <span class="skin-name">Galaxy</span>
+                    </div>
+                    <div class="skin-card" id="skin-mono" onclick="setSkin('mono',this)">
+                        <div class="skin-preview" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                            <svg width="32" height="32" viewBox="0 0 10 10"><rect x="1" y="1" width="3" height="3" fill="#334155"/><rect x="6" y="1" width="3" height="3" fill="#334155"/><rect x="1" y="6" width="3" height="3" fill="#334155"/><rect x="5" y="5" width="1" height="1" fill="#64748b"/><rect x="7" y="5" width="1" height="1" fill="#64748b"/></svg>
+                        </div>
+                        <span class="skin-name">Mono</span>
+                    </div>
+                </div>
+            </div>
             <!-- 🎨 Frame Template -->
             <div class="input-wrap">
                 <label>🎨 ফ্রেম টেমপ্লেট</label>
@@ -386,12 +456,87 @@
                     <div class="frame-chip" onclick="applyTemplate('neon', this)"><span style='color:#10b981'>⬢</span> Neon</div>
                 </div>
             </div>
-            <div class="input-wrap">
                 <label data-i18n="lbl_dsg_style">QR কোডের স্টাইল</label>
                 <select id="qr-style" onchange="autoGenerate()">
                     <option value="square" data-i18n="opt_sq">ক্লাসিক (Square)</option>
                     <option value="dot" data-i18n="opt_dot">প্রিমিয়াম বিন্দু (Dot)</option>
                 </select>
+            </div>
+        </div>
+
+        <!-- 📞 Phone Call QR -->
+        <div id="view-phone" class="view-section">
+            <div class="input-wrap">
+                <label>📞 ফোন নাম্বার</label>
+                <input type="tel" id="phone-num" placeholder="01XXXXXXXXX" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap" style="background:rgba(59,130,246,0.06);border-radius:12px;padding:12px;">
+                <p style="margin:0;font-size:12px;color:var(--text-muted);">💡 QR স্ক্যান করলে সরাসরি কল যাবে এই নাম্বারে!</p>
+            </div>
+        </div>
+
+        <!-- 💸 bKash/Nagad Payment QR -->
+        <div id="view-payment" class="view-section">
+            <div class="input-wrap">
+                <label>💳 পেমেন্ট সার্ভিস</label>
+                <select id="pay-service" onchange="autoGenerate()">
+                    <option value="bkash">bKash 📱</option>
+                    <option value="nagad">Nagad 📱</option>
+                    <option value="rocket">Rocket 🚀</option>
+                    <option value="upay">Upay 💰</option>
+                </select>
+            </div>
+            <div class="input-wrap">
+                <label>📞 অ্যাকাউন্ট নাম্বার</label>
+                <input type="tel" id="pay-number" placeholder="01XXXXXXXXX" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap">
+                <label>💵 পরিমাণ (টাকা) - ঐচ্ছিক</label>
+                <input type="number" id="pay-amount" placeholder="500" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap">
+                <label>📝 নোট - ঐচ্ছিক</label>
+                <input type="text" id="pay-note" placeholder="পেমেন্টের কারণ" oninput="autoGenerate()">
+            </div>
+        </div>
+
+        <!-- 💬 Telegram QR -->
+        <div id="view-telegram" class="view-section">
+            <div class="input-wrap">
+                <label>💬 টাইপ</label>
+                <select id="tg-type" onchange="autoGenerate()">
+                    <option value="user">ব্যক্তিগত প্রোফাইল</option>
+                    <option value="group">গ্রুপ / চ্যানেল</option>
+                    <option value="bot">Bot</option>
+                </select>
+            </div>
+            <div class="input-wrap">
+                <label>ইউজারনেম / Link</label>
+                <input type="text" id="tg-username" placeholder="username অথবা t.me/... link" oninput="autoGenerate()">
+            </div>
+        </div>
+
+        <!-- 📅 Event/Calendar QR -->
+        <div id="view-event" class="view-section">
+            <div class="input-wrap">
+                <label>📅 ইভেন্ট নাম</label>
+                <input type="text" id="ev-title" placeholder="এক বিশেষ অনুষ্ঠান" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap">
+                <label>📆 শুরুর তারিখ ও সময়</label>
+                <input type="datetime-local" id="ev-start" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap">
+                <label>📆 শেষের তারিখ ও সময়</label>
+                <input type="datetime-local" id="ev-end" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap">
+                <label>📍 স্থান - ঐচ্ছিক</label>
+                <input type="text" id="ev-location" placeholder="ঢাকা, বাংলাদেশ" oninput="autoGenerate()">
+            </div>
+            <div class="input-wrap">
+                <label>📝 বিবরণ - ঐচ্ছিক</label>
+                <textarea id="ev-desc" placeholder="ইভেন্টের বিস্তারিত..." oninput="autoGenerate()"></textarea>
             </div>
         </div>
 
@@ -424,6 +569,10 @@
         <button class="nav-item active" onclick="switchTab('text', this)"><i class="fa-solid fa-link"></i><span data-i18n="nav_text">লিংক</span></button>
         <button class="nav-item" onclick="switchTab('scan', this)"><i class="fa-solid fa-expand"></i><span data-i18n="nav_scan">স্ক্যান</span></button>
         <button class="nav-item" onclick="switchTab('whatsapp', this)"><i class="fa-brands fa-whatsapp"></i><span data-i18n="nav_wa">WA</span></button>
+        <button class="nav-item" onclick="switchTab('phone', this)"><i class="fa-solid fa-phone"></i><span>ফোন</span></button>
+        <button class="nav-item" onclick="switchTab('payment', this)"><i class="fa-solid fa-money-bill-wave"></i><span>পেমেন্ট</span></button>
+        <button class="nav-item" onclick="switchTab('telegram', this)"><i class="fa-brands fa-telegram"></i><span>Telegram</span></button>
+        <button class="nav-item" onclick="switchTab('event', this)"><i class="fa-solid fa-calendar-days"></i><span>ইভেন্ট</span></button>
         <button class="nav-item" onclick="switchTab('location', this)"><i class="fa-solid fa-location-dot"></i><span data-i18n="nav_loc">লোকেশন</span></button>
         <button class="nav-item" onclick="switchTab('wifi', this)"><i class="fa-solid fa-wifi"></i><span data-i18n="nav_wifi">WiFi</span></button>
         <button class="nav-item" onclick="switchTab('contact', this)"><i class="fa-solid fa-address-card"></i><span data-i18n="nav_contact">কন্ট্যাক্ট</span></button>
@@ -644,6 +793,31 @@
         autoGenerate();
     }
 
+    // 🎨 SKIN PICKER
+    const skinPresets = {
+        classic: { dark:'#000000', light:'#ffffff', dot: 1,   grad: false, dark2: '#000000' },
+        dot:     { dark:'#1e293b', light:'#ffffff', dot: 0.5, grad: false, dark2: '#1e293b' },
+        blue:    { dark:'#3b82f6', light:'#eff6ff', dot: 0.8, grad: true,  dark2: '#6366f1' },
+        neon:    { dark:'#10b981', light:'#022c22', dot: 1,   grad: false, dark2: '#10b981' },
+        rose:    { dark:'#f43f5e', light:'#fff1f2', dot: 0.7, grad: true,  dark2: '#f97316' },
+        gold:    { dark:'#f59e0b', light:'#1c1400', dot: 1,   grad: false, dark2: '#f59e0b' },
+        galaxy:  { dark:'#a78bfa', light:'#0f0c29', dot: 0.5, grad: true,  dark2: '#c4b5fd' },
+        mono:    { dark:'#334155', light:'#f8fafc', dot: 1,   grad: false, dark2: '#334155' },
+    };
+    function setSkin(name, el) {
+        document.querySelectorAll('.skin-card').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        const s = skinPresets[name];
+        document.getElementById('col-dark').value  = s.dark;
+        document.getElementById('col-light').value = s.light;
+        document.getElementById('col-dark2').value = s.dark2;
+        document.getElementById('use-gradient').checked = s.grad;
+        toggleGradientUI();
+        document.getElementById('bg-transparent').checked = false;
+        selectedCorner = name === 'dot' || name === 'galaxy' ? 'dot' : 'square';
+        autoGenerate();
+    }
+
     function switchTab(tabName, element) {
         // Stop scanner if leaving scan tab
         if (currentTab === 'scan' && tabName !== 'scan') stopScanner();
@@ -762,6 +936,45 @@
                     if(pf==='insta') textData = `https://instagram.com/${url}`;
                     if(pf==='yt') textData = `https://youtube.com/@${url}`;
                 }
+            }
+        }
+        // 📞 Phone Call
+        else if (activeDataTab === 'phone') {
+            const num = document.getElementById('phone-num').value.trim().replace(/[^0-9+]/g,'');
+            if(num) textData = `tel:${num}`;
+        }
+        // 💸 Payment (bKash/Nagad)
+        else if (activeDataTab === 'payment') {
+            const svc   = document.getElementById('pay-service').value;
+            const num   = document.getElementById('pay-number').value.trim();
+            const amt   = document.getElementById('pay-amount').value.trim();
+            const note  = document.getElementById('pay-note').value.trim();
+            if(num) {
+                const svcNames = { bkash:'bKash', nagad:'Nagad', rocket:'Rocket', upay:'Upay' };
+                let parts = [`${svcNames[svc]}:${num}`];
+                if(amt)  parts.push(`Amount:${amt}`);
+                if(note) parts.push(`Note:${note}`);
+                textData = parts.join(';');
+            }
+        }
+        // 💬 Telegram
+        else if (activeDataTab === 'telegram') {
+            const uname = document.getElementById('tg-username').value.trim();
+            if(uname) {
+                if(uname.startsWith('http')) textData = uname;
+                else textData = `https://t.me/${uname.replace(/^@/,'')}`;
+            }
+        }
+        // 📅 Event / Calendar (iCal VEVENT)
+        else if (activeDataTab === 'event') {
+            const title = document.getElementById('ev-title').value.trim();
+            const start = document.getElementById('ev-start').value;
+            const end   = document.getElementById('ev-end').value;
+            const loc   = document.getElementById('ev-location').value.trim();
+            const desc  = document.getElementById('ev-desc').value.trim();
+            if(title && start) {
+                const toIcal = d => d.replace(/[-:T]/g,'').slice(0,15)+'Z';
+                textData = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${toIcal(start)}\nDTEND:${toIcal(end||start)}\n${loc?'LOCATION:'+loc+'\n':''}${desc?'DESCRIPTION:'+desc+'\n':''}END:VEVENT\nEND:VCALENDAR`;
             }
         }
 
