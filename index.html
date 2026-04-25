@@ -7,138 +7,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Hind Siliguri', sans-serif;
-        }
-
-        body {
-            background-color: #f0f4f8;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .card {
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 450px;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-        }
-
-        h2 {
-            text-align: center;
-            color: #1a365d;
-            margin-bottom: 25px;
-            font-weight: 700;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #4a5568;
-            font-weight: 600;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #3182ce;
-            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
-        }
-
-        button {
-            width: 100%;
-            background-color: #3182ce;
-            color: white;
-            border: none;
-            padding: 14px;
-            font-size: 18px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #2b6cb0;
-        }
-
-        button:disabled {
-            background-color: #a0aec0;
-            cursor: not-allowed;
-        }
-
-        #loader {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-            color: #3182ce;
-            font-weight: 600;
-        }
-
-        #result-box {
-            display: none;
-            margin-top: 25px;
-            background-color: #ebf8ff;
-            border: 1px solid #bee3f8;
-            border-radius: 8px;
-            padding: 15px;
-        }
-
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dashed #bee3f8;
-        }
-
-        .result-item:last-child {
-            border-bottom: none;
-        }
-
-        .result-label {
-            font-weight: 600;
-            color: #2c5282;
-            width: 40%;
-        }
-
-        .result-value {
-            color: #2d3748;
-            width: 60%;
-            text-align: right;
-            font-weight: 600;
-        }
-
-        .error-msg {
-            color: #e53e3e;
-            background-color: #fff5f5;
-            border: 1px solid #feb2b2;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 20px;
-            text-align: center;
-            display: none;
-            font-weight: 600;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Hind Siliguri', sans-serif; }
+        body { background-color: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background-color: #ffffff; width: 100%; max-width: 450px; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); }
+        h2 { text-align: center; color: #1a365d; margin-bottom: 25px; font-weight: 700; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; color: #4a5568; font-weight: 600; }
+        .input-group input { width: 100%; padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 16px; transition: all 0.3s ease; }
+        .input-group input:focus { outline: none; border-color: #3182ce; box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1); }
+        button { width: 100%; background-color: #3182ce; color: white; border: none; padding: 14px; font-size: 18px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease; }
+        button:hover { background-color: #2b6cb0; }
+        button:disabled { background-color: #a0aec0; cursor: not-allowed; }
+        #loader { display: none; text-align: center; margin-top: 20px; color: #3182ce; font-weight: 600; }
+        #result-box { display: none; margin-top: 25px; background-color: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 15px; }
+        .result-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #bee3f8; }
+        .result-item:last-child { border-bottom: none; }
+        .result-label { font-weight: 600; color: #2c5282; width: 45%; }
+        .result-value { color: #2d3748; width: 55%; text-align: right; font-weight: 600; }
+        .error-msg { color: #e53e3e; background-color: #fff5f5; border: 1px solid #feb2b2; padding: 10px; border-radius: 8px; margin-top: 20px; text-align: center; display: none; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -180,12 +66,16 @@
                 return;
             }
 
+            if (brn.length !== 17) {
+                showError("জন্ম নিবন্ধন নম্বর অবশ্যই ১৭ ডিজিটের হতে হবে!");
+                return;
+            }
+
             resultBox.style.display = 'none';
             errorBox.style.display = 'none';
             loader.style.display = 'block';
             btn.disabled = true;
 
-            // CORS সমাধান: এখানে allorigins proxy ব্যবহার করা হয়েছে
             const targetUrl = encodeURIComponent(`https://infodokan.myani.top/apilab/BIRTH-INFO-MAIN.php?brn=${brn}&dob=${dob}`);
             const proxyUrl = `https://api.allorigins.win/raw?url=${targetUrl}`;
 
@@ -196,21 +86,25 @@
                 loader.style.display = 'none';
                 btn.disabled = false;
 
-                // যদি API থেকে এরর আসে
-                if(data.error || Object.keys(data).length === 0) {
-                    showError("কোনো তথ্য পাওয়া যায়নি। নম্বর ও তারিখ ঠিক আছে কিনা চেক করুন।");
+                // যদি API থেকে N/A আসে, তার মানে সার্ভার ডেটা বের করতে পারেনি
+                if(data.registration_date === "N/A" || data.error) {
+                    showError("এই নম্বরটির কোনো তথ্য পাওয়া যায়নি! (অথবা API সার্ভারটি কাজ করছে না)");
                     return;
                 }
 
                 let htmlData = '<h3 style="color:#2b6cb0; text-align:center; margin-bottom:15px;">প্রাপ্ত তথ্য</h3>';
                 
                 for (const [key, value] of Object.entries(data)) {
-                    htmlData += `
-                        <div class="result-item">
-                            <span class="result-label">${key}</span>
-                            <span class="result-value">${value}</span>
-                        </div>
-                    `;
+                    // যদি কোনো ভ্যালু ফাঁকা না থাকে, তবেই দেখাবে
+                    if(value && value !== "N/A") {
+                        let formattedKey = key.replace(/_/g, ' ').toUpperCase(); // key গুলো সুন্দর করে দেখানোর জন্য
+                        htmlData += `
+                            <div class="result-item">
+                                <span class="result-label">${formattedKey}</span>
+                                <span class="result-value">${value}</span>
+                            </div>
+                        `;
+                    }
                 }
 
                 resultBox.innerHTML = htmlData;
@@ -219,7 +113,7 @@
             } catch (error) {
                 loader.style.display = 'none';
                 btn.disabled = false;
-                showError("সার্ভার ডাউন আছে অথবা ডেটা লোড হতে ব্যর্থ হয়েছে!");
+                showError("ডেটা লোড হতে ব্যর্থ হয়েছে! দয়া করে একটু পর আবার চেষ্টা করুন।");
                 console.error("Error:", error);
             }
         }
